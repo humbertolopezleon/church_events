@@ -56,7 +56,8 @@ class _DuplicateEventDialogState extends ConsumerState<DuplicateEventDialog> {
       error = null;
     });
     try {
-      final id = await EventCopy(ref.read(databaseProvider)).duplicateEvent(
+      final copier = EventCopy(ref.read(databaseProvider));
+      final id = await copier.duplicateEvent(
         widget.event.id,
         name: name.text,
         startDate: _d(start),
@@ -69,8 +70,14 @@ class _DuplicateEventDialogState extends ConsumerState<DuplicateEventDialog> {
             groups: groups),
       );
       if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context);
       ref.read(currentEventIdProvider.notifier).state = id;
+      if (copier.lastUnassignedForCompatibility > 0) {
+        messenger.showSnackBar(SnackBar(
+            content: Text(
+                '${copier.lastUnassignedForCompatibility} ${copier.lastUnassignedForCompatibility == 1 ? 'persona quedó' : 'personas quedaron'} sin hospedaje en la copia porque no encajaban con el hospedaje (sexo o matrimonio).')));
+      }
     } on DataException catch (e) {
       if (mounted) setState(() => error = e.message);
     } catch (e) {

@@ -138,8 +138,44 @@ class _LodgingSuggestScreenState extends ConsumerState<LodgingSuggestScreen> {
       );
       if (ok != true) return;
     }
-    // Si el usuario cambió algo y hay avisos, también se pide confirmación.
+    // Compatibilidad = bloqueo duro (también si la persona cambió el hospedaje de una propuesta).
+    final repo = ref.read(lodgingRepoProvider);
+    final blockers = <String>[];
+    for (final l in legs) {
+      blockers.addAll(await repo.compatibilityProblems(
+          l.lodgingId, l.people.map((p) => p.id)));
+    }
     if (!mounted) return;
+    if (blockers.isNotEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: Brand.avisoSuave,
+          title: const Text('No se puede asignar así'),
+          content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final b in blockers)
+                  Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      key: const Key('sg-bloqueo'),
+                      child: Text(b)),
+                const Text(
+                    'Elige otro hospedaje o edita este para cambiar a quién acepta.',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+              ]),
+          actions: [
+            FilledButton(
+                key: const Key('sg-bloqueo-ok'),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Entendido')),
+          ],
+        ),
+      );
+      return;
+    }
+    // Si el usuario cambió algo y hay avisos de capacidad, también se pide confirmación.
     final warns = _warnings(i, lodgings);
     if (warns.isNotEmpty && editing.contains(i)) {
       final ok = await showDialog<bool>(
@@ -200,8 +236,9 @@ class _LodgingSuggestScreenState extends ConsumerState<LodgingSuggestScreen> {
     for (final l in legsByProposal[i]!) {
       final lv = lodgings.where((x) => x.row.id == l.lodgingId).firstOrNull;
       if (lv == null) continue;
-      out.addAll(
-          checkLodgingAssignment(lv.slot, l.people).map((w) => w.message));
+      out.addAll(checkLodgingAssignment(lv.slot, l.people)
+          .where((w) => w.kind == WarningKind.capacity)
+          .map((w) => w.message));
     }
     return out;
   }
@@ -404,8 +441,10 @@ class _LodgingSuggestScreenState extends ConsumerState<LodgingSuggestScreen> {
               for (final x in lodgings)
                 DropdownMenuItem(
                     value: x.row.id,
+                    enabled: x.row.id == l.lodgingId ||
+                        lodgingBlockers(x.slot, l.people).isEmpty,
                     child: Text(
-                        '${x.row.name} · ${lodgingAcceptsLabel(lodgingAcceptsFromDb(x.row.accepts))} · ${x.free < 0 ? 0 : x.free} libres',
+                        '${x.row.name} · ${lodgingAcceptsLabel(lodgingAcceptsFromDb(x.row.accepts))} · ${x.free < 0 ? 0 : x.free} libres${x.row.id != l.lodgingId && lodgingBlockers(x.slot, l.people).isNotEmpty ? ' · no compatible' : ''}',
                         overflow: TextOverflow.ellipsis)),
             ],
             onChanged: (v) => setState(() => l.lodgingId = v ?? l.lodgingId),

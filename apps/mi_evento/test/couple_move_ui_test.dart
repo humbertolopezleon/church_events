@@ -1,6 +1,7 @@
 // QA-BUG-003 · matrimonio inscrito en dos fichas: si el esposo ya está en un hospedaje donde no
 // pueden estar juntos, al vincular a la esposa se avisa y se PROPONE moverlos a los dos a un
 // hospedaje de matrimonios (propuesta con borde discontinuo: se acepta, se cambia o se descarta).
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mi_evento/data/database.dart';
@@ -170,15 +171,20 @@ void main() {
   });
 
   testWidgets(
-      'elegir el albergue de hombres para la esposa: avisa que no es compatible (no hay propuesta ni movimiento)',
+      'elegir el albergue de hombres para la esposa: sale deshabilitado (no compatible), no hay propuesta ni movimiento',
       (t) async {
     final d = await _open(t);
     await _vincular(t);
     await tapKey(t, 'f-hosp-sel');
-    await t.tap(find.textContaining('Albergue de hombres').last);
+    expect(find.textContaining('no compatible'), findsWidgets);
+    await t
+        .tap(find.textContaining('Albergue de hombres').last); // deshabilitado
     await settle(t);
-    expect(find.byKey(const Key('f-hosp-aviso')), findsWidgets);
+    await t.sendKeyEvent(LogicalKeyboardKey.escape);
+    await settle(t);
     expect(find.byKey(const Key('f-hosp-pareja-ok')), findsNothing);
     expect((await _rows(t, d.c))['Humberto']!.lodgingId, d.shelter.id);
+    await tapKey(t, 'f-guardar');
+    expect((await _rows(t, d.c))['Jany']!.lodgingId, isNull);
   });
 }

@@ -253,7 +253,7 @@ void main() {
 
   group('asignación manual y avisos', () {
     test(
-        'QA-HOS-020 · forzar a un hombre en un hospedaje de mujeres: avisa de compatibilidad y NO bloquea',
+        'QA-HOS-020 · un hombre en un hospedaje de mujeres: la compatibilidad BLOQUEA (solo se logra editando el hospedaje)',
         () async {
       final q = await evento120();
       final all = await q.people();
@@ -264,8 +264,18 @@ void main() {
           checkLodgingAssignment(mujeres.slot, [hombre.toPersonRef(null)]);
       expect(warns.map((w) => w.kind), contains(WarningKind.compatibility));
       expect(warns.first.message, contains('solo acepta mujeres'));
-      await q.lodgings
-          .assign(mujeres.row.id, [hombre.id]); // el usuario decide continuar
+      await expectLater(q.lodgings.assign(mujeres.row.id, [hombre.id]),
+          throwsA(isA<LodgingIncompatibleException>()));
+      expect((await q.repo.attendeeById(hombre.id))!.lodgingId, isNull);
+      // La única salida: editar el hospedaje (para quién es).
+      await q.lodgings.save(
+          id: mujeres.row.id,
+          eventId: q.eventId,
+          name: mujeres.row.name,
+          kind: mujeres.row.kind,
+          capacity: mujeres.row.capacity,
+          accepts: LodgingAccepts.any);
+      await q.lodgings.assign(mujeres.row.id, [hombre.id]);
       expect((await q.repo.attendeeById(hombre.id))!.lodgingId, mujeres.row.id);
     });
 
@@ -315,10 +325,14 @@ void main() {
       final sets = await q.social.togetherSets(q.eventId);
       expect(sets, isNotEmpty);
       final grupo = sets.first;
-      final albergue = (await q.lodgingViews()).firstWhere(
-          (l) => l.row.accepts == 'couples' && l.row.capacity >= grupo.length);
-      await q.lodgings.assign(albergue.row.id, grupo);
-      final occ = await q.lodgings.occupants(albergue.row.id);
+      final albergue = await q.lodgings.save(
+          eventId: q.eventId,
+          name: 'Albergue abierto',
+          kind: 'shelter',
+          capacity: grupo.length + 2,
+          accepts: LodgingAccepts.any);
+      await q.lodgings.assign(albergue.id, grupo);
+      final occ = await q.lodgings.occupants(albergue.id);
       expect(occ.map((o) => o.id).toSet(), grupo);
     });
 

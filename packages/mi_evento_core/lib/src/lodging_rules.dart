@@ -77,8 +77,8 @@ class AssignmentWarning {
   final String message;
 }
 
-/// Revisa una asignación MANUAL de [people] a [lodging]. Devuelve avisos, nunca bloquea:
-/// la decisión final es del usuario (que puede continuar de todas formas).
+/// Revisa una asignación de [people] a [lodging]. Devuelve la capacidad (aviso, el usuario decide)
+/// y la compatibilidad (BLOQUEO: ver [lodgingBlockers]).
 /// [alreadyThere] son quienes ya están en ese hospedaje (cuentan para la capacidad y para
 /// completar matrimonios).
 List<AssignmentWarning> checkLodgingAssignment(
@@ -94,7 +94,19 @@ List<AssignmentWarning> checkLodgingAssignment(
         'Capacidad: «${lodging.name}» quedaría con $after personas y solo tiene ${lodging.capacity} plazas '
         '(${lodging.free < 0 ? 0 : lodging.free} libres ahora).'));
   }
+  out.addAll(lodgingBlockers(lodging, people, alreadyThere: alreadyThere));
+  return out;
+}
 
+/// Incompatibilidades que IMPIDEN la asignación (sin excepciones): un hombre no entra en un
+/// hospedaje de mujeres ni al revés; uno de matrimonios solo recibe a quien queda junto a su
+/// cónyuge (en la selección o ya dentro); «Sin preferencia» acepta a todos. La única forma de
+/// cambiar esto es editar el hospedaje (para quién es). Lista vacía = se puede asignar.
+List<AssignmentWarning> lodgingBlockers(
+    LodgingSlot lodging, List<PersonRef> people,
+    {List<PersonRef> alreadyThere = const []}) {
+  final out = <AssignmentWarning>[];
+  if (people.isEmpty) return out;
   switch (lodging.accepts) {
     case LodgingAccepts.men:
       final wrong = people.where((p) => p.sex == Sex.female).toList();

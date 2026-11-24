@@ -269,6 +269,7 @@ class AttendeeExchange {
       final ids = <int, String>{}; // número del archivo / actual → id
       final spouseLinks = <String, AttendeeCsvRow>{};
       final needTeam = <String>[]; // nuevas sin equipo válido en el archivo
+      final wantLodging = <String, (String, String, int)>{};
       for (final item in plan.items) {
         final r = item.row;
         if (item.action == PlanAction.skipDuplicate) {
@@ -327,7 +328,10 @@ class AttendeeExchange {
           if (r.number == null) ids[row.regNumber] = id;
         }
         if (r.number != null) ids.putIfAbsent(r.number!, () => id);
-        if (lodgingId != null) await lodgingRepo.assign(lodgingId, [id]);
+        // El hospedaje se asigna al final, cuando ya están vinculadas las parejas (un hospedaje de
+        // matrimonios exige al cónyuge) y comprobando la compatibilidad: si no cabe, la fila queda
+        // sin hospedaje y con aviso.
+        if (lodgingId != null) wantLodging[id] = (lodgingId, r.lodging, r.line);
         final teamId =
             r.team.isEmpty || !fromFile ? null : teams[normalizeText(r.team)];
         if (teamId != null) {
@@ -393,6 +397,27 @@ class AttendeeExchange {
           await social.setSpouse(e.key, other);
         } on DataException catch (ex) {
           rep.warnings.add('Fila ${r.line}: ${ex.message}');
+        }
+      }
+      // Hospedajes: por hospedaje y juntos (así un matrimonio entra a la vez); si el grupo no es
+      // compatible se prueba persona por persona y a quien no cabe se le deja sin hospedaje.
+      final byLodging = <String, List<String>>{};
+      wantLodging.forEach((p, v) => (byLodging[v.$1] ??= []).add(p));
+      for (final e in byLodging.entries) {
+        if ((await lodgingRepo.compatibilityProblems(e.key, e.value)).isEmpty) {
+          await lodgingRepo.assign(e.key, e.value);
+          continue;
+        }
+        for (final pid in e.value) {
+          final problems =
+              await lodgingRepo.compatibilityProblems(e.key, [pid]);
+          final w = wantLodging[pid]!;
+          if (problems.isEmpty) {
+            await lodgingRepo.assign(e.key, [pid]);
+          } else {
+            rep.warnings.add(
+                'Fila ${w.$3}: no se asignó el hospedaje «${w.$2}» (${problems.join(' ')}) y la persona queda sin hospedaje. Edita el hospedaje o elige otro.');
+          }
         }
       }
       // Equipo automático para las personas nuevas sin equipo en el archivo, igual que al inscribir
