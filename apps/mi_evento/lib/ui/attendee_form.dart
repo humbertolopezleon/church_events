@@ -797,6 +797,31 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                               },
                               child: const Text('Confirmar')),
                         ),
+                      )
+                    else if (editing)
+                      Card(
+                        child: ListTile(
+                          key: const Key('f-confirmado'),
+                          leading: const Icon(Icons.check_circle_outline,
+                              color: Brand.exito),
+                          title: const Text('Asistencia confirmada',
+                              style: TextStyle(fontWeight: FontWeight.w700)),
+                          trailing: OutlinedButton(
+                              key: const Key('f-desconfirmar-asistencia'),
+                              onPressed: () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                try {
+                                  await repo.unconfirmAttendance(
+                                      [widget.attendeeId!]);
+                                  if (!mounted) return;
+                                  setState(() => _isPreregistered = true);
+                                } on DataException catch (e) {
+                                  messenger.showSnackBar(
+                                      SnackBar(content: Text(e.message)));
+                                }
+                              },
+                              child: const Text('Desconfirmar')),
+                        ),
                       ),
                     if (offersLodging) ...[
                       const SizedBox(height: 16),
