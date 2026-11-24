@@ -9,6 +9,7 @@ import 'package:mi_evento/backup/backup_service.dart';
 import 'package:mi_evento/data/database.dart';
 import 'package:mi_evento/data/repository.dart';
 import 'package:mi_evento/main.dart';
+import 'package:mi_evento/ui/attendee_form.dart';
 import 'package:mi_evento/providers.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
@@ -114,5 +115,22 @@ Future<void> pickMunicipio(WidgetTester t, String name) async {
   await t.tap(find.byType(DropdownButtonFormField<String>).at(1));
   await settle(t);
   await t.tap(find.text(name).last);
+  await settle(t);
+}
+
+/// Abre el formulario de registro: «Asistentes» → botón «Registrar persona».
+Future<void> goRegister(WidgetTester t) async {
+  await leaveForm(t);
+  await t.tap(find.text('Asistentes').first);
+  await settle(t);
+  await tapKey(t, 'asis-registrar');
+}
+
+/// Si el formulario de registro/ficha está abierto encima de la navegación, vuelve a ella.
+Future<void> leaveForm(WidgetTester t) async {
+  if (find.byType(AttendeeFormScreen).evaluate().isEmpty) return;
+  t
+      .state<NavigatorState>(find.byType(Navigator).first)
+      .popUntil((r) => r.isFirst);
   await settle(t);
 }

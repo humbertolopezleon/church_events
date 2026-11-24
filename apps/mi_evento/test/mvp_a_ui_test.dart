@@ -76,7 +76,7 @@ void main() {
       (t) async {
     final c = await _open(t);
     expect(find.byKey(const Key('panel-vacio')), findsOneWidget);
-    await _goTo(t, 'Registrar');
+    await goRegister(t);
 
     await tapKey(t, 'f-guardar');
     expect(find.textContaining('Falta el nombre'), findsOneWidget);
@@ -148,7 +148,7 @@ void main() {
       'aviso de duplicado: aparece, se puede descartar, y no bloquea guardar',
       (t) async {
     await _open(t, seed: true);
-    await _goTo(t, 'Registrar');
+    await goRegister(t);
     await enter(t, 'f-nombre', 'JUAN');
     await enter(t, 'f-apellido1', 'perez');
     await settle(t);
@@ -167,7 +167,7 @@ void main() {
       'guardar con el mismo nombre y apellidos pregunta antes de guardar',
       (t) async {
     final c = await _open(t, seed: true);
-    await _goTo(t, 'Registrar');
+    await goRegister(t);
     await enter(t, 'f-nombre', 'Juan');
     await enter(t, 'f-apellido1', 'Pérez');
     await enter(t, 'f-apellido2', 'García');
@@ -193,7 +193,7 @@ void main() {
       '«Guardar y registrar otro» deja el formulario limpio y numera seguido',
       (t) async {
     final c = await _open(t, seed: true);
-    await _goTo(t, 'Registrar');
+    await goRegister(t);
     await enter(t, 'f-nombre', 'Pedro');
     await enter(t, 'f-apellido1', 'Gómez');
     await enter(t, 'f-edad', '40');

@@ -241,7 +241,6 @@ void main() {
 
     const pantallas = [
       'Panel',
-      'Registrar',
       'Asistentes',
       'Hospedajes',
       'Equipos',

@@ -68,7 +68,7 @@ void main() {
     await login(t, 'admin', 'secreto1');
     await t.tap(find.text('Retiro'));
     await settle(t);
-    await t.tap(find.text('Registrar').first);
+    await goRegister(t);
     await settle(t);
 
     Future<void> openDialog(String name) async {
@@ -100,9 +100,9 @@ void main() {
     expect(rows.single.municipality, 'Cárdenas');
 
     // La segunda iglesia del mismo municipio sugiere la comunidad ya añadida.
-    await t.tap(find.text('Registrar').first);
+    await goRegister(t);
     await settle(t);
-    await t.tap(find.text('Registrar').first);
+    await goRegister(t);
     await settle(t);
     await openDialog('Segunda');
     await t.tap(find.byKey(const Key('ni-provincia')));

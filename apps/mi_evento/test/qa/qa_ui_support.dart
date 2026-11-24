@@ -61,7 +61,9 @@ Future<QaApp> qaOpen(
       t, operator ? 'ruth' : 'admin', operator ? 'ruth123' : 'secreto1');
   await t.tap(find.text('Congreso QA 2026'));
   await settle(t);
-  if (goTo != null) {
+  if (goTo == 'Registrar') {
+    await goRegister(t);
+  } else if (goTo != null) {
     await t.tap(find.text(goTo).first);
     await settle(t);
   }
@@ -105,7 +107,6 @@ Future<bool> qaScrollMenuTo(WidgetTester t, String label) async {
   Finder menu() {
     for (final l in const [
       'Panel',
-      'Registrar',
       'Asistentes',
       'Confirmar asistencia',
       'Hospedajes',
@@ -133,6 +134,11 @@ Future<bool> qaScrollMenuTo(WidgetTester t, String label) async {
 }
 
 Future<void> qaGoTo(WidgetTester t, String label) async {
+  if (label == 'Registrar') {
+    await goRegister(t);
+    return;
+  }
+  await leaveForm(t);
   await qaScrollMenuTo(t, label);
   if (find.text(label).evaluate().isEmpty &&
       find.text('Más').evaluate().isNotEmpty) {

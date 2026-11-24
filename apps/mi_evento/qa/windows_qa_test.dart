@@ -254,6 +254,11 @@ void main() {
 
     Future<void> goTo(String label) async {
       await home();
+      if (label == 'Registrar') {
+        await menuTo('Asistentes');
+        await tapKey(t, 'asis-registrar');
+        return;
+      }
       await menuTo(label);
     }
 
@@ -489,8 +494,8 @@ void main() {
       await settle(t);
       ck(find.byKey(const Key('cfg-intro')).evaluate().isNotEmpty,
           'al crear se abre la pantalla de configuración del evento');
-      ck(find.text('Registrar').evaluate().isEmpty,
-          'mientras se configura no hay menú «Registrar»');
+      ck(find.text('Asistentes').evaluate().isEmpty,
+          'mientras se configura no hay menú de asistentes');
 
       for (final (name, kind, cap, accepts, host) in lodgingDefs) {
         await tk('cfg-hospedajes');

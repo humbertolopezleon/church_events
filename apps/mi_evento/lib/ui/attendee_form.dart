@@ -1352,6 +1352,12 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                         icon: const Icon(Icons.add),
                         label: const Text('Registrar a otra persona'),
                       ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        key: const Key('exito-volver'),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Terminar y volver a la lista'),
+                      ),
                     ]),
               ),
             ),

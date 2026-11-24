@@ -5,7 +5,6 @@ import '../auth/auth_service.dart';
 import '../data/database.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
-import 'attendee_form.dart';
 import 'backup_screen.dart';
 import 'reports_screen.dart';
 import 'attendance_screen.dart';
@@ -34,8 +33,6 @@ class Destination {
 final allDestinations = <Destination>[
   Destination(
       'panel', 'Panel', Icons.home_outlined, (_) => const PanelScreen()),
-  Destination('registrar', 'Registrar', Icons.person_add_alt_outlined,
-      (_) => const AttendeeFormScreen()),
   Destination('asistentes', 'Asistentes', Icons.list_alt_outlined,
       (_) => const AttendeesScreen()),
   Destination('asistencia', 'Confirmar asistencia', Icons.how_to_reg_outlined,
@@ -60,7 +57,7 @@ final allDestinations = <Destination>[
 ];
 
 /// En móvil se muestran 4 destinos principales + «Más»; en PC, barra lateral con todos.
-const mobileMainIds = ['panel', 'registrar', 'comidas', 'equipos'];
+const mobileMainIds = ['panel', 'asistentes', 'comidas', 'equipos'];
 
 /// Estado de la app: sin usuarios → configuración; sin sesión → login; sin evento → «Mis eventos».
 class AppRoot extends ConsumerStatefulWidget {

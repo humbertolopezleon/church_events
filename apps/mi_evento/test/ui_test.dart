@@ -191,7 +191,6 @@ void main() {
     expect(find.byType(NavigationBar), findsNothing);
     for (final l in [
       'Panel',
-      'Registrar',
       'Asistentes',
       'Hospedajes',
       'Equipos',
@@ -237,7 +236,7 @@ void main() {
     await t.tap(find.text('Congreso'));
     await settle(t);
     expect(find.text('Usuarios'), findsNothing);
-    expect(find.text('Registrar'), findsWidgets);
+    expect(find.text('Asistentes'), findsWidgets);
     expect(
         (await t.runAsync(() => c.db.select(c.db.appUsers).get()))!.length, 2);
   });

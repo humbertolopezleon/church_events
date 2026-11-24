@@ -45,8 +45,6 @@ void main() {
     await settle(t);
     _withSystemBar(t);
     await t.pump();
-    await t.tap(find.text('Más'));
-    await settle(t);
     await t.tap(find.text('Asistentes'));
     await settle(t);
     await tapKey(t, 'asistente-1');

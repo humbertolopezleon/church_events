@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:material_ui/material_ui.dart';
 
 import 'package:mi_evento_core/mi_evento_core.dart'
@@ -112,148 +113,174 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
     final teams = ref.watch(teamsProvider(eventId)).valueOrNull ?? const [];
     final list = _filter.apply(Repository.search(all, query.text));
     final filtering = query.text.isNotEmpty || !_filter.isEmpty;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Asistentes')),
-      body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: ListToolbar(
-            controller: query,
-            hint: 'Buscar por nombre, iglesia o número…',
-            onChanged: () => setState(() {}),
-            activeFilters: [
-              sex,
-              churchId,
-              lodgingId,
-              teamId,
-              lodgingStatus,
-              teamStatus,
-              preregistered
-            ].where((f) => f != null).length,
-            count: filtering
-                ? '${list.length} de ${all.length}'
-                : '${all.length} inscritos',
-            onExport: list.isEmpty ? null : () => _export(eventId, list),
-            filters: [
-              FilterDropdown<bool>(
-                  key: const Key('filtro-asistencia'),
-                  label: 'Asistencia',
-                  value: preregistered,
-                  options: const {false: 'Confirmados', true: 'Preinscritos'},
-                  onChanged: (v) => setState(() => preregistered = v)),
-              FilterDropdown<String>(
-                  key: const Key('filtro-sexo'),
-                  label: 'Sexo',
-                  value: sex,
-                  options: const {'M': 'Hombres', 'F': 'Mujeres'},
-                  onChanged: (v) => setState(() => sex = v)),
-              FilterDropdown<String>(
-                  key: const Key('filtro-iglesia'),
-                  label: 'Iglesia',
-                  value: churchId,
-                  options: {
-                    for (final e
-                        in churches.entries.toList()
-                          ..sort((a, b) => a.value.compareTo(b.value)))
-                      e.key: e.value
-                  },
-                  onChanged: (v) => setState(() => churchId = v)),
-              FilterDropdown<LodgingStatus>(
-                  key: const Key('filtro-hospedaje-estado'),
-                  label: 'Hospedaje',
-                  value: lodgingStatus,
-                  options: const {
-                    LodgingStatus.assigned: 'Con hospedaje',
-                    LodgingStatus.pending: 'Necesita y no tiene',
-                    LodgingStatus.notNeeded: 'No necesita',
-                  },
-                  onChanged: (v) => setState(() => lodgingStatus = v)),
-              if (lodgings.isNotEmpty)
-                FilterDropdown<String>(
-                    key: const Key('filtro-hospedaje'),
-                    label: 'En el hospedaje',
-                    value: lodgingId,
-                    options: {for (final l in lodgings) l.row.id: l.row.name},
-                    onChanged: (v) => setState(() => lodgingId = v)),
-              if (teams.isNotEmpty)
-                FilterDropdown<String>(
-                    key: const Key('filtro-equipo'),
-                    label: 'Equipo',
-                    value: teamId,
-                    options: {for (final t in teams) t.id: t.name},
-                    onChanged: (v) => setState(() => teamId = v)),
-            ],
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
+            openRegister(context),
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Asistentes')),
+          floatingActionButton: FloatingActionButton.extended(
+            key: const Key('asis-registrar'),
+            tooltip: 'Registrar persona (Ctrl+N)',
+            onPressed: () => openRegister(context),
+            icon: const Icon(Icons.person_add_alt_outlined),
+            label: const Text('Registrar persona'),
           ),
-        ),
-        Expanded(
-          child: list.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                        all.isEmpty
-                            ? 'Todavía no hay nadie inscrito.'
-                            : filtering
-                                ? 'Nadie coincide con la búsqueda y los filtros. ¿Falta registrarlo?'
-                                : 'Nadie coincide. ¿Falta registrarlo?',
-                        textAlign: TextAlign.center,
-                        style:
-                            const TextStyle(fontSize: 18, color: Brand.gris)),
-                  ),
-                )
-              : useTables(context)
-                  ? Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                      child: _table(list, lodgings, teams))
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                      itemCount: list.length,
-                      itemBuilder: (_, i) {
-                        final v = list[i];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Card(
-                            child: ListTile(
-                              key: Key('asistente-${v.a.regNumber}'),
-                              minVerticalPadding: 10,
-                              leading: CircleAvatar(
-                                  backgroundColor: Brand.naranjaSuave,
-                                  foregroundColor: const Color(0xFF8F4512),
-                                  child: Text(v.initials,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w700))),
-                              title: Text(v.fullName,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 17)),
-                              subtitle: Text(
-                                  'Nº ${v.a.regNumber} · ${v.isMale ? 'Hombre' : 'Mujer'} · ${v.a.age} años${v.churchName == null ? '' : ' · ${v.churchName}'}'),
-                              trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (v.isPreregistered)
-                                      Chip(
-                                          key: Key(
-                                              'preinscrito-${v.a.regNumber}'),
-                                          label: const Text('Preinscrito'),
-                                          visualDensity: VisualDensity.compact),
-                                    if (v.a.needsLodging)
-                                      const Padding(
-                                          padding: EdgeInsets.only(left: 6),
-                                          child: Icon(Icons.house_outlined,
-                                              color: Brand.azul)),
-                                  ]),
-                              onTap: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                      builder: (_) => AttendeeFormScreen(
-                                          attendeeId: v.a.id))),
-                            ),
-                          ),
-                        );
+          body: Column(children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: ListToolbar(
+                controller: query,
+                hint: 'Buscar por nombre, iglesia o número…',
+                onChanged: () => setState(() {}),
+                activeFilters: [
+                  sex,
+                  churchId,
+                  lodgingId,
+                  teamId,
+                  lodgingStatus,
+                  teamStatus,
+                  preregistered
+                ].where((f) => f != null).length,
+                count: filtering
+                    ? '${list.length} de ${all.length}'
+                    : '${all.length} inscritos',
+                onExport: list.isEmpty ? null : () => _export(eventId, list),
+                filters: [
+                  FilterDropdown<bool>(
+                      key: const Key('filtro-asistencia'),
+                      label: 'Asistencia',
+                      value: preregistered,
+                      options: const {
+                        false: 'Confirmados',
+                        true: 'Preinscritos'
                       },
-                    ),
+                      onChanged: (v) => setState(() => preregistered = v)),
+                  FilterDropdown<String>(
+                      key: const Key('filtro-sexo'),
+                      label: 'Sexo',
+                      value: sex,
+                      options: const {'M': 'Hombres', 'F': 'Mujeres'},
+                      onChanged: (v) => setState(() => sex = v)),
+                  FilterDropdown<String>(
+                      key: const Key('filtro-iglesia'),
+                      label: 'Iglesia',
+                      value: churchId,
+                      options: {
+                        for (final e
+                            in churches.entries.toList()
+                              ..sort((a, b) => a.value.compareTo(b.value)))
+                          e.key: e.value
+                      },
+                      onChanged: (v) => setState(() => churchId = v)),
+                  FilterDropdown<LodgingStatus>(
+                      key: const Key('filtro-hospedaje-estado'),
+                      label: 'Hospedaje',
+                      value: lodgingStatus,
+                      options: const {
+                        LodgingStatus.assigned: 'Con hospedaje',
+                        LodgingStatus.pending: 'Necesita y no tiene',
+                        LodgingStatus.notNeeded: 'No necesita',
+                      },
+                      onChanged: (v) => setState(() => lodgingStatus = v)),
+                  if (lodgings.isNotEmpty)
+                    FilterDropdown<String>(
+                        key: const Key('filtro-hospedaje'),
+                        label: 'En el hospedaje',
+                        value: lodgingId,
+                        options: {
+                          for (final l in lodgings) l.row.id: l.row.name
+                        },
+                        onChanged: (v) => setState(() => lodgingId = v)),
+                  if (teams.isNotEmpty)
+                    FilterDropdown<String>(
+                        key: const Key('filtro-equipo'),
+                        label: 'Equipo',
+                        value: teamId,
+                        options: {for (final t in teams) t.id: t.name},
+                        onChanged: (v) => setState(() => teamId = v)),
+                ],
+              ),
+            ),
+            Expanded(
+              child: list.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                            all.isEmpty
+                                ? 'Todavía no hay nadie inscrito.'
+                                : filtering
+                                    ? 'Nadie coincide con la búsqueda y los filtros. ¿Falta registrarlo?'
+                                    : 'Nadie coincide. ¿Falta registrarlo?',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                fontSize: 18, color: Brand.gris)),
+                      ),
+                    )
+                  : useTables(context)
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: _table(list, lodgings, teams))
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                          itemCount: list.length,
+                          itemBuilder: (_, i) {
+                            final v = list[i];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Card(
+                                child: ListTile(
+                                  key: Key('asistente-${v.a.regNumber}'),
+                                  minVerticalPadding: 10,
+                                  leading: CircleAvatar(
+                                      backgroundColor: Brand.naranjaSuave,
+                                      foregroundColor: const Color(0xFF8F4512),
+                                      child: Text(v.initials,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w700))),
+                                  title: Text(v.fullName,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 17)),
+                                  subtitle: Text(
+                                      'Nº ${v.a.regNumber} · ${v.isMale ? 'Hombre' : 'Mujer'} · ${v.a.age} años${v.churchName == null ? '' : ' · ${v.churchName}'}'),
+                                  trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (v.isPreregistered)
+                                          Chip(
+                                              key: Key(
+                                                  'preinscrito-${v.a.regNumber}'),
+                                              label: const Text('Preinscrito'),
+                                              visualDensity:
+                                                  VisualDensity.compact),
+                                        if (v.a.needsLodging)
+                                          const Padding(
+                                              padding: EdgeInsets.only(left: 6),
+                                              child: Icon(Icons.house_outlined,
+                                                  color: Brand.azul)),
+                                      ]),
+                                  onTap: () => Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                          builder: (_) => AttendeeFormScreen(
+                                              attendeeId: v.a.id))),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+          ]),
         ),
-      ]),
+      ),
     );
   }
 }
+
+/// Abre el formulario de registro de una persona nueva (botón «Registrar persona» y Ctrl+N).
+Future<void> openRegister(BuildContext context) => Navigator.of(context)
+    .push(MaterialPageRoute<void>(builder: (_) => const AttendeeFormScreen()));

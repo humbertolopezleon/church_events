@@ -42,7 +42,7 @@ void main() {
     await login(t, 'admin', 'secreto1');
     await t.tap(find.text('Retiro'));
     await settle(t);
-    await t.tap(find.text('Registrar').first);
+    await goRegister(t);
     await settle(t);
     await enter(t, 'f-nombre', 'Lucía');
     await enter(t, 'f-apellido1', 'Gómez');

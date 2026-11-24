@@ -63,7 +63,7 @@ void main() {
       await login(t, 'admin', 'secreto1');
       await _newEvent(t);
       expect(find.byKey(const Key('cfg-intro')), findsOneWidget);
-      expect(find.text('Registrar'), findsNothing); // aún no hay inscripciones
+      expect(find.text('Asistentes'), findsNothing); // aún no hay inscripciones
       expect(find.byKey(const Key('cfg-hospedajes-estado')), findsOneWidget);
       expect(find.byKey(const Key('cfg-equipos-estado')), findsOneWidget);
 
@@ -76,7 +76,7 @@ void main() {
       await tapKey(t, 'cfg-terminar');
       await tapKey(t, 'cfg-terminar-igual');
       expect(find.byKey(const Key('panel-vacio')), findsOneWidget);
-      expect(find.text('Registrar'), findsWidgets);
+      expect(find.text('Asistentes'), findsWidgets);
     });
 
     testWidgets(
@@ -188,7 +188,7 @@ void main() {
       await login(t, 'admin', 'secreto1');
       await t.tap(find.text('Retiro'));
       await settle(t);
-      await t.tap(find.text('Registrar').first);
+      await goRegister(t);
       await settle(t);
       return c;
     }
