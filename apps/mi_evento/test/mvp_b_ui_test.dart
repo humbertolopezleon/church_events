@@ -185,7 +185,7 @@ void main() {
   });
 
   testWidgets(
-      'hospedaje: asignar a una mujer a «solo hombres» avisa y deja continuar',
+      'hospedaje: una mujer no se puede asignar a «solo hombres» (bloqueo, sin «de todas formas»)',
       (t) async {
     final b = await _open(t);
     await t.runAsync(() => b.lodging.save(
@@ -197,23 +197,12 @@ void main() {
     await _goTo(t, 'Hospedajes');
     await tapKey(t, 'hosp-Casa de Ramón');
     await tapKey(t, 'hd-asignar');
-    await tapKey(t, 'as-2'); // María (necesita hospedaje)
-    expect(find.text('1 seleccionada · plazas libres: 3'), findsOneWidget);
+    await tapKey(t, 'as-2'); // María (necesita hospedaje): deshabilitada
+    expect(find.text('0 seleccionadas · plazas libres: 3'), findsOneWidget);
+    expect(find.textContaining('no compatible con «Solo hombres»'),
+        findsOneWidget);
+    expect(find.byKey(const Key('hd-continuar')), findsNothing);
     await tapKey(t, 'as-confirmar');
-    expect(find.byKey(const Key('hd-aviso')), findsOneWidget);
-    expect(find.textContaining('solo acepta hombres'), findsOneWidget);
-
-    await tapKey(t, 'hd-revisar'); // revisar: no se asigna
-    expect(find.byKey(const Key('hd-persona-2')), findsNothing);
-
-    await tapKey(t, 'hd-asignar');
-    await tapKey(t, 'as-2');
-    await tapKey(t, 'as-confirmar');
-    await tapKey(t, 'hd-continuar');
-    expect(find.byKey(const Key('hd-persona-2')), findsOneWidget);
-    expect(find.text('1 de 3 ocupadas'), findsOneWidget);
-
-    await tapKey(t, 'hd-quitar-2');
     expect(find.byKey(const Key('hd-persona-2')), findsNothing);
   });
 
@@ -468,5 +457,80 @@ void main() {
     await tapKey(t, 'equipo-Rojo-menu');
     expect(find.text('Eliminar equipo'), findsNothing);
     expect(find.text('Editar nombre, color y capitán'), findsOneWidget);
+  });
+
+  group('hospedajes: CRUD y compatibilidad', () {
+    Future<B> withCasa(WidgetTester t, {bool operator = false}) async {
+      final b = await _open(t, operator: operator);
+      late LodgingRow l;
+      await t.runAsync(() async => l = await b.lodging.save(
+          eventId: b.ev,
+          name: 'Casa Mixta',
+          kind: 'private_home',
+          capacity: 4,
+          accepts: LodgingAccepts.any));
+      final rows =
+          (await t.runAsync(() => b.c.db.select(b.c.db.attendees).get()))!;
+      await t.runAsync(() => b.lodging.assign(l.id, [
+            rows.firstWhere((r) => r.regNumber == 1).id, // Juan
+            rows.firstWhere((r) => r.regNumber == 2).id, // María
+          ]));
+      return b;
+    }
+
+    testWidgets(
+        'editar «acepta» desde el menú de la tabla: avisa de quién ya no encaja y no borra a nadie',
+        (t) async {
+      await withCasa(t);
+      await _goTo(t, 'Hospedajes');
+      await tapKey(t, 'hosp-menu-Casa Mixta');
+      await tapKey(t, 'hosp-editar');
+      await t.tap(find.text('Solo mujeres'));
+      await t.pump();
+      await tapKey(t, 'lf-guardar');
+      expect(find.byKey(const Key('hf-incompatibles')), findsOneWidget);
+      expect(find.textContaining('Juan Pérez'), findsOneWidget);
+      expect(find.textContaining('María Pérez'), findsNothing);
+      await tapKey(t, 'hf-incompatibles-ok');
+      // La ficha lo deja a la vista y Juan sigue hospedado.
+      await tapKey(t, 'hosp-Casa Mixta');
+      expect(find.byKey(const Key('hd-incompatibles')), findsOneWidget);
+      expect(find.byKey(const Key('hd-persona-1')), findsOneWidget);
+      expect(find.textContaining('NO COMPATIBLE'), findsOneWidget);
+      expect(find.byKey(const Key('hd-persona-2')), findsOneWidget);
+    });
+
+    testWidgets(
+        'eliminar desde el menú: pide confirmación, es borrado lógico y los ocupantes quedan pendientes',
+        (t) async {
+      final b = await withCasa(t);
+      await _goTo(t, 'Hospedajes');
+      await tapKey(t, 'hosp-menu-Casa Mixta');
+      await tapKey(t, 'hosp-eliminar');
+      expect(find.textContaining('2 personas quedarán sin hospedaje'),
+          findsOneWidget);
+      await t.tap(find.text('Cancelar'));
+      await settle(t);
+      expect(find.byKey(const Key('hosp-Casa Mixta')), findsOneWidget);
+      await tapKey(t, 'hosp-menu-Casa Mixta');
+      await tapKey(t, 'hosp-eliminar');
+      await tapKey(t, 'hd-confirmar-eliminar');
+      expect(find.byKey(const Key('hosp-Casa Mixta')), findsNothing);
+      final rows =
+          (await t.runAsync(() => b.c.db.select(b.c.db.lodgings).get()))!;
+      expect(rows.single.deletedAt, isNotNull); // borrado lógico
+      final people =
+          (await t.runAsync(() => b.c.db.select(b.c.db.attendees).get()))!;
+      expect(people.every((p) => p.lodgingId == null && p.deletedAt == null),
+          isTrue);
+    });
+
+    testWidgets('un operador ve ver/editar pero no «Eliminar»', (t) async {
+      await withCasa(t, operator: true);
+      await _goTo(t, 'Hospedajes');
+      await tapKey(t, 'hosp-menu-Casa Mixta');
+      expect(find.byKey(const Key('hosp-editar')), findsOneWidget);
+      expect(find.byKey(const Key('hosp-eliminar')), findsNothing);
+    });
   });
 }

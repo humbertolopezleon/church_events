@@ -263,6 +263,14 @@ class SocialRepo {
   }
 }
 
+/// La asignación se rechazó por incompatibilidad (sexo o matrimonio) con el hospedaje.
+class LodgingIncompatibleException extends DataException {
+  LodgingIncompatibleException(this.problems)
+      : super('${problems.join(' ')} Para hospedarlos ahí hay que editar '
+            'el hospedaje (para quién es) o elegir otro.');
+  final List<String> problems;
+}
+
 /// Hospedajes: alta, asignación manual y ocupación.
 class LodgingRepo {
   LodgingRepo(this.db);
@@ -362,13 +370,83 @@ class LodgingRepo {
         return n;
       });
 
-  /// Asigna personas al hospedaje. No bloquea por capacidad ni compatibilidad: eso son avisos
-  /// que la pantalla muestra antes (el usuario decide).
+  /// Asigna personas al hospedaje. La compatibilidad es un BLOQUEO duro (no hay «asignar de todas
+  /// formas»): un hombre no entra en un hospedaje de mujeres ni al revés, y uno de matrimonios solo
+  /// recibe a quien queda junto a su cónyuge (en esta misma llamada o ya dentro). «Sin preferencia»
+  /// acepta a todos. Todo o nada: si alguien no es compatible no se asigna a NADIE y se lanza
+  /// [LodgingIncompatibleException]. La única salida es editar el hospedaje (para quién es).
+  /// La capacidad NO bloquea (es un aviso que muestra la pantalla antes).
   Future<void> assign(String lodgingId, Iterable<String> attendeeIds) async {
-    await (db.update(db.attendees)..where((a) => a.id.isIn(attendeeIds))).write(
-        AttendeesCompanion(
-            lodgingId: Value(lodgingId),
-            updatedAt: Value(DateTime.now().toUtc())));
+    final ids = attendeeIds.toSet().toList();
+    if (ids.isEmpty) return;
+    await db.transaction(() async {
+      final problems = await compatibilityProblems(lodgingId, ids);
+      if (problems.isNotEmpty) {
+        throw LodgingIncompatibleException(problems);
+      }
+      await (db.update(db.attendees)..where((a) => a.id.isIn(ids))).write(
+          AttendeesCompanion(
+              lodgingId: Value(lodgingId),
+              updatedAt: Value(DateTime.now().toUtc())));
+    });
+  }
+
+  /// Motivos por los que [attendeeIds] NO pueden ir a [lodgingId] (vacío = compatible). No escribe.
+  Future<List<String>> compatibilityProblems(
+      String lodgingId, Iterable<String> attendeeIds) async {
+    final ids = attendeeIds.toSet();
+    final l = await (db.select(db.lodgings)
+          ..where((x) => x.id.equals(lodgingId) & x.deletedAt.isNull()))
+        .getSingleOrNull();
+    if (l == null) throw DataException('Ese hospedaje ya no existe.');
+    final people = await (db.select(db.attendees)
+          ..where((a) => a.id.isIn(ids) & a.deletedAt.isNull()))
+        .get();
+    final there = await (db.select(db.attendees)
+          ..where((a) =>
+              a.lodgingId.equals(lodgingId) &
+              a.deletedAt.isNull() &
+              a.id.isIn(ids).not()))
+        .get();
+    final spouses = await SocialRepo(db).spouseMap(l.eventId);
+    final slot = LodgingSlot(
+        name: l.name,
+        accepts: lodgingAcceptsFromDb(l.accepts),
+        capacity: l.capacity,
+        occupied: there.length);
+    return [
+      for (final w in lodgingBlockers(
+          slot, [for (final p in people) p.toPersonRef(spouses[p.id])],
+          alreadyThere: [for (final p in there) p.toPersonRef(spouses[p.id])]))
+        w.message
+    ];
+  }
+
+  /// Ocupantes actuales que ya NO son compatibles con el hospedaje (p. ej. porque se editó para
+  /// quién es). No se borra ni se mueve a nadie: solo se listan para que la persona decida.
+  Future<List<AttendeeRow>> incompatibleOccupants(String lodgingId) async {
+    final l = await (db.select(db.lodgings)
+          ..where((x) => x.id.equals(lodgingId) & x.deletedAt.isNull()))
+        .getSingleOrNull();
+    if (l == null) return const [];
+    final occ = await occupants(lodgingId);
+    final spouses = await SocialRepo(db).spouseMap(l.eventId);
+    final refs = {for (final p in occ) p.id: p.toPersonRef(spouses[p.id])};
+    final slot = LodgingSlot(
+        name: l.name,
+        accepts: lodgingAcceptsFromDb(l.accepts),
+        capacity: l.capacity,
+        occupied: occ.length);
+    return [
+      for (final p in occ)
+        if (lodgingBlockers(slot, [
+          refs[p.id]!
+        ], alreadyThere: [
+          for (final o in occ)
+            if (o.id != p.id) refs[o.id]!
+        ]).isNotEmpty)
+          p
+    ];
   }
 
   Future<void> unassign(Iterable<String> attendeeIds) async {

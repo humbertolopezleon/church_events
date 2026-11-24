@@ -238,7 +238,47 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
           ? 'Falta la iglesia. Búscala por su nombre o regístrala si es nueva.'
           : 'Elige la iglesia de la lista o regístrala como nueva.';
     }
+    // Hospedaje incompatible = no se guarda (la única salida: otro hospedaje o editarlo).
+    if (needsLodging && lodgingId != null) {
+      final lodgings =
+          ref.read(lodgingsProvider(eventId)).valueOrNull ?? const [];
+      final chosen = lodgings.where((l) => l.row.id == lodgingId).firstOrNull;
+      if (chosen != null) {
+        final b = _blockersFor(chosen);
+        if (b.isNotEmpty) {
+          return 'No se puede guardar con ese hospedaje. ${b.map((w) => w.message).join(' ')} Elige otro hospedaje o edita este para cambiar a quién acepta.';
+        }
+      }
+    }
     return null;
+  }
+
+  /// Incompatibilidades (sexo / matrimonio) de esta persona (y su cónyuge si se hospedan juntos)
+  /// con el hospedaje [l]. Vacío = compatible. Se evalúa para [l] aunque no sea el elegido: en uno
+  /// de matrimonios el cónyuge viaja con esta persona.
+  List<AssignmentWarning> _blockersFor(LodgingView l) {
+    final accepts = lodgingAcceptsFromDb(l.row.accepts);
+    final sp = spouse;
+    final moves = sp != null &&
+        sp.needsLodging &&
+        l.row.id != sp.lodgingId &&
+        acceptsCouples(accepts);
+    final mateRefs = spouseDraft != null
+        ? _mateRefs()
+        : (sp != null && ((sp.needsLodging && sp.lodgingId == null) || moves)
+            ? [sp.toPersonRef(widget.attendeeId ?? 'nuevo')]
+            : const <PersonRef>[]);
+    final there = sp != null && sp.lodgingId == l.row.id
+        ? [sp.toPersonRef(widget.attendeeId ?? 'nuevo')]
+        : const <PersonRef>[];
+    return lodgingBlockers(
+        LodgingSlot(
+            name: l.row.name,
+            accepts: accepts,
+            capacity: l.row.capacity,
+            occupied: 0),
+        [_selfRef(), ...mateRefs],
+        alreadyThere: there);
   }
 
   Future<void> _save({required bool another}) async {
@@ -280,14 +320,19 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
           await social.setGroups(widget.attendeeId!, groupIds);
           final lid = needsLodging ? lodgingId : null;
           final lr = ref.read(lodgingRepoProvider);
-          if (lid != _origLodgingId) {
-            lid == null
-                ? await lr.unassign([widget.attendeeId!])
-                : await lr.assign(lid, [widget.attendeeId!]);
-          }
-          // La pareja va junta: el mismo hospedaje y, si es nueva, el mismo equipo.
+          // La pareja va junta (el mismo hospedaje y, si es nueva, el mismo equipo): en UNA sola
+          // asignación, porque un hospedaje de matrimonios exige al cónyuge a la vez.
           final mates = _mateIds(newSpouse);
-          if (lid != null && mates.isNotEmpty) await lr.assign(lid, mates);
+          if (lid == null) {
+            if (_origLodgingId != null) {
+              await lr.unassign([widget.attendeeId!]);
+            }
+          } else {
+            await lr.assign(lid, [
+              if (lid != _origLodgingId) widget.attendeeId!,
+              ...mates,
+            ]);
+          }
           if (newSpouse != null) {
             await ref.read(teamRepoProvider).autoAssign(newSpouse.id);
           }
@@ -974,13 +1019,17 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
         : null;
     final warns = chosen == null || !ready
         ? const <AssignmentWarning>[]
-        : checkLodgingAssignment(
-            LodgingSlot(
-                name: chosen.row.name,
-                accepts: lodgingAcceptsFromDb(chosen.row.accepts),
-                capacity: chosen.row.capacity,
-                occupied: cand(chosen).occupied),
-            [_selfRef(), ..._mateRefs()]);
+        : [
+            ...checkLodgingAssignment(
+                    LodgingSlot(
+                        name: chosen.row.name,
+                        accepts: lodgingAcceptsFromDb(chosen.row.accepts),
+                        capacity: chosen.row.capacity,
+                        occupied: cand(chosen).occupied),
+                    [_selfRef(), ..._mateRefs()])
+                .where((w) => w.kind == WarningKind.capacity),
+            ..._blockersFor(chosen),
+          ];
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -1142,17 +1191,12 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
         ]),
         const SizedBox(height: 6),
         Builder(builder: (context) {
-          final hasSpouse = spouse != null || spouseDraft != null;
           // El hospedaje ya elegido siempre se muestra, aunque el filtro lo deje fuera.
           final options = [
             for (final l in filterLodgings(lodgings, hospSearch.text))
               if (l.row.id == lodgingId ||
                   ((!hospOnlyFree || cand(l).free > 0) &&
-                      (!hospOnlyFit ||
-                          !ready ||
-                          lodgingFitsPerson(
-                              lodgingAcceptsFromDb(l.row.accepts), sex!,
-                              hasSpouse: hasSpouse))))
+                      (!hospOnlyFit || !ready || _blockersFor(l).isEmpty)))
                 l
           ];
           return Column(
@@ -1175,8 +1219,12 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                         for (final l in options)
                           DropdownMenuItem<String?>(
                               value: l.row.id,
+                              // Incompatible = no se puede elegir (salvo que ya sea el elegido).
+                              enabled: !ready ||
+                                  l.row.id == lodgingId ||
+                                  _blockersFor(l).isEmpty,
                               child: Text(
-                                  '${l.row.name} · ${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.row.accepts))} · ${cand(l).free} libres',
+                                  '${l.row.name} · ${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.row.accepts))} · ${cand(l).free} libres${ready && l.row.id != lodgingId && _blockersFor(l).isNotEmpty ? ' · no compatible' : ''}',
                                   overflow: TextOverflow.ellipsis)),
                       ],
                       onChanged: (v) => setState(() => lodgingId = v),
