@@ -325,9 +325,38 @@ class Repository {
   Future<int> confirmAttendance(Iterable<String> ids) =>
       _setAttendanceStatus(ids, confirmed: true);
 
-  /// Deshace la confirmación (vuelve a preinscrito): para corregir un error.
-  Future<int> unconfirmAttendance(Iterable<String> ids) =>
-      _setAttendanceStatus(ids, confirmed: false);
+  /// Desconfirma (vuelve a preinscrito): para corregir un error. Se BLOQUEA (todo o nada) si alguna
+  /// persona ya tiene comidas marcadas: primero hay que quitar esas marcas en Comidas.
+  Future<int> unconfirmAttendance(Iterable<String> ids) async {
+    final list = ids.toSet().toList();
+    if (list.isEmpty) return 0;
+    final blocked = <String, int>{};
+    for (var i = 0; i < list.length; i += 500) {
+      final chunk = list.sublist(i, (i + 500).clamp(0, list.length));
+      final recs = await (db.select(db.controlRecords)
+            ..where((r) =>
+                r.attendeeId.isIn(chunk) &
+                r.undoneAt.isNull() &
+                r.deletedAt.isNull()))
+          .get();
+      for (final r in recs) {
+        blocked[r.attendeeId] = (blocked[r.attendeeId] ?? 0) + 1;
+      }
+    }
+    if (blocked.isNotEmpty) {
+      final people = await (db.select(db.attendees)
+            ..where((a) => a.id.isIn(blocked.keys)))
+          .get();
+      final names = people
+          .take(3)
+          .map((p) =>
+              '${p.firstName} ${p.lastName1} (${blocked[p.id]} ${blocked[p.id] == 1 ? 'comida' : 'comidas'})')
+          .join(', ');
+      throw DataException(
+          'No se puede desconfirmar: ${people.length == 1 ? 'tiene' : 'tienen'} comidas marcadas: $names${people.length > 3 ? '…' : ''}. Quita primero esas marcas en Comidas.');
+    }
+    return _setAttendanceStatus(list, confirmed: false);
+  }
 
   Future<int> _setAttendanceStatus(Iterable<String> ids,
       {required bool confirmed}) async {

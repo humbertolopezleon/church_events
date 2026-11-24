@@ -15,6 +15,7 @@ import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'attendee_form.dart';
 import 'widgets/data_table_view.dart';
+import 'widgets/highlight_text.dart';
 import 'widgets/list_toolbar.dart';
 
 /// Lista de asistentes: búsqueda (nombre en cualquier orden, iglesia o número), filtros y exportación a CSV.
@@ -65,7 +66,7 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
             numeric: true, sortValue: (v) => v.a.regNumber),
         TableCol(
             'Nombre',
-            (v) => Text(v.fullName,
+            (v) => HighlightText(v.fullName, query.text,
                 key: Key('asistente-${v.a.regNumber}'),
                 style: const TextStyle(fontWeight: FontWeight.w700)),
             sortValue: (v) => normalizeText(v.fullName)),
@@ -73,7 +74,8 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
             sortValue: (v) => v.a.sex),
         TableCol('Edad', (v) => txt('${v.a.age}'),
             numeric: true, sortValue: (v) => v.a.age),
-        TableCol('Iglesia', (v) => txt(v.churchName ?? '—'),
+        TableCol(
+            'Iglesia', (v) => HighlightText(v.churchName ?? '—', query.text),
             sortValue: (v) => normalizeText(v.churchName ?? '')),
         TableCol(
             'Hospedaje',
@@ -242,7 +244,7 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
                                       child: Text(v.initials,
                                           style: const TextStyle(
                                               fontWeight: FontWeight.w700))),
-                                  title: Text(v.fullName,
+                                  title: HighlightText(v.fullName, query.text,
                                       style: const TextStyle(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 17)),
