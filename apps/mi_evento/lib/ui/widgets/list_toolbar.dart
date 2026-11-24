@@ -14,6 +14,8 @@ class ListToolbar extends StatefulWidget {
     this.filters = const [],
     this.activeFilters = 0,
     this.onExport,
+    this.onImport,
+    this.importKey = const Key('importar-csv'),
     this.searchKey = const Key('buscar'),
     this.exportKey = const Key('exportar-csv'),
     this.countKey = const Key('lista-conteo'),
@@ -30,6 +32,10 @@ class ListToolbar extends StatefulWidget {
   /// Cuántos filtros están activos (se muestra en el botón «Filtros»).
   final int activeFilters;
   final VoidCallback? onExport;
+
+  /// Importar CSV (donde se exporta, también se importa).
+  final VoidCallback? onImport;
+  final Key importKey;
   final Key searchKey, exportKey, countKey;
 
   @override
@@ -88,6 +94,12 @@ class _ListToolbarState extends State<ListToolbar> {
                         label: Text(widget.activeFilters > 0
                             ? 'Filtros (${widget.activeFilters})'
                             : 'Filtros')),
+                  if (widget.onImport != null)
+                    OutlinedButton.icon(
+                        key: widget.importKey,
+                        onPressed: widget.onImport,
+                        icon: const Icon(Icons.upload_file_outlined),
+                        label: const Text('Importar CSV')),
                   if (widget.onExport != null)
                     OutlinedButton.icon(
                         key: widget.exportKey,

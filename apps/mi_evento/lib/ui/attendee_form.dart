@@ -460,8 +460,8 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
   Future<void> _newChurch(String suggested) async {
     final c = await showDialog<ChurchRow>(
         context: context,
-        builder: (_) => _NewChurchDialog(
-            initialName: suggested, initialProvince: province));
+        builder: (_) =>
+            ChurchDialog(initialName: suggested, initialProvince: province));
     if (c == null || !mounted) return;
     _pickChurch(c);
   }
@@ -1468,19 +1468,29 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
       );
 }
 
-class _NewChurchDialog extends ConsumerStatefulWidget {
-  const _NewChurchDialog({required this.initialName, this.initialProvince});
+/// Alta de iglesia (nueva) o edición de una existente ([church]).
+class ChurchDialog extends ConsumerStatefulWidget {
+  const ChurchDialog(
+      {super.key, this.initialName = '', this.initialProvince, this.church});
   final String initialName;
   final String? initialProvince;
+  final ChurchRow? church;
   @override
-  ConsumerState<_NewChurchDialog> createState() => _NewChurchDialogState();
+  ConsumerState<ChurchDialog> createState() => _ChurchDialogState();
 }
 
-class _NewChurchDialogState extends ConsumerState<_NewChurchDialog> {
-  late final name = TextEditingController(text: widget.initialName);
-  final community = TextEditingController();
-  late String? province = widget.initialProvince;
-  String? municipality;
+class _ChurchDialogState extends ConsumerState<ChurchDialog> {
+  late final name =
+      TextEditingController(text: widget.church?.name ?? widget.initialName);
+  late final community =
+      TextEditingController(text: widget.church?.community ?? '');
+  late String? province = widget.church != null
+      ? (widget.church!.province.isEmpty ? null : widget.church!.province)
+      : widget.initialProvince;
+  late String? municipality =
+      widget.church == null || widget.church!.municipality.isEmpty
+          ? null
+          : widget.church!.municipality;
   String? error;
 
   /// Municipios de la provincia elegida: el catálogo completo más los que ya traigan las iglesias
@@ -1500,12 +1510,19 @@ class _NewChurchDialogState extends ConsumerState<_NewChurchDialog> {
 
   Future<void> _save() async {
     try {
-      final c = await ref.read(repositoryProvider).createChurch(
-          name: name.text,
-          province: province ?? '',
-          municipality: municipality ?? '',
-          community: community.text,
-          requireLocation: true);
+      final repo = ref.read(repositoryProvider);
+      final c = widget.church == null
+          ? await repo.createChurch(
+              name: name.text,
+              province: province ?? '',
+              municipality: municipality ?? '',
+              community: community.text,
+              requireLocation: true)
+          : await repo.updateChurch(widget.church!.id,
+              name: name.text,
+              province: province ?? '',
+              municipality: municipality ?? '',
+              community: community.text);
       if (mounted) Navigator.pop(context, c);
     } on DataException catch (e) {
       setState(() => error = e.message);
@@ -1521,7 +1538,7 @@ class _NewChurchDialogState extends ConsumerState<_NewChurchDialog> {
         ? const <String>[]
         : communitiesOf(churches, province ?? '', municipality!);
     return AlertDialog(
-      title: const Text('Iglesia nueva'),
+      title: Text(widget.church == null ? 'Iglesia nueva' : 'Editar iglesia'),
       content: SingleChildScrollView(
         child: SizedBox(
           width: 420,
@@ -1634,7 +1651,10 @@ class _NewChurchDialogState extends ConsumerState<_NewChurchDialog> {
                             style:
                                 TextStyle(color: Brand.gris, fontSize: 14)))),
               const SizedBox(height: 8),
-              const Text('Quedará en el catálogo para los próximos registros.',
+              Text(
+                  widget.church == null
+                      ? 'Quedará en el catálogo para los próximos registros.'
+                      : 'Si cambias la provincia o el municipio, también cambian en sus asistentes.',
                   style: TextStyle(color: Brand.gris, fontSize: 14)),
               if (error != null) ...[
                 const SizedBox(height: 12),
@@ -1651,7 +1671,9 @@ class _NewChurchDialogState extends ConsumerState<_NewChurchDialog> {
         FilledButton(
             key: const Key('ni-guardar'),
             onPressed: _save,
-            child: const Text('Añadir al catálogo')),
+            child: Text(widget.church == null
+                ? 'Añadir al catálogo'
+                : 'Guardar cambios')),
       ],
     );
   }

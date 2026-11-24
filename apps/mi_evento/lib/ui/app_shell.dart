@@ -11,6 +11,7 @@ import 'attendance_screen.dart';
 import 'attendees_screen.dart';
 import 'auth_screens.dart';
 import 'brand_logo.dart';
+import 'churches_screen.dart';
 import 'default_password_banner.dart';
 import 'event_setup.dart';
 import 'events_screen.dart';
@@ -50,6 +51,9 @@ final allDestinations = <Destination>[
       adminOnly: true),
   Destination('respaldo', 'Copias de seguridad', Icons.backup_outlined,
       (_) => const BackupScreen(),
+      adminOnly: true),
+  Destination('iglesias', 'Iglesias', Icons.church_outlined,
+      (_) => const ChurchesScreen(),
       adminOnly: true),
   Destination('usuarios', 'Usuarios', Icons.manage_accounts_outlined,
       (_) => const UsersScreen(),
