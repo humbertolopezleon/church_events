@@ -1,18 +1,57 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:mi_evento_core/mi_evento_core.dart' show normalizeText;
 
 import '../auth/auth_service.dart';
 import '../data/database.dart';
+import '../export/csv_export.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'auth_screens.dart';
+import 'widgets/list_toolbar.dart';
 
 /// Administración de usuarios (solo administrador).
-class UsersScreen extends ConsumerWidget {
+class UsersScreen extends ConsumerStatefulWidget {
   const UsersScreen({super.key});
+  @override
+  ConsumerState<UsersScreen> createState() => _UsersScreenState();
+}
+
+class _UsersScreenState extends ConsumerState<UsersScreen> {
+  final query = TextEditingController();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    query.dispose();
+    super.dispose();
+  }
+
+  List<AppUser> _filter(List<AppUser> all) {
+    final q = normalizeText(query.text);
+    if (q.isEmpty) return all;
+    return [
+      for (final u in all)
+        if (normalizeText('${u.displayName} ${u.username} ${u.roleLabel}')
+            .contains(q))
+          u
+    ];
+  }
+
+  /// CSV de usuarios (nunca incluye contraseñas ni sus huellas).
+  Future<void> _export(List<AppUser> shown) =>
+      saveCsv(context, ref, name: csvFileName('usuarios'), rows: [
+        ['usuario', 'nombre', 'rol', 'estado'],
+        for (final u in shown)
+          [
+            u.username,
+            u.displayName,
+            u.roleLabel,
+            u.active ? 'Activo' : 'Desactivado'
+          ],
+      ]);
+
+  @override
+  Widget build(BuildContext context) {
     final auth = ref.watch(authServiceProvider);
     final me = ref.watch(currentUserProvider)!;
     return Scaffold(
@@ -27,13 +66,28 @@ class UsersScreen extends ConsumerWidget {
       body: StreamBuilder<List<AppUser>>(
         stream: auth.watchUsers(),
         builder: (context, snap) {
-          final list = snap.data ?? const <AppUser>[];
+          final all = snap.data ?? const <AppUser>[];
+          final list = _filter(all);
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-            itemCount: list.length,
+            itemCount: list.length + 1,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (_, i) {
-              final u = list[i];
+              if (i == 0) {
+                return ListToolbar(
+                  controller: query,
+                  hint: 'Buscar por nombre, usuario o rol…',
+                  searchKey: const Key('usr-buscar'),
+                  exportKey: const Key('usr-exportar'),
+                  countKey: const Key('usr-conteo'),
+                  onChanged: () => setState(() {}),
+                  count: list.length == all.length
+                      ? '${all.length} usuarios'
+                      : '${list.length} de ${all.length}',
+                  onExport: list.isEmpty ? null : () => _export(list),
+                );
+              }
+              final u = list[i - 1];
               return Card(
                 child: ListTile(
                   minVerticalPadding: 12,

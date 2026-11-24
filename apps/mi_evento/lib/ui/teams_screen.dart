@@ -12,6 +12,7 @@ import '../data/repository.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'auth_screens.dart' show ErrorBox;
+import 'widgets/data_table_view.dart';
 import 'widgets/list_toolbar.dart';
 import 'people_pickers.dart';
 import 'team_generate_screen.dart';
@@ -131,6 +132,53 @@ class _TeamsToolbarState extends ConsumerState<_TeamsToolbar> {
       );
 }
 
+/// Escritorio: resumen de todos los equipos en una tabla ordenable (los integrantes se mueven
+/// en las tarjetas de abajo, que admiten arrastrar y soltar).
+class _TeamsTable extends StatelessWidget {
+  const _TeamsTable(
+      {required this.teams, required this.stats, required this.views});
+  final List<TeamRow> teams;
+  final List<TeamStats> stats;
+  final List<AttendeeView> views;
+
+  @override
+  Widget build(BuildContext context) {
+    TeamStats st(TeamRow t) => stats.firstWhere((s) => s.teamId == t.id);
+    String captain(TeamRow t) => t.captainId == null
+        ? '—'
+        : (views.where((v) => v.a.id == t.captainId).firstOrNull?.fullName ??
+            '—');
+    return SizedBox(
+      key: const Key('eq-tabla'),
+      height: (teams.length * 56.0 + 64).clamp(120, 420).toDouble(),
+      child: DataTableView<TeamRow>(
+        items: teams,
+        columns: [
+          TableCol(
+              'Equipo',
+              (t) => Text(t.name,
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              sortValue: (t) => normalizeText(t.name)),
+          TableCol('Integrantes', (t) => Text('${st(t).size}'),
+              numeric: true, sortValue: (t) => st(t).size),
+          TableCol('Hombres', (t) => Text('${st(t).men}'),
+              numeric: true, sortValue: (t) => st(t).men),
+          TableCol('Mujeres', (t) => Text('${st(t).women}'),
+              numeric: true, sortValue: (t) => st(t).women),
+          TableCol(
+              'Edad media',
+              (t) =>
+                  Text(st(t).size == 0 ? '—' : st(t).avgAge.toStringAsFixed(1)),
+              numeric: true,
+              sortValue: (t) => st(t).avgAge),
+          TableCol('Capitán', (t) => Text(captain(t)),
+              sortValue: (t) => normalizeText(captain(t))),
+        ],
+      ),
+    );
+  }
+}
+
 class TeamsScreen extends ConsumerWidget {
   const TeamsScreen({super.key});
 
@@ -237,6 +285,10 @@ class TeamsScreen extends ConsumerWidget {
                       teamCount: teams.length,
                       hasPeople: people.any((p) => p.teamId != null)),
                   const SizedBox(height: 12),
+                  if (useTables(context) && shownTeams.isNotEmpty) ...[
+                    _TeamsTable(teams: shownTeams, stats: stats, views: views),
+                    const SizedBox(height: 12),
+                  ],
                   Wrap(spacing: 12, runSpacing: 12, children: [
                     for (final t in shownTeams)
                       _TeamCard(
