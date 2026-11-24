@@ -103,6 +103,10 @@ class SocialRepo {
           throw DataException(
               'Los dos deben estar inscritos en el mismo evento.');
         }
+        if (s.sex == a.sex) {
+          throw DataException(
+              'Un matrimonio es entre un hombre y una mujer: ${a.firstName} ${a.lastName1} y ${s.firstName} ${s.lastName1} son del mismo sexo.');
+        }
         final other = await spouseOf(spouseId);
         if (other != null && other.id != attendeeId) {
           throw DataException(

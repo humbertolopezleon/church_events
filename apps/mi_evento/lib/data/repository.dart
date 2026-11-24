@@ -2,7 +2,8 @@ import 'package:drift/drift.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
 import 'database.dart';
-import 'repos_b.dart' show LodgingIncompatibleException, LodgingRepo;
+import 'repos_b.dart'
+    show LodgingIncompatibleException, LodgingRepo, SocialRepo;
 
 /// Error de datos con mensaje listo para el usuario (en español).
 class DataException implements Exception {
@@ -369,6 +370,16 @@ class Repository {
     _validate(firstName, lastName1, age);
     await db.transaction(() async {
       final before = await attendeeById(id);
+      // Cambiar el sexo no puede dejar un matrimonio del mismo sexo.
+      if (before != null &&
+          before.coupleId != null &&
+          before.sex != (sex == Sex.male ? 'M' : 'F')) {
+        final mate = await SocialRepo(db).spouseOf(id);
+        if (mate != null && mate.sex == (sex == Sex.male ? 'M' : 'F')) {
+          throw DataException(
+              'No se puede cambiar el sexo: ${mate.firstName} ${mate.lastName1}, su cónyuge, quedaría del mismo sexo. Desvincula primero el matrimonio.');
+        }
+      }
       await (db.update(db.attendees)..where((a) => a.id.equals(id)))
           .write(AttendeesCompanion(
         firstName: Value(firstName.trim()),

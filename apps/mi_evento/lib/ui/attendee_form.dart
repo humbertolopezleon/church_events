@@ -13,6 +13,7 @@ import 'auth_screens.dart' show ErrorBox;
 import 'new_spouse_dialog.dart';
 import 'proposal_card.dart';
 import 'social_section.dart';
+import 'widgets/input_formats.dart';
 
 /// Registro y edición de asistentes (misma pantalla).
 /// [attendeeId] == null → registro nuevo (pestaña «Registrar»); si no, edición de esa ficha.
@@ -56,6 +57,7 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
   bool _coupleMoveDismissed = false;
   // Búsqueda y filtros de la lista de hospedajes disponibles.
   final hospSearch = TextEditingController();
+  int hospMinSlots = 0; // filtro «plazas necesarias» del selector de hospedaje
   bool hospOnlyFit =
       false; // solo los que aceptan a esta persona (según su sexo / cónyuge)
   bool hospOnlyFree = false; // solo con plazas libres
@@ -135,7 +137,8 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
       phone,
       notes,
       churchText,
-      municipality
+      municipality,
+      hospSearch
     ]) {
       c.clear();
     }
@@ -145,6 +148,9 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
       needsLodging = false;
       lodgingId = null;
       lodgingDeferred = false;
+      hospOnlyFit = false;
+      hospOnlyFree = false;
+      hospMinSlots = 0;
       _coupleMoveDismissed = false;
       savedTeamName = savedLodgingName = null;
       spouse = null;
@@ -237,6 +243,12 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
       return churchText.text.trim().isEmpty
           ? 'Falta la iglesia. Búscala por su nombre o regístrala si es nueva.'
           : 'Elige la iglesia de la lista o regístrala como nueva.';
+    }
+    // Matrimonio solo entre un hombre y una mujer.
+    final mateSex = spouseDraft?.sex ??
+        (spouse == null ? null : (spouse!.sex == 'M' ? Sex.male : Sex.female));
+    if (mateSex != null && mateSex == sex) {
+      return 'Un matrimonio es entre un hombre y una mujer: la pareja elegida es del mismo sexo.';
     }
     // Hospedaje incompatible = no se guarda (la única salida: otro hospedaje o editarlo).
     if (needsLodging && lodgingId != null) {
@@ -616,6 +628,7 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                                     key: const Key('f-edad'),
                                     controller: age,
                                     keyboardType: TextInputType.number,
+                                    inputFormatters: digitsOnly(3),
                                     textInputAction: TextInputAction.next,
                                     onChanged: (_) {
                                       _checkDup();
@@ -632,6 +645,7 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                                       key: const Key('f-telefono'),
                                       controller: phone,
                                       keyboardType: TextInputType.phone,
+                                      inputFormatters: phoneChars(),
                                       decoration: const InputDecoration(
                                           labelText: 'Teléfono (opcional)')))),
                         ]),
@@ -1188,6 +1202,20 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
               label: const Text('Con plazas libres'),
               selected: hospOnlyFree,
               onSelected: (v) => setState(() => hospOnlyFree = v)),
+          // Cantidad: solo hospedajes con al menos N plazas libres (p. ej. 2 para un matrimonio).
+          DropdownButton<int>(
+            key: const Key('f-hosp-minplazas'),
+            value: hospMinSlots,
+            underline: const SizedBox.shrink(),
+            items: [
+              const DropdownMenuItem(
+                  value: 0, child: Text('Cualquier cantidad de plazas')),
+              for (var n = 1; n <= 6; n++)
+                DropdownMenuItem(
+                    value: n, child: Text('$n o más plazas libres')),
+            ],
+            onChanged: (v) => setState(() => hospMinSlots = v ?? 0),
+          ),
         ]),
         const SizedBox(height: 6),
         Builder(builder: (context) {
@@ -1196,6 +1224,7 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
             for (final l in filterLodgings(lodgings, hospSearch.text))
               if (l.row.id == lodgingId ||
                   ((!hospOnlyFree || cand(l).free > 0) &&
+                      (hospMinSlots == 0 || cand(l).free >= hospMinSlots) &&
                       (!hospOnlyFit || !ready || _blockersFor(l).isEmpty)))
                 l
           ];

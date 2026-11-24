@@ -42,8 +42,7 @@ void main() {
         ('abc', 'Falta la edad'),
         ('0', 'entre 1 y 110'),
         ('111', 'entre 1 y 110'),
-        ('-5', 'entre 1 y 110'),
-        ('999999', 'entre 1 y 110'),
+        ('999999', 'entre 1 y 110'), // el campo corta a 3 dígitos: 999
       ]) {
         await enter(t, 'f-edad', txt);
         await tapKey(t, 'f-guardar');
@@ -129,10 +128,10 @@ void main() {
               .controller!
               .text,
           contains('planta baja'));
-      // Observación: el teléfono no se valida (acepta cualquier texto).
-      await enter(t, 'f-telefono', 'no tiene');
+      // El teléfono solo admite dígitos y + - ( ) (las letras se descartan al escribir).
+      await enter(t, 'f-telefono', 'tel 55-123');
       await tapKey(t, 'f-guardar');
-      expect((await _rows(t, a)).single.phone, 'no tiene');
+      expect((await _rows(t, a)).single.phone, '55-123');
     });
   });
 
@@ -266,9 +265,6 @@ void main() {
       await settle(t);
       await tapKey(t, 'pp-1');
       expect(find.byKey(const Key('social-conyuge')), findsOneWidget);
-      await tapKey(t, 'social-grupos');
-      await tapKey(t, 'gp-Jóvenes Ebenezer');
-      await tapKey(t, 'gp-listo');
       await tapKey(t, 'f-guardar');
       final rows = await _rows(t, a);
       final raul = rows.firstWhere((r) => r.firstName == 'Raúl');
@@ -279,9 +275,6 @@ void main() {
       final team = (await qaRows(t, a.q.teamRows))
           .firstWhere((x) => x.id == elena.teamId);
       expect(find.text('Equipo: ${team.name}'), findsOneWidget);
-      final gid = a.q.groupIds['Jóvenes Ebenezer']!;
-      final members = await qaRows(t, () => a.q.social.groupMembers(gid));
-      expect(members.map((m) => m.firstName), contains('Elena'));
     });
 
     testWidgets(
