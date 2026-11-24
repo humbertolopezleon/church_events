@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
 import 'database.dart';
+import 'repos_b.dart' show LodgingIncompatibleException, LodgingRepo;
 
 /// Error de datos con mensaje listo para el usuario (en español).
 class DataException implements Exception {
@@ -366,22 +367,33 @@ class Repository {
     String notes = '',
   }) async {
     _validate(firstName, lastName1, age);
-    await (db.update(db.attendees)..where((a) => a.id.equals(id)))
-        .write(AttendeesCompanion(
-      firstName: Value(firstName.trim()),
-      lastName1: Value(lastName1.trim()),
-      lastName2: Value(lastName2.trim()),
-      sex: Value(sex == Sex.male ? 'M' : 'F'),
-      age: Value(age),
-      churchId: Value(churchId),
-      phone: Value(_blankToNull(phone)),
-      province: Value(province.trim()),
-      municipality: Value(municipality.trim()),
-      needsLodging: Value(needsLodging),
-      notes: Value(notes.trim()),
-      dedupeKey: Value(dedupeKey(firstName, lastName1)),
-      updatedAt: Value(DateTime.now().toUtc()),
-    ));
+    await db.transaction(() async {
+      final before = await attendeeById(id);
+      await (db.update(db.attendees)..where((a) => a.id.equals(id)))
+          .write(AttendeesCompanion(
+        firstName: Value(firstName.trim()),
+        lastName1: Value(lastName1.trim()),
+        lastName2: Value(lastName2.trim()),
+        sex: Value(sex == Sex.male ? 'M' : 'F'),
+        age: Value(age),
+        churchId: Value(churchId),
+        phone: Value(_blankToNull(phone)),
+        province: Value(province.trim()),
+        municipality: Value(municipality.trim()),
+        needsLodging: Value(needsLodging),
+        notes: Value(notes.trim()),
+        dedupeKey: Value(dedupeKey(firstName, lastName1)),
+        updatedAt: Value(DateTime.now().toUtc()),
+      ));
+      // Cambiar el sexo de alguien hospedado no puede dejarlo en un hospedaje que no lo acepta.
+      final lid = before?.lodgingId;
+      if (before != null &&
+          lid != null &&
+          before.sex != (sex == Sex.male ? 'M' : 'F')) {
+        final problems = await LodgingRepo(db).compatibilityProblems(lid, [id]);
+        if (problems.isNotEmpty) throw LodgingIncompatibleException(problems);
+      }
+    });
   }
 
   /// Borrado lógico (se conserva para poder fusionar datos entre dispositivos). Solo administrador.

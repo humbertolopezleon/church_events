@@ -131,6 +131,7 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
               'Cercanía',
               (l) => Text(l.row.distanceNote.isEmpty ? '—' : l.row.distanceNote,
                   overflow: TextOverflow.ellipsis)),
+          TableCol('', (l) => _LodgingMenu(l)),
         ],
       );
 
@@ -271,6 +272,7 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
                                                 textAlign: TextAlign.end,
                                                 style: const TextStyle(
                                                     color: Brand.gris))),
+                                        _LodgingMenu(l),
                                       ]),
                                       const SizedBox(height: 4),
                                       Text(
@@ -331,6 +333,43 @@ class _LodgingFormDialogState extends ConsumerState<LodgingFormDialog> {
           directions: directions.text,
           hostName: host.text,
           distanceNote: near.text);
+      // Si al cambiar «acepta» alguien ya hospedado dejó de ser compatible, se avisa y se lista
+      // (no se quita ni se borra a nadie: se decide en la ficha del hospedaje).
+      if (widget.lodging != null) {
+        final bad = await ref
+            .read(lodgingRepoProvider)
+            .incompatibleOccupants(widget.lodging!.id);
+        if (bad.isNotEmpty && mounted) {
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: Brand.avisoSuave,
+              title: const Text('Hay personas que ya no encajan'),
+              content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        '«${name.text.trim()}» ahora es «${lodgingAcceptsLabel(accepts)}». Siguen hospedadas (no se borró nada):',
+                        key: const Key('hf-incompatibles')),
+                    const SizedBox(height: 6),
+                    for (final a in bad.take(12))
+                      Text('• ${a.firstName} ${a.lastName1}'),
+                    if (bad.length > 12) Text('… y ${bad.length - 12} más'),
+                    const SizedBox(height: 6),
+                    const Text(
+                        'Quítalas desde la ficha del hospedaje o muévelas a otro.'),
+                  ]),
+              actions: [
+                FilledButton(
+                    key: const Key('hf-incompatibles-ok'),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Entendido')),
+              ],
+            ),
+          );
+        }
+      }
       if (mounted) Navigator.pop(context, true);
     } on DataException catch (e) {
       setState(() => error = e.message);
@@ -439,6 +478,74 @@ class _LodgingFormDialogState extends ConsumerState<LodgingFormDialog> {
       );
 }
 
+/// Confirma y elimina (borrado lógico) un hospedaje. Quienes estaban hospedados NO se borran:
+/// quedan «sin hospedaje» y vuelven a la lista de pendientes. Devuelve si se eliminó.
+Future<bool> confirmDeleteLodging(
+    BuildContext context, WidgetRef ref, LodgingView lv) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('¿Eliminar este hospedaje?'),
+      content: Text(lv.occupied == 0
+          ? '«${lv.row.name}» dejará de aparecer.'
+          : '«${lv.row.name}» dejará de aparecer y ${lv.occupied} ${lv.occupied == 1 ? 'persona quedará' : 'personas quedarán'} sin hospedaje (no se borran: pasan a pendientes de hospedaje).'),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar')),
+        FilledButton(
+            key: const Key('hd-confirmar-eliminar'),
+            style: FilledButton.styleFrom(backgroundColor: Brand.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar')),
+      ],
+    ),
+  );
+  if (ok != true) return false;
+  await ref.read(lodgingRepoProvider).delete(lv.row.id);
+  return true;
+}
+
+/// Menú ⋮ de un hospedaje en la lista: ver, editar y (solo administrador) eliminar.
+class _LodgingMenu extends ConsumerWidget {
+  const _LodgingMenu(this.lv);
+  final LodgingView lv;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(currentUserProvider)?.isAdmin ?? false;
+    return PopupMenuButton<String>(
+      key: Key('hosp-menu-${lv.row.name}'),
+      tooltip: 'Acciones',
+      onSelected: (v) async {
+        switch (v) {
+          case 'ver':
+            await Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => LodgingDetailScreen(lodgingId: lv.row.id)));
+          case 'editar':
+            await showDialog<void>(
+                context: context,
+                builder: (_) => LodgingFormDialog(
+                    eventId: lv.row.eventId, lodging: lv.row));
+          case 'eliminar':
+            await confirmDeleteLodging(context, ref, lv);
+        }
+      },
+      itemBuilder: (_) => [
+        const PopupMenuItem(
+            key: Key('hosp-ver'), value: 'ver', child: Text('Ver ficha')),
+        const PopupMenuItem(
+            key: Key('hosp-editar'), value: 'editar', child: Text('Editar…')),
+        if (isAdmin)
+          const PopupMenuItem(
+              key: Key('hosp-eliminar'),
+              value: 'eliminar',
+              child: Text('Eliminar…')),
+      ],
+    );
+  }
+}
+
 class LodgingDetailScreen extends ConsumerWidget {
   const LodgingDetailScreen({super.key, required this.lodgingId});
   final String lodgingId;
@@ -488,82 +595,101 @@ class LodgingDetailScreen extends ConsumerWidget {
               icon: const Icon(Icons.delete_outline),
               onPressed: () => _delete(context, ref, lv)),
       ]),
-      body: ListView(padding: const EdgeInsets.all(16), children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(
-                  '${kindLabel(l.kind)} · ${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.accepts))}',
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
-              if (l.hostName != null) Text('Anfitrión: ${l.hostName}'),
-              if (l.contactPhone != null) Text('Contacto: ${l.contactPhone}'),
-              if (l.directions.isNotEmpty) Text('Cómo llegar: ${l.directions}'),
-              if (l.distanceNote.isNotEmpty)
-                Text(l.distanceNote, style: const TextStyle(color: Brand.gris)),
+      body: FutureBuilder<List<AttendeeRow>>(
+          future:
+              ref.read(lodgingRepoProvider).incompatibleOccupants(lodgingId),
+          builder: (context, snap) {
+            final bad = {
+              for (final a in snap.data ?? const <AttendeeRow>[]) a.id
+            };
+            return ListView(padding: const EdgeInsets.all(16), children: [
+              if (bad.isNotEmpty)
+                Card(
+                  key: const Key('hd-incompatibles'),
+                  color: Brand.avisoSuave,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              '${bad.length} ${bad.length == 1 ? 'persona ya no es compatible' : 'personas ya no son compatibles'} con «${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.accepts))}»',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  color: Brand.avisoTexto)),
+                          const SizedBox(height: 4),
+                          const Text(
+                              'Siguen aquí (no se borró nada), pero no se podrían volver a asignar. Quítalas de este hospedaje, muévelas a otro o edita el hospedaje para cambiar a quién acepta.'),
+                        ]),
+                  ),
+                ),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                            '${kindLabel(l.kind)} · ${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.accepts))}',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w700)),
+                        if (l.hostName != null)
+                          Text('Anfitrión: ${l.hostName}'),
+                        if (l.contactPhone != null)
+                          Text('Contacto: ${l.contactPhone}'),
+                        if (l.directions.isNotEmpty)
+                          Text('Cómo llegar: ${l.directions}'),
+                        if (l.distanceNote.isNotEmpty)
+                          Text(l.distanceNote,
+                              style: const TextStyle(color: Brand.gris)),
+                        const SizedBox(height: 12),
+                        _Occupancy(lv.occupied, l.capacity),
+                      ]),
+                ),
+              ),
               const SizedBox(height: 12),
-              _Occupancy(lv.occupied, l.capacity),
-            ]),
-          ),
-        ),
-        const SizedBox(height: 12),
-        FilledButton.icon(
-            key: const Key('hd-asignar'),
-            onPressed: () => _assign(context, ref, lv, people),
-            icon: const Icon(Icons.person_add_alt_outlined),
-            label: const Text('Asignar personas')),
-        const SizedBox(height: 16),
-        Text('Hospedados (${occupants.length})',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 8),
-        if (occupants.isEmpty)
-          const Text('Nadie asignado todavía.',
-              style: TextStyle(color: Brand.gris)),
-        for (final o in occupants)
-          Card(
-            child: ListTile(
-              key: Key('hd-persona-${o.a.regNumber}'),
-              title: Text(o.fullName,
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: Text(
-                  '${o.isMale ? 'Hombre' : 'Mujer'} · ${o.a.age} años${o.a.coupleId != null ? ' · matrimonio' : ''}${o.churchName == null ? '' : ' · ${o.churchName}'}'),
-              trailing: IconButton(
-                  key: Key('hd-quitar-${o.a.regNumber}'),
-                  tooltip: 'Quitar de este hospedaje',
-                  icon: const Icon(Icons.close),
-                  onPressed: () =>
-                      ref.read(lodgingRepoProvider).unassign([o.a.id])),
-            ),
-          ),
-      ]),
+              FilledButton.icon(
+                  key: const Key('hd-asignar'),
+                  onPressed: () => _assign(context, ref, lv, people),
+                  icon: const Icon(Icons.person_add_alt_outlined),
+                  label: const Text('Asignar personas')),
+              const SizedBox(height: 16),
+              Text('Hospedados (${occupants.length})',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 8),
+              if (occupants.isEmpty)
+                const Text('Nadie asignado todavía.',
+                    style: TextStyle(color: Brand.gris)),
+              for (final o in occupants)
+                Card(
+                  child: ListTile(
+                    key: Key('hd-persona-${o.a.regNumber}'),
+                    title: Text(o.fullName,
+                        style: const TextStyle(fontWeight: FontWeight.w700)),
+                    subtitle: Text(
+                        '${o.isMale ? 'Hombre' : 'Mujer'} · ${o.a.age} años${o.a.coupleId != null ? ' · matrimonio' : ''}${o.churchName == null ? '' : ' · ${o.churchName}'}${bad.contains(o.a.id) ? ' · NO COMPATIBLE con este hospedaje' : ''}',
+                        style: bad.contains(o.a.id)
+                            ? const TextStyle(color: Brand.error)
+                            : null),
+                    trailing: IconButton(
+                        key: Key('hd-quitar-${o.a.regNumber}'),
+                        tooltip: 'Quitar de este hospedaje',
+                        icon: const Icon(Icons.close),
+                        onPressed: () =>
+                            ref.read(lodgingRepoProvider).unassign([o.a.id])),
+                  ),
+                ),
+            ]);
+          }),
     );
   }
 
   Future<void> _delete(
       BuildContext context, WidgetRef ref, LodgingView lv) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Eliminar este hospedaje?'),
-        content: Text(lv.occupied == 0
-            ? '«${lv.row.name}» dejará de aparecer.'
-            : '«${lv.row.name}» dejará de aparecer y ${lv.occupied} ${lv.occupied == 1 ? 'persona quedará' : 'personas quedarán'} sin hospedaje.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
-          FilledButton(
-              key: const Key('hd-confirmar-eliminar'),
-              style: FilledButton.styleFrom(backgroundColor: Brand.error),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Eliminar')),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    await ref.read(lodgingRepoProvider).delete(lv.row.id);
-    if (context.mounted) Navigator.pop(context);
+    if (await confirmDeleteLodging(context, ref, lv) && context.mounted) {
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _assign(BuildContext context, WidgetRef ref, LodgingView lv,
@@ -581,9 +707,42 @@ class LodgingDetailScreen extends ConsumerWidget {
         .where((p) => p.a.lodgingId == lv.row.id)
         .map((p) => p.a.toPersonRef(spouses[p.a.id]))
         .toList();
-    final warnings = checkLodgingAssignment(
-        lv.slot, chosen.map((p) => p.a.toPersonRef(spouses[p.a.id])).toList(),
-        alreadyThere: here);
+    final chosenRefs =
+        chosen.map((p) => p.a.toPersonRef(spouses[p.a.id])).toList();
+    // Compatibilidad = BLOQUEO (sin «asignar de todas formas»): hay que editar el hospedaje.
+    final blockers = lodgingBlockers(lv.slot, chosenRefs, alreadyThere: here);
+    if (blockers.isNotEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: Brand.avisoSuave,
+          icon: const Icon(Icons.block, color: Brand.error, size: 36),
+          title: const Text('No se puede asignar'),
+          content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final w in blockers)
+                  Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(w.message, key: const Key('hd-bloqueo'))),
+                const Text(
+                    'Para hospedarlos aquí, edita el hospedaje y cambia a quién acepta; o elige otro.',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+              ]),
+          actions: [
+            FilledButton(
+                key: const Key('hd-bloqueo-ok'),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Entendido')),
+          ],
+        ),
+      );
+      return;
+    }
+    // La capacidad sí es un aviso: la persona decide.
+    final warnings =
+        checkLodgingAssignment(lv.slot, chosenRefs, alreadyThere: here);
     if (warnings.isNotEmpty) {
       final go = await showDialog<bool>(
         context: context,
@@ -619,9 +778,16 @@ class LodgingDetailScreen extends ConsumerWidget {
       );
       if (go != true) return;
     }
-    await ref
-        .read(lodgingRepoProvider)
-        .assign(lv.row.id, chosen.map((p) => p.a.id));
+    try {
+      await ref
+          .read(lodgingRepoProvider)
+          .assign(lv.row.id, chosen.map((p) => p.a.id));
+    } on DataException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
   }
 }
 
@@ -652,6 +818,12 @@ class _AssignDialogState extends ConsumerState<_AssignDialog> {
     setState(() => on ? sel.addAll(ids) : sel.removeAll(ids));
   }
 
+  /// ¿Esta persona puede entrar en este hospedaje? (sexo; en uno de matrimonios, con cónyuge).
+  bool _fits(AttendeeView v) => lodgingFitsPerson(
+      lodgingAcceptsFromDb(widget.lodging.row.accepts),
+      v.isMale ? Sex.male : Sex.female,
+      hasSpouse: widget.spouses[v.a.id] != null);
+
   Future<void> _addGroup() async {
     final eventId = widget.lodging.row.eventId;
     final groups =
@@ -676,7 +848,7 @@ class _AssignDialogState extends ConsumerState<_AssignDialog> {
     setState(() {
       for (final m in members) {
         final v = _byId(m.id);
-        if (v != null) _toggle(v, true);
+        if (v != null && _fits(v)) _toggle(v, true);
       }
     });
   }
@@ -728,17 +900,19 @@ class _AssignDialogState extends ConsumerState<_AssignDialog> {
                     itemBuilder: (_, i) {
                       final v = list[i];
                       final sp = widget.spouses[v.a.id];
+                      final fits = _fits(v);
                       return CheckboxListTile(
                         key: Key('as-${v.a.regNumber}'),
                         contentPadding: EdgeInsets.zero,
                         controlAffinity: ListTileControlAffinity.leading,
                         value: sel.contains(v.a.id),
-                        onChanged: (on) => _toggle(v, on ?? false),
+                        onChanged:
+                            fits ? (on) => _toggle(v, on ?? false) : null,
                         title: Text(v.fullName,
                             style:
                                 const TextStyle(fontWeight: FontWeight.w700)),
                         subtitle: Text(
-                            '${v.isMale ? 'Hombre' : 'Mujer'} · ${v.a.age} años${sp != null ? ' · con su cónyuge' : ''}${v.a.lodgingId != null ? ' · ya tiene hospedaje' : ''}'),
+                            '${v.isMale ? 'Hombre' : 'Mujer'} · ${v.a.age} años${sp != null ? ' · con su cónyuge' : ''}${v.a.lodgingId != null ? ' · ya tiene hospedaje' : ''}${fits ? '' : ' · no compatible con «${lodgingAcceptsLabel(lodgingAcceptsFromDb(widget.lodging.row.accepts))}»'}'),
                       );
                     },
                   ),

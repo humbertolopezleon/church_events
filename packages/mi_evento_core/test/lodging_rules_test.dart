@@ -7,6 +7,7 @@ LodgingSlot slot(LodgingAccepts a, {int cap = 4, int occ = 0}) =>
     LodgingSlot(name: 'Casa', accepts: a, capacity: cap, occupied: occ);
 
 void main() {
+  bloqueoDuro();
   group('capacidad', () {
     test('dentro de la capacidad no avisa', () {
       expect(
@@ -105,5 +106,53 @@ void main() {
         {'Jóvenes': 1, 'Adultos': 0});
     expect(ageDistribution([], AgeRange.defaults).values.every((v) => v == 0),
         isTrue);
+  });
+}
+
+void bloqueoDuro() {
+  group('compatibilidad = bloqueo (lodgingBlockers)', () {
+    test('hombre en hospedaje de mujeres y mujer en el de hombres: bloquea',
+        () {
+      expect(
+          lodgingBlockers(slot(LodgingAccepts.women), [p('1', Sex.male)])
+              .single
+              .kind,
+          WarningKind.compatibility);
+      expect(lodgingBlockers(slot(LodgingAccepts.men), [p('1', Sex.female)]),
+          hasLength(1));
+      expect(lodgingBlockers(slot(LodgingAccepts.men), [p('1', Sex.male)]),
+          isEmpty);
+    });
+    test('«sin preferencia» acepta a todos, también solteros', () {
+      expect(
+          lodgingBlockers(
+              slot(LodgingAccepts.any), [p('1', Sex.male), p('2', Sex.female)]),
+          isEmpty);
+    });
+    test('matrimonios: un soltero bloquea; el matrimonio junto, no', () {
+      expect(lodgingBlockers(slot(LodgingAccepts.couples), [p('1', Sex.male)]),
+          hasLength(1));
+      expect(
+          lodgingBlockers(slot(LodgingAccepts.couples),
+              [p('1', Sex.male, '2'), p('2', Sex.female, '1')]),
+          isEmpty);
+    });
+    test(
+        'matrimonios: un cónyuge solo bloquea, salvo que el otro ya esté dentro',
+        () {
+      final h = p('1', Sex.male, '2');
+      expect(lodgingBlockers(slot(LodgingAccepts.couples), [h]), hasLength(1));
+      expect(
+          lodgingBlockers(slot(LodgingAccepts.couples), [h],
+              alreadyThere: [p('2', Sex.female, '1')]),
+          isEmpty);
+    });
+    test('checkLodgingAssignment sigue incluyendo capacidad y compatibilidad',
+        () {
+      final w = checkLodgingAssignment(slot(LodgingAccepts.men, cap: 1),
+          [p('1', Sex.female), p('2', Sex.male)]);
+      expect(w.map((x) => x.kind),
+          [WarningKind.capacity, WarningKind.compatibility]);
+    });
   });
 }

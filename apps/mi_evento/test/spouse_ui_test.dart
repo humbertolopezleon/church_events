@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mi_evento/data/database.dart';
@@ -235,7 +236,7 @@ void main() {
   });
 
   testWidgets(
-      'matrimonio nuevo + hospedaje elegido a mano en uno incompatible: avisa por los dos y deja guardar',
+      'matrimonio nuevo + hospedaje de solo hombres: sale deshabilitado, no se puede elegir y queda sin hospedaje',
       (t) async {
     final c = await pumpApp(t, _pc);
     late String ev;
@@ -263,10 +264,15 @@ void main() {
     await t.ensureVisible(find.byKey(const Key('f-hosp-sel')));
     await t.tap(find.byKey(const Key('f-hosp-sel')));
     await settle(t);
-    await t.tap(find.textContaining('Casa solo hombres').last);
+    expect(find.textContaining('no compatible'), findsWidgets);
+    await t.tap(find.textContaining('Casa solo hombres').last); // deshabilitado
     await settle(t);
-    expect(find.byKey(const Key('f-hosp-aviso')), findsWidgets);
+    await t.sendKeyEvent(LogicalKeyboardKey.escape);
+    await settle(t);
+    expect(find.byKey(const Key('f-hosp-aviso')), findsNothing);
     await tapKey(t, 'f-guardar');
-    expect(await _all(t, c), hasLength(2));
+    final rows = await _all(t, c);
+    expect(rows, hasLength(2));
+    expect(rows.every((r) => r.lodgingId == null), isTrue);
   });
 }

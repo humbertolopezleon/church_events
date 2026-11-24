@@ -35,6 +35,9 @@ class EventCopy {
   EventCopy(this.db);
   final AppDatabase db;
 
+  /// Personas de la última duplicación que quedaron sin hospedaje por no ser compatibles con él.
+  int lastUnassignedForCompatibility = 0;
+
   /// Crea un evento nuevo a partir de [sourceId]. Devuelve su id.
   Future<String> duplicateEvent(
     String sourceId, {
@@ -50,6 +53,7 @@ class EventCopy {
     }
     final dev = await db.deviceId();
     final now = DateTime.now().toUtc();
+    lastUnassignedForCompatibility = 0;
     return db.transaction(() async {
       final src = await (db.select(db.events)
             ..where((e) => e.id.equals(sourceId) & e.deletedAt.isNull()))
@@ -148,6 +152,16 @@ class EventCopy {
         await _copyCouples(sourceId, personMap);
         if (options.groups) {
           await _copyGroups(sourceId, newId, personMap, now, dev);
+        }
+        // Un hospedaje nunca queda con gente incompatible (p. ej. datos viejos de antes de que
+        // la compatibilidad bloqueara): a quien no encaja se le deja sin hospedaje en la copia.
+        final lodgingRepo = LodgingRepo(db);
+        for (final newLodging in lodgingMap.values) {
+          final bad = await lodgingRepo.incompatibleOccupants(newLodging);
+          if (bad.isNotEmpty) {
+            await lodgingRepo.unassign(bad.map((p) => p.id));
+            lastUnassignedForCompatibility += bad.length;
+          }
         }
       }
       return newId;
