@@ -16,7 +16,8 @@ import 'helpers.dart';
 
 const _pc = Size(1200, 2400);
 
-Future<(Ctx, MemoryFileSaver, String)> _open(WidgetTester t) async {
+Future<(Ctx, MemoryFileSaver, String)> _open(WidgetTester t,
+    {bool withPreregistered = false}) async {
   final saver = MemoryFileSaver();
   final c = await pumpApp(t, _pc, overrides: [
     fileSaverProvider.overrideWithValue(saver),
@@ -64,6 +65,17 @@ Future<(Ctx, MemoryFileSaver, String)> _open(WidgetTester t) async {
         kind: 'shelter',
         capacity: 10,
         accepts: LodgingAccepts.men);
+    if (withPreregistered) {
+      for (final n in ['Lidia', 'Mario']) {
+        await c.repo.addAttendee(
+            eventId: ev,
+            firstName: n,
+            lastName1: 'Preinscrito',
+            sex: n == 'Lidia' ? Sex.female : Sex.male,
+            age: 30,
+            preregistered: true);
+      }
+    }
   });
   await login(t, 'admin', 'secreto1');
   await t.tap(find.text('Retiro Jóvenes'));
@@ -191,5 +203,43 @@ void main() {
     await settle(t);
     expect(find.text('1 de 2'), findsOneWidget);
     expect(find.byKey(const Key('evento-Retiro')), findsNothing);
+  });
+
+  testWidgets('Equipos (escritorio): tabla resumen ordenable con los totales',
+      (t) async {
+    await _open(t);
+    await _goTo(t, 'Equipos');
+    expect(find.byKey(const Key('eq-tabla')), findsOneWidget);
+    expect(find.text('Edad media'), findsOneWidget);
+    expect(find.text('Capitán'), findsOneWidget);
+  });
+
+  testWidgets('Confirmar asistencia: buscar y exportar los preinscritos',
+      (t) async {
+    final (_, saver, _) = await _open(t, withPreregistered: true);
+    await _goTo(t, 'Confirmar asistencia');
+    await tapKey(t, 'ca-exportar');
+    var rows = _csv(saver, 'por-confirmar');
+    expect(rows.first.first, 'numero');
+    expect(rows.length, 3); // títulos + 2 preinscritos
+    await t.enterText(find.byKey(const Key('ca-buscar')), 'lidia');
+    await settle(t);
+    await tapKey(t, 'ca-exportar');
+    rows = _csv(saver, 'por-confirmar');
+    expect(rows.length, 2);
+    expect(rows[1][1], contains('Lidia'));
+  });
+
+  testWidgets('Usuarios: buscar y exportar sin contraseñas', (t) async {
+    final (_, saver, _) = await _open(t);
+    await _goTo(t, 'Usuarios');
+    await tapKey(t, 'usr-exportar');
+    final rows = _csv(saver, 'usuarios');
+    expect(rows.first, ['usuario', 'nombre', 'rol', 'estado']);
+    expect(rows.length, 2); // títulos + el administrador
+    expect(rows.expand((r) => r).any((c) => c.contains('secreto')), isFalse);
+    await t.enterText(find.byKey(const Key('usr-buscar')), 'zzz');
+    await settle(t);
+    expect(find.text('0 de 1'), findsOneWidget);
   });
 }

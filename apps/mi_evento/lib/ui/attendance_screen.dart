@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../data/repository.dart';
+import '../export/csv_export.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'widgets/list_toolbar.dart';
@@ -65,6 +66,25 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     if (ok == true) await _confirm(eventId, shown.map((v) => v.a.id));
   }
 
+  /// Exporta a CSV los preinscritos que deja la búsqueda (con su hospedaje y equipo no: solo identidad).
+  Future<void> _export(String eventId, List<AttendeeView> shown) {
+    final event = ref.read(eventProvider(eventId)).valueOrNull;
+    return saveCsv(context, ref,
+        name: csvFileName('por-confirmar', event?.name ?? ''),
+        rows: [
+          ['numero', 'nombre', 'sexo', 'edad', 'iglesia', 'estado'],
+          for (final v in shown)
+            [
+              '${v.a.regNumber}',
+              v.fullName,
+              v.isMale ? 'Hombre' : 'Mujer',
+              '${v.a.age}',
+              v.churchName ?? '',
+              'Preinscrito',
+            ],
+        ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final eventId = ref.watch(currentEventIdProvider)!;
@@ -91,6 +111,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             hint: 'Buscar a un preinscrito por nombre, iglesia o número…',
             searchKey: const Key('ca-buscar'),
             countKey: const Key('ca-conteo'),
+            exportKey: const Key('ca-exportar'),
+            onExport: shown.isEmpty ? null : () => _export(eventId, shown),
             onChanged: () => setState(() {}),
             count:
                 '${pending.length} por confirmar · $confirmed ya confirmados${query.text.isEmpty ? '' : ' · ${shown.length} coinciden'}',
