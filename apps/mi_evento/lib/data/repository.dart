@@ -239,6 +239,82 @@ class Repository {
     return (db.select(db.churches)..where((c) => c.id.equals(id))).getSingle();
   }
 
+  /// Cambia nombre y ubicación de una iglesia (los tres obligatorios). La provincia y el municipio
+  /// de sus asistentes salen de la iglesia, así que también se actualizan en ellos.
+  Future<ChurchRow> updateChurch(String id,
+      {required String name,
+      required String province,
+      required String municipality,
+      String community = ''}) async {
+    final n = name.trim();
+    if (n.isEmpty) throw DataException('Falta el nombre de la iglesia.');
+    if (province.trim().isEmpty) {
+      throw DataException('Falta la provincia de la iglesia.');
+    }
+    if (municipality.trim().isEmpty) {
+      throw DataException('Falta el municipio de la iglesia.');
+    }
+    return db.transaction(() async {
+      final norm = normalizeText(n);
+      final muni = normalizeMunicipality(municipality);
+      final same = await (db.select(db.churches)
+            ..where((c) =>
+                c.id.equals(id).not() &
+                c.nameNormalized.equals(norm) &
+                c.province.equals(province.trim()) &
+                c.deletedAt.isNull()))
+          .get();
+      final dup = same
+          .where((c) => normalizeText(c.municipality) == normalizeText(muni))
+          .firstOrNull;
+      if (dup != null) {
+        throw DataException(
+            'Ya existe «${dup.name}» en el catálogo para esa provincia y municipio.');
+      }
+      final now = DateTime.now().toUtc();
+      await (db.update(db.churches)..where((c) => c.id.equals(id))).write(
+          ChurchesCompanion(
+              name: Value(n),
+              nameNormalized: Value(norm),
+              province: Value(province.trim()),
+              municipality: Value(muni),
+              community: Value(normalizeCommunity(community)),
+              updatedAt: Value(now)));
+      await (db.update(db.attendees)..where((a) => a.churchId.equals(id)))
+          .write(AttendeesCompanion(
+              province: Value(province.trim()),
+              municipality: Value(muni),
+              updatedAt: Value(now)));
+      return (db.select(db.churches)..where((c) => c.id.equals(id)))
+          .getSingle();
+    });
+  }
+
+  /// Cuántos asistentes (de cualquier evento) tiene cada iglesia.
+  Future<Map<String, int>> churchAttendeeCounts() async {
+    final c = db.attendees.id.count();
+    final q = db.selectOnly(db.attendees)
+      ..addColumns([db.attendees.churchId, c])
+      ..where(
+          db.attendees.deletedAt.isNull() & db.attendees.churchId.isNotNull())
+      ..groupBy([db.attendees.churchId]);
+    return {
+      for (final r in await q.get()) r.read(db.attendees.churchId)!: r.read(c)!
+    };
+  }
+
+  /// Borrado lógico. Se BLOQUEA si la iglesia tiene asistentes (dice cuántos).
+  Future<void> deleteChurch(String id) async {
+    final n = (await churchAttendeeCounts())[id] ?? 0;
+    if (n > 0) {
+      throw DataException(
+          'No se puede eliminar: tiene $n ${n == 1 ? 'asistente' : 'asistentes'}. Cámbialos de iglesia primero.');
+    }
+    final now = DateTime.now().toUtc();
+    await (db.update(db.churches)..where((c) => c.id.equals(id)))
+        .write(ChurchesCompanion(deletedAt: Value(now), updatedAt: Value(now)));
+  }
+
   /// Iglesias cuyo nombre contiene el texto (sin importar tildes ni mayúsculas).
   static List<ChurchRow> filterChurches(List<ChurchRow> all, String query,
       {int limit = 6}) {
