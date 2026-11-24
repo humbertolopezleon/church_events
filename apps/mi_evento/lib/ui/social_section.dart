@@ -10,6 +10,9 @@ import '../theme/app_theme.dart';
 import 'new_spouse_dialog.dart';
 import 'people_pickers.dart';
 
+/// Los grupos se ocultan del formulario por ahora (la lógica y los datos se conservan).
+const kShowGroups = false;
+
 /// Matrimonio y grupos de una persona, dentro del formulario de asistente.
 /// Los cambios se aplican al guardar el formulario (no antes).
 class SocialSection extends ConsumerWidget {
@@ -46,7 +49,7 @@ class SocialSection extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Matrimonio y grupos',
+          Text(kShowGroups ? 'Matrimonio y grupos' : 'Matrimonio',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
           if (spouseDraft != null)
@@ -133,31 +136,33 @@ class SocialSection extends ConsumerWidget {
                     'Elige primero el sexo para poder inscribir a su cónyuge aquí.',
                     key: Key('social-conyuge-sinsexo'),
                     style: TextStyle(color: Brand.gris, fontSize: 14))),
-          const SizedBox(height: 10),
-          Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                for (final id in groupIds)
-                  InputChip(
-                    key: Key('social-grupo-${names[id] ?? id}'),
-                    label: Text(names[id] ?? 'Grupo'),
-                    onDeleted: () => onGroups({...groupIds}..remove(id)),
+          if (kShowGroups) ...[
+            const SizedBox(height: 10),
+            Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  for (final id in groupIds)
+                    InputChip(
+                      key: Key('social-grupo-${names[id] ?? id}'),
+                      label: Text(names[id] ?? 'Grupo'),
+                      onDeleted: () => onGroups({...groupIds}..remove(id)),
+                    ),
+                  OutlinedButton.icon(
+                    key: const Key('social-grupos'),
+                    onPressed: () async {
+                      final r = await pickGroups(context,
+                          eventId: eventId, selected: groupIds);
+                      if (r != null) onGroups(r);
+                    },
+                    icon: const Icon(Icons.groups_outlined),
+                    label: Text(groupIds.isEmpty
+                        ? 'Añadir a un grupo'
+                        : 'Cambiar grupos'),
                   ),
-                OutlinedButton.icon(
-                  key: const Key('social-grupos'),
-                  onPressed: () async {
-                    final r = await pickGroups(context,
-                        eventId: eventId, selected: groupIds);
-                    if (r != null) onGroups(r);
-                  },
-                  icon: const Icon(Icons.groups_outlined),
-                  label: Text(groupIds.isEmpty
-                      ? 'Añadir a un grupo'
-                      : 'Cambiar grupos'),
-                ),
-              ]),
+                ]),
+          ],
         ]),
       ),
     );

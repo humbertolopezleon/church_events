@@ -140,6 +140,8 @@ void main() {
   });
 
   testWidgets('grupos: crear uno nuevo desde el formulario y asignarlo',
+      skip:
+          true, // Los grupos están ocultos del formulario por ahora (kShowGroups)
       (t) async {
     final b = await _open(t);
     await _goTo(t, 'Asistentes');

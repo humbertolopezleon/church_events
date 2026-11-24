@@ -16,6 +16,7 @@ import 'widgets/data_table_view.dart';
 import 'widgets/list_toolbar.dart';
 import 'people_pickers.dart';
 import 'team_generate_screen.dart';
+import 'widgets/input_formats.dart';
 
 Color teamColor(String? hex) {
   if (hex == null || hex.length != 7) return Brand.gris;
@@ -350,6 +351,7 @@ Future<void> showCreateTeamsDialog(
                       key: const Key('eq-cantidad'),
                       controller: c,
                       keyboardType: TextInputType.number,
+                      inputFormatters: digitsOnly(),
                       decoration: const InputDecoration(
                           labelText: 'Cuántos equipos',
                           helperText:
@@ -368,6 +370,7 @@ Future<void> showCreateTeamsDialog(
                         key: const Key('eq-tope-tamano'),
                         controller: size,
                         keyboardType: TextInputType.number,
+                        inputFormatters: digitsOnly(),
                         decoration: const InputDecoration(
                             labelText:
                                 'Tamaño: diferencia máxima de personas')),
@@ -376,6 +379,7 @@ Future<void> showCreateTeamsDialog(
                         key: const Key('eq-tope-sexo'),
                         controller: sex,
                         keyboardType: TextInputType.number,
+                        inputFormatters: digitsOnly(),
                         decoration: const InputDecoration(
                             labelText:
                                 'Sexo: diferencia máxima hombres–mujeres por equipo')),
@@ -385,6 +389,7 @@ Future<void> showCreateTeamsDialog(
                         controller: age,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
+                        inputFormatters: decimalOnly(),
                         decoration: const InputDecoration(
                             labelText:
                                 'Edad: diferencia máxima de edad media (años)')),
@@ -1116,6 +1121,7 @@ class LimitsDialogState extends ConsumerState<LimitsDialog> {
                       key: const Key('lim-tamano'),
                       controller: size,
                       keyboardType: TextInputType.number,
+                      inputFormatters: digitsOnly(),
                       decoration: const InputDecoration(
                           labelText: 'Tamaño: diferencia máxima de personas')),
                   const SizedBox(height: 12),
@@ -1123,6 +1129,7 @@ class LimitsDialogState extends ConsumerState<LimitsDialog> {
                       key: const Key('lim-sexo'),
                       controller: sex,
                       keyboardType: TextInputType.number,
+                      inputFormatters: digitsOnly(),
                       decoration: const InputDecoration(
                           labelText:
                               'Sexo: diferencia máxima hombres–mujeres por equipo')),
@@ -1132,6 +1139,7 @@ class LimitsDialogState extends ConsumerState<LimitsDialog> {
                       controller: ageC,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: decimalOnly(),
                       decoration: const InputDecoration(
                           labelText:
                               'Edad: diferencia máxima de edad media (años)')),

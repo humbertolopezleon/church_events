@@ -6,6 +6,7 @@ import '../data/database.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'auth_screens.dart' show ErrorBox;
+import 'widgets/input_formats.dart';
 
 /// Cónyuge que todavía no está inscrito: se guarda junto con la ficha de la primera persona
 /// (si se cancela, no se crea nadie).
@@ -155,6 +156,7 @@ class _NewSpouseDialogState extends ConsumerState<NewSpouseDialog> {
                         key: const Key('ns-edad'),
                         controller: age,
                         keyboardType: TextInputType.number,
+                        inputFormatters: digitsOnly(3),
                         decoration: const InputDecoration(labelText: 'Edad')),
                   ),
                   const SizedBox(width: 12),

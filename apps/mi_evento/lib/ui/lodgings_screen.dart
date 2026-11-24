@@ -18,6 +18,7 @@ import 'lodging_pdf.dart';
 import 'lodging_suggest_screen.dart';
 import 'widgets/data_table_view.dart';
 import 'widgets/list_toolbar.dart';
+import 'widgets/input_formats.dart';
 
 String kindLabel(String kind) =>
     kind == 'shelter' ? 'Albergue' : 'Casa particular';
@@ -411,6 +412,7 @@ class _LodgingFormDialogState extends ConsumerState<LodgingFormDialog> {
                       key: const Key('lf-capacidad'),
                       controller: capacity,
                       keyboardType: TextInputType.number,
+                      inputFormatters: digitsOnly(),
                       decoration: const InputDecoration(
                           labelText: 'Capacidad (plazas)')),
                   const SizedBox(height: 12),
@@ -443,6 +445,7 @@ class _LodgingFormDialogState extends ConsumerState<LodgingFormDialog> {
                       key: const Key('lf-telefono'),
                       controller: phone,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: phoneChars(),
                       decoration: const InputDecoration(
                           labelText: 'Teléfono de contacto (opcional)')),
                   const SizedBox(height: 12),
