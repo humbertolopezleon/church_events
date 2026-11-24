@@ -43,7 +43,7 @@ Future<Ctx> _open(WidgetTester t,
   await login(t, 'admin', 'secreto1');
   await t.tap(find.text('Retiro'));
   await settle(t);
-  await t.tap(find.text('Registrar').first);
+  await goRegister(t);
   await settle(t);
   return c;
 }
@@ -257,7 +257,7 @@ void main() {
     await login(t, 'admin', 'secreto1');
     await t.tap(find.text('Retiro'));
     await settle(t);
-    await t.tap(find.text('Registrar').first);
+    await goRegister(t);
     await settle(t);
     await _fillHusband(t);
     await _newSpouse(t);

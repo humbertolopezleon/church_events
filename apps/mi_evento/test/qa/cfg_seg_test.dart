@@ -37,7 +37,7 @@ void main() {
       await tapKey(t, 'ev-crear');
       // Primer momento: solo configuración.
       expect(find.byKey(const Key('cfg-intro')), findsOneWidget);
-      expect(find.text('Registrar'), findsNothing);
+      expect(find.text('Asistentes'), findsNothing);
       // Equipos con un criterio cambiado (edad media ±2).
       await tapKey(t, 'cfg-equipos-definir');
       await enter(t, 'eq-tope-edad', '2');
@@ -68,7 +68,7 @@ void main() {
       expect(find.textContaining('administrador está configurando'),
           findsOneWidget);
       expect(find.byKey(const Key('cfg-terminar')), findsNothing);
-      expect(find.text('Registrar'), findsNothing);
+      expect(find.text('Asistentes'), findsNothing);
     });
   });
 
@@ -85,7 +85,6 @@ void main() {
       }
       for (final l in [
         'Panel',
-        'Registrar',
         'Asistentes',
         'Hospedajes',
         'Equipos',

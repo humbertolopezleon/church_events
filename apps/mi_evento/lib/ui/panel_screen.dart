@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../data/repository.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
+import 'attendees_screen.dart' show openRegister;
 import 'backup_screen.dart' show ago;
 
 class PanelScreen extends ConsumerWidget {
@@ -54,7 +55,7 @@ class PanelScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 FilledButton.icon(
                     key: const Key('panel-registrar'),
-                    onPressed: () => go('registrar'),
+                    onPressed: () => openRegister(context),
                     icon: const Icon(Icons.add),
                     label: const Text('Registrar primer asistente')),
               ]),
@@ -79,7 +80,7 @@ class PanelScreen extends ConsumerWidget {
                 backgroundColor: Brand.naranja,
                 foregroundColor: Brand.tinta,
                 minimumSize: const Size.fromHeight(60)),
-            onPressed: () => go('registrar'),
+            onPressed: () => openRegister(context),
             icon: const Icon(Icons.person_add_alt_outlined),
             label: const Text('Registrar asistente'),
           ),
