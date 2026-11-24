@@ -9,6 +9,8 @@ import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'auth_screens.dart';
 import 'widgets/list_toolbar.dart';
+import '../data/users_exchange.dart';
+import 'table_import_flow.dart';
 
 /// Administración de usuarios (solo administrador).
 class UsersScreen extends ConsumerStatefulWidget {
@@ -85,6 +87,12 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                       ? '${all.length} usuarios'
                       : '${list.length} de ${all.length}',
                   onExport: list.isEmpty ? null : () => _export(list),
+                  importKey: const Key('usr-importar'),
+                  onImport: () => runTableImport(
+                      context,
+                      ref,
+                      UsersExchange(ref.read(databaseProvider),
+                          ref.read(authServiceProvider), me)),
                 );
               }
               final u = list[i - 1];

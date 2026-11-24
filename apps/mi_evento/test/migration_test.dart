@@ -8,7 +8,7 @@ import 'package:mi_evento_core/mi_evento_core.dart';
 
 void main() {
   test(
-      'migración v1 → v7 conserva los datos, habilita el inicio de sesión, los topes de equipos y el control de comidas y la opción de equipos y la fase del evento y la preinscripción',
+      'migración v1 → v8 conserva los datos, habilita el inicio de sesión, los topes de equipos y el control de comidas y la opción de equipos y la fase del evento y la preinscripción',
       () async {
     final dir = await Directory.systemTemp.createTemp('mievento_mig');
     final file = File('${dir.path}/db.sqlite');
@@ -49,7 +49,7 @@ void main() {
     expect(people, hasLength(1));
     expect(people.single.firstName, 'Juan');
     expect(people.single.createdBy, isNull);
-    expect((await db.select(db.appMeta).getSingle()).schemaVersion, 7);
+    expect((await db.select(db.appMeta).getSingle()).schemaVersion, 8);
     expect(await db.select(db.controlSessions).get(),
         isEmpty); // la tabla nueva columna existe y se puede consultar
     final e = await db.select(db.events).getSingle();
@@ -61,5 +61,35 @@ void main() {
     // v7: lo anterior cuenta como asistencia confirmada.
     expect(people.single.status, 'confirmed');
     expect(people.single.confirmedAt, isNull);
+  });
+
+  test(
+      'migración v7 → v8 conserva a los usuarios y añade «contraseña temporal» en falso',
+      () async {
+    final dir = await Directory.systemTemp.createTemp('mievento_mig8');
+    final file = File('${dir.path}/db.sqlite');
+    addTearDown(() => dir.delete(recursive: true));
+    var db = AppDatabase(NativeDatabase(file));
+    await db.into(db.appUsers).insert(AppUsersCompanion.insert(
+        id: 'u1',
+        createdAt: DateTime.utc(2026),
+        updatedAt: DateTime.utc(2026),
+        originDeviceId: 'd',
+        username: 'ana',
+        displayName: 'Ana',
+        role: 'admin',
+        passwordHash: 'x'));
+    await db.customStatement(
+        'ALTER TABLE app_users DROP COLUMN must_change_password');
+    await db.customStatement('UPDATE app_meta SET schema_version = 7');
+    await db.customStatement('PRAGMA user_version = 7');
+    await db.close();
+
+    db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    final u = await db.select(db.appUsers).getSingle();
+    expect(u.username, 'ana');
+    expect(u.mustChangePassword, isFalse);
+    expect((await db.select(db.appMeta).getSingle()).schemaVersion, 8);
   });
 }

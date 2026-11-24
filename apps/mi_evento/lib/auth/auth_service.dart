@@ -84,7 +84,8 @@ class AuthService {
   }
 
   Future<AppUser> _insertUser(
-      String username, String displayName, String password, String role) async {
+      String username, String displayName, String password, String role,
+      {bool mustChange = false}) async {
     final u = normalizeUsername(username);
     final exists = await (db.select(db.appUsers)
           ..where((x) => x.username.equals(u)))
@@ -104,6 +105,7 @@ class AuthService {
           displayName: displayName.trim(),
           role: role,
           passwordHash: await _hash(password),
+          mustChangePassword: Value(mustChange),
         ));
     return (db.select(db.appUsers)..where((x) => x.id.equals(id))).getSingle();
   }
@@ -206,11 +208,13 @@ class AuthService {
       {required String username,
       required String displayName,
       required String password,
-      bool admin = false}) async {
+      bool admin = false,
+      bool mustChange = false}) async {
     _requireAdmin(actor);
     _checkNewCredentials(username, displayName, password);
     return _insertUser(
-        username, displayName, password, admin ? 'admin' : 'operator');
+        username, displayName, password, admin ? 'admin' : 'operator',
+        mustChange: mustChange);
   }
 
   Future<void> changeOwnPassword(
@@ -222,13 +226,22 @@ class AuthService {
     }
     final pe = PasswordPolicy.validate(next, username: u.username);
     if (pe.isNotEmpty) throw AuthException(pe.first);
+    if (next == current) {
+      throw AuthException(
+          'La contraseña nueva debe ser distinta de la actual.');
+    }
     await _setPassword(u.id, next);
   }
+
+  /// El usuario tal como está ahora en la base (p. ej. tras cambiar su contraseña).
+  Future<AppUser> userById(String id) =>
+      (db.select(db.appUsers)..where((x) => x.id.equals(id))).getSingle();
 
   Future<void> _setPassword(String id, String password) async {
     await (db.update(db.appUsers)..where((x) => x.id.equals(id))).write(
         AppUsersCompanion(
             passwordHash: Value(await _hash(password)),
+            mustChangePassword: const Value(false),
             failedAttempts: const Value(0),
             lockedUntil: const Value(null),
             updatedAt: Value(DateTime.now().toUtc())));
