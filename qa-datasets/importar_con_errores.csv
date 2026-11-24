@@ -1,0 +1,23 @@
+﻿id;numero;nombre;apellido1;apellido2;sexo;edad;iglesia;provincia;municipio;telefono;necesita_hospedaje;hospedaje;equipo;pareja_numero;grupos;observaciones
+;;Lucía;Prueba;Uno;Mujer;28;Bautista Ebenezer;;;;;;;;;
+;;Óscar;Prueba;Dos;Hombre;35;Bautista Ebenezer;;;;;;;;;
+;;;SinNombre;;Mujer;30;Bautista Ebenezer;;;;;;;;;
+;;SinApellido;;;Hombre;30;Bautista Ebenezer;;;;;;;;;
+;;Sexo;Raro;;Otro;30;Bautista Ebenezer;;;;;;;;;
+;;Edad;Texto;;Mujer;treinta;Bautista Ebenezer;;;;;;;;;
+;;Edad;Cero;;Mujer;0;Bautista Ebenezer;;;;;;;;;
+;;Edad;Enorme;;Hombre;111;Bautista Ebenezer;;;;;;;;;
+;;Sin;Iglesia;;Hombre;40;;;;;;;;;;
+;;Hospedaje;Quizás;;Mujer;22;Bautista Ebenezer;;;;Quizás;;;;;
+;;Pareja;Mala;;Mujer;33;Bautista Ebenezer;;;;;;;abc;;
+DUP-1;;IdUno;Repetido;;Hombre;26;Bautista Ebenezer;;;;;;;;;
+DUP-1;;IdDos;Repetido;;Hombre;27;Bautista Ebenezer;;;;;;;;;
+;500;NumUno;Repetido;;Mujer;31;Bautista Ebenezer;;;;;;;;;
+;500;NumDos;Repetido;;Mujer;32;Bautista Ebenezer;;;;;;;;;
+;;Yamilé;Sánchez;Valdés;Mujer;17;Iglesia del Nazareno Peñas Altas;;;;;;;;;
+;;Lucía;Prueba;Uno;Mujer;28;Bautista Ebenezer;;;;;;;;;
+;;Hotel;Fantasma;;Hombre;45;Bautista Ebenezer;;;;Sí;Hotel Fantasma;;;;
+;;Equipo;Inventado;;Mujer;19;Bautista Ebenezer;;;;;;Equipo Inventado;;;
+;;Pareja;Perdida;;Hombre;50;Bautista Ebenezer;;;;;;;999;;
+;;Con;Grupos;;Mujer;24;Bautista Ebenezer;;;;;;;;Coro nuevo|Jóvenes Ebenezer;"Texto con ""comillas""; punto y coma
+y salto de línea"

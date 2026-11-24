@@ -1,0 +1,23 @@
+﻿nombre;tipo;acepta;capacidad;ocupadas;libres;anfitrion;telefono;indicaciones;cercania
+Albergue Betania Mujeres;Albergue;Solo mujeres;25;25;0;;;;A 5 minutos del templo
+Albergue Central Hombres;Albergue;Solo hombres;30;30;0;;;;A 5 minutos del templo
+Albergue Escuela Hombres;Albergue;Solo hombres;25;25;0;;;;A 5 minutos del templo
+Albergue Juvenil Mujeres;Albergue;Solo mujeres;30;30;0;;;;A 5 minutos del templo
+Casa Familia Gómez;Casa particular;Matrimonios;10;10;0;Pedro Gómez;;;A 10 cuadras
+Casa Familia Núñez;Casa particular;Matrimonios;6;0;6;Ana Núñez;;;A 10 cuadras
+Casa Familia Ortiz;Casa particular;Matrimonios;10;2;8;Luis Ortiz;;;A 10 cuadras
+Casa Familia Peña;Casa particular;Matrimonios;6;0;6;Raúl Peña;;;A 10 cuadras
+Casa Familia Rivas;Casa particular;Matrimonios;8;0;8;Julio Rivas;;;A 10 cuadras
+Casa Familia Ñáñez;Casa particular;Matrimonios;8;0;8;Rolando Ñáñez;;;A 10 cuadras
+Casa Hna. Carmen Soto;Casa particular;Solo mujeres;15;15;0;Carmen Soto;;;A 10 cuadras
+Casa Hna. Rosa Leyva;Casa particular;Sin preferencia;8;2;6;Rosa Leyva;;;A 10 cuadras
+Casa Hna. Teresa Gil;Casa particular;Solo mujeres;15;8;7;Teresa Gil;;;A 10 cuadras
+Casa Hna. Ñuri Peña;Casa particular;Solo mujeres;15;0;15;Ñuri Peña;;;A 10 cuadras
+Casa Hno. Elier Piñeiro;Casa particular;Sin preferencia;6;4;2;Elier;;;A 10 cuadras
+Casa Hno. Julián Báez;Casa particular;Solo hombres;15;15;0;Julián Báez;;;A 10 cuadras
+Casa Hno. Osvaldo Díaz;Casa particular;Solo hombres;15;15;0;Osvaldo Díaz;;;A 10 cuadras
+Casa Hno. Ramón Cruz;Casa particular;Solo hombres;15;3;12;Ramón Cruz;;;A 10 cuadras
+Casa Hno. Yunier Acosta;Casa particular;Sin preferencia;8;0;8;Yunier;;;A 10 cuadras
+Casa Pastoral;Casa particular;Sin preferencia;12;12;0;Pastor Iván;;;A 10 cuadras
+Posada Betel;Albergue;Sin preferencia;20;20;0;;;;A 5 minutos del templo
+Posada Monte Sión;Albergue;Sin preferencia;10;0;10;;;;A 5 minutos del templo

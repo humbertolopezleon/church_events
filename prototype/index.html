@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mi Evento — Prototipo</title>
+<style>
+:root{--azul:#1D4E89;--azul-s:#E6EEF8;--nar:#E07A2E;--nar-s:#FDEBDD;--ok:#1B7A43;--ok-s:#E3F4EA;--warn:#E8B53A;--warn-s:#FFF3CC;--err:#B3261E;--err-s:#FCE8E6;--tinta:#18202B;--fondo:#F5F3EE;--gris:#4A5565;--borde:#D5D9E0}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;background:var(--fondo);color:var(--tinta);font-size:17px}
+h1,h2,h3,.h{font-family:Nunito,"Segoe UI Black",system-ui,sans-serif;font-weight:800;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+#shell{display:flex;min-height:100vh}
+#side{width:230px;background:#fff;border-right:1px solid var(--borde);padding:16px 12px;display:none;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+#main{flex:1;min-width:0;display:flex;flex-direction:column}
+#bar{background:var(--azul);color:#fff;padding:14px 16px}
+#bar .t{font-size:22px}#bar .s{font-size:14px;opacity:.88}
+#content{flex:1;padding:16px;max-width:1100px;width:100%;margin:0 auto}
+#tabs{display:flex;background:#fff;border-top:1px solid var(--borde);position:sticky;bottom:0}
+#tabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;font-size:12px;font-weight:700;color:var(--gris);text-decoration:none;min-height:56px;justify-content:center}
+#tabs a.on{color:var(--azul)}#tabs a.on span{background:var(--azul-s);border-radius:99px;padding:1px 14px}
+.nav{display:flex;align-items:center;gap:10px;padding:0 12px;height:48px;border-radius:12px;color:var(--gris);font-weight:700;text-decoration:none}
+.nav.on{background:var(--azul-s);color:var(--azul)}
+@media(min-width:900px){#side{display:flex}#tabs{display:none}#bar{display:none}#content{padding:28px 32px}}
+.card{background:#fff;border:1px solid var(--borde);border-radius:16px;padding:16px}
+.grid{display:grid;gap:12px}.g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.row{display:flex;gap:10px;align-items:center}.wrap{flex-wrap:wrap}.sp{justify-content:space-between}.col{display:flex;flex-direction:column;gap:12px}
+.btn{border:2px solid transparent;border-radius:12px;min-height:56px;padding:0 20px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--azul);color:#fff}
+.btn.o{background:#fff;color:var(--azul);border-color:var(--azul)}.btn.n{background:var(--nar);color:var(--tinta)}.btn.g{background:transparent;color:var(--azul)}.btn.w{background:var(--warn);color:var(--tinta)}.btn.sm{min-height:44px;font-size:16px;padding:0 14px}.btn.r{background:var(--err)}
+@media(min-width:900px){.btn{min-height:48px}}
+label{font-weight:700;font-size:16px;display:block;margin-bottom:4px}
+.in{width:100%;height:56px;border:1.5px solid #8A93A3;border-radius:12px;padding:0 14px;background:#fff;font-size:18px}
+textarea.in{height:80px;padding:12px 14px}
+.in:focus{outline:3px solid #9DB9DD;border-color:var(--azul)}
+.seg{flex:1;height:56px;border-radius:12px;border:1.5px solid #8A93A3;background:#fff;font-weight:700;cursor:pointer}.seg.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.msg{display:flex;gap:12px;align-items:flex-start;border-radius:12px;padding:12px 14px}
+.msg.w{background:var(--warn-s);border:2px solid var(--warn)}.msg.ok{background:var(--ok-s)}.msg.e{background:var(--err-s);outline:2px solid var(--err)}
+.prop{border:2px dashed var(--azul);background:#F3F7FC;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.prop.acc{border-style:solid}
+.tag{align-self:flex-start;background:var(--azul);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px}
+.num{font-size:44px;line-height:1}
+.muted{color:var(--gris);font-size:15px}
+.chip{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px}
+.li{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid #EEF0F3}
+.li:last-child{border:0}
+.av{width:44px;height:44px;border-radius:99px;background:var(--nar-s);color:#8F4512;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.bar{height:14px;border-radius:7px;background:var(--azul-s);overflow:hidden}.bar i{display:block;height:100%;background:var(--azul)}
+.modal{position:fixed;inset:0;background:rgba(24,32,43,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.modal>div{background:#fff;border-radius:24px 24px 0 0;padding:22px 20px;width:100%;max-width:560px;display:flex;flex-direction:column;gap:14px}
+.modal.w>div{background:var(--warn-s);border-top:8px solid var(--warn)}
+@media(min-width:900px){.modal{align-items:center}.modal>div{border-radius:20px}}
+.team{min-height:120px}.team.over{outline:3px dashed var(--azul);background:#F3F7FC}
+.drag{cursor:grab}
+.note{background:#FFF8E1;border:1px dashed #C98A00;border-radius:10px;padding:8px 12px;font-size:14px;color:#6B4600}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;background:var(--tinta);color:#fff;padding:12px 18px;border-radius:12px;z-index:20;display:none}
+.hide{display:none}
+#psheet{display:none}
+@media print{#shell,#toast,.modal{display:none!important}#psheet{display:block!important;padding:0;background:#fff}body{background:#fff}}
+.ps{background:#fff;max-width:760px;margin:0 auto;padding:8px 4px}
+.ps table{width:100%;border-collapse:collapse;margin-top:12px}.ps th,.ps td{border:1px solid #8A93A3;padding:8px 10px;text-align:left;font-size:16px}.ps th{background:var(--azul-s)}
+</style>
+</head>
+<body>
+<div id="shell">
+  <aside id="side"></aside>
+  <div id="main">
+    <header id="bar"></header>
+    <div id="content"></div>
+    <nav id="tabs"></nav>
+  </div>
+</div>
+<div id="psheet"></div>
+<div id="toast" role="status"></div>
+<script>
+/* ===== Datos de ejemplo (en memoria; el prototipo no guarda nada) ===== */
+const IC={
+ home:'<path d="M3 11 12 4l9 7v9H3z"/>',
+ add:'<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6"/>',
+ food:'<path d="M7 2v20M4 2v6a3 3 0 0 0 6 0V2M17 22V2c-2 1-3 4-3 8h3"/>',
+ team:'<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5M14 15c3 0 8 1 8 5"/>',
+ bed:'<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9Z"/>',
+ list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+ chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+ menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+ warn:'<path d="M12 3 2 21h20L12 3Z"/><path d="M12 10v5M12 18h.01"/>',
+ ok:'<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>',
+ swap:'<path d="M7 7h11l-3-3M17 17H6l3 3"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>'
+};
+const ico=(n,s=24)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
+let uid=1;const id=()=>uid++;
+const S={
+ ev:{name:'Retiro de Jóvenes 2026',dates:'12–14 dic',venue:'Campamento Los Pinos, Matanzas',lodging:true},
+ churches:['Bautista Ebenezer','Metodista de Colón','Pentecostal Eben-Ezer','Asamblea Jovellanos'],
+ people:[],teams:[],lodgings:[],
+ sessions:[{id:1,name:'Almuerzo del sábado',closed:false,marks:{}},{id:2,name:'Cena del viernes',closed:true,marks:{}}],
+ cur:1,route:'panel',lastReg:null,dismissedDup:false
+};
+(function seed(){
+ const nm=['Juan','María','Ana','Pedro','Rosa','Luis','Lisandra','Yoandry','Ruth','Carlos','Elena','Daniel','Sara','Mario','Lidia','Jorge','Marta','Abel','Noemí','Raúl'];
+ const ap=['Pérez','Rodríguez','García','Martínez','Díaz','Hernández','Leyva','Iglesias','Pino','Fuentes','Gómez','Valdés'];
+ S.teams=[{id:1,name:'Rojo',color:'#C8453B',cap:null},{id:2,name:'Azul',color:'#2F6DB5',cap:null},{id:3,name:'Verde',color:'#2E8B57',cap:null},{id:4,name:'Amarillo',color:'#D9A400',cap:null}];
+ S.lodgings=[
+  {id:1,name:'Albergue Iglesia Metodista',kind:'Albergue',acc:'M',cap:22,note:'Frente al templo'},
+  {id:2,name:'Casa de Hno. Ramón Leiva',kind:'Casa particular',acc:'H',cap:4,note:'A 300 m del templo'},
+  {id:3,name:'Casa de Hna. Teresa',kind:'Casa particular',acc:'C',cap:4,note:'A 300 m del templo'},
+  {id:4,name:'Albergue Bautista',kind:'Albergue',acc:'H',cap:12,note:'A 1 km'}];
+ for(let i=0;i<48;i++){
+  S.people.push({id:id(),n:nm[i%nm.length],a1:ap[(i*3)%ap.length],a2:ap[(i*5+1)%ap.length],sex:i%2?'F':'M',age:14+((i*7)%40),church:S.churches[i%4],hosp:i%3==0,team:(Math.floor(i/2)%4)+1,lodging:null,num:i+1,group:i>=36&&i<45?1:null,spouse:null});
+ }
+ S.people[10].spouse=S.people[11].id;S.people[11].spouse=S.people[10].id;
+ S.people.filter(p=>p.hosp&&p.sex==='F').slice(0,6).forEach(p=>p.lodging=1);S.people.filter(p=>p.hosp&&p.sex==='M').slice(0,3).forEach(p=>p.lodging=2);
+ S.sessions[0].marks={};S.people.slice(0,30).forEach((p,i)=>S.sessions[0].marks[p.id]={t:'12:'+String(10+i).padStart(2,'0'),by:'Ruth'});
+})();
+const P=i=>S.people.find(p=>p.id===i);
+const full=p=>`${p.n} ${p.a1} ${p.a2}`;
+const norm=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+const initials=p=>p.n[0]+p.a1[0];
+const team=i=>S.teams.find(t=>t.id===i);
+const sess=()=>S.sessions.find(s=>s.id===S.cur);
+const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',2600)};
+const used=l=>S.people.filter(p=>p.lodging===l.id).length;
+/* ===== Equipos: criterio PROVISIONAL (el del diseño) hasta que se elija estrategia ===== */
+const LIM={size:2,sex:4,age:3};
+const issues=(arr)=>{const o=[];const ns=arr.map(x=>x.b.n),mx=Math.max(...ns),mn=Math.min(...ns);
+ if(mx-mn>LIM.size){const a=arr.find(x=>x.b.n===mx),b=arr.find(x=>x.b.n===mn);o.push({k:'Tamaño',team:[a.t.id,b.t.id],txt:`${a.t.name} ${mx} y ${b.t.name} ${mn} (diferencia ${mx-mn}, máximo ${LIM.size}).`})}
+ arr.forEach(x=>{if(x.b.diff>LIM.sex)o.push({k:'Sexo',team:[x.t.id],txt:`${x.t.name} tiene ${x.b.h} hombres y ${x.b.m} mujeres (diferencia ${x.b.diff}, máximo ${LIM.sex}).`})});
+ const ag=arr.filter(x=>x.b.n).map(x=>+x.b.age),amx=Math.max(...ag),amn=Math.min(...ag);
+ if(amx-amn>LIM.age){const a=arr.find(x=>+x.b.age===amx),b=arr.find(x=>+x.b.age===amn);o.push({k:'Edad media',team:[a.t.id,b.t.id],txt:`${a.t.name} ${amx} y ${b.t.name} ${amn} años (diferencia ${(amx-amn).toFixed(1)}, máximo ${LIM.age}).`})}
+ return o};
+const allStats=()=>S.teams.map(t=>({t,b:tstats(t)}));
+const stats=(pp)=>{const h=pp.filter(p=>p.sex==='M').length,m=pp.length-h;return{n:pp.length,h,m,age:pp.length?(pp.reduce((a,p)=>a+p.age,0)/pp.length).toFixed(1):'—',diff:Math.abs(h-m)}};
+const tstats=t=>stats(S.people.filter(p=>p.team===t.id));
+/* ===== Vistas ===== */
+const NAV=[['panel','Panel','home'],['registro','Registrar','add'],['asistentes','Asistentes','list'],['hospedajes','Hospedajes','bed'],['equipos','Equipos','team'],['comidas','Comidas','food'],['reportes','Reportes','chart'],['eventos','Mis eventos','cal']];
+const TABS=[['panel','Evento','home'],['registro','Registrar','add'],['comidas','Comidas','food'],['equipos','Equipos','team'],['mas','Más','menu']];
+const TITLES={panel:'Panel del evento',registro:'Nuevo asistente',asistentes:'Asistentes',hospedajes:'Hospedajes',sugerir:'Sugerir hospedaje',equipos:'Equipos',comidas:'Control de comidas',cierre:'Comida cerrada',reportes:'Reportes',eventos:'Mis eventos',mas:'Más opciones'};
+const V={};
+V.eventos=()=>`<div class="col"><h2>Mis eventos</h2>
+ <button class="card row sp" style="text-align:left;cursor:pointer" data-go="panel"><div><div class="h" style="font-size:22px">${S.ev.name}</div><div class="muted">${S.ev.dates} · ${S.ev.venue}</div><div class="muted">${S.people.length} inscritos</div></div><span class="btn o sm">Abrir</span></button>
+ <div class="card col"><h3>Crear evento</h3>
+  <div><label>Nombre</label><input class="in"></div>
+  <div class="row wrap"><div style="flex:1;min-width:140px"><label>Inicio</label><input type="date" class="in"></div><div style="flex:1;min-width:140px"><label>Fin</label><input type="date" class="in"></div></div>
+  <div><label>Lugar</label><input class="in"></div><div><label>Organizador</label><input class="in"></div>
+  <div class="row sp"><b>Ofrece hospedaje</b><button class="seg on" style="flex:none;width:90px" data-act="noop">Sí</button></div>
+  <button class="btn" data-act="noop">Crear evento</button></div></div>`;
+V.panel=()=>{const h=stats(S.people);return`<div class="col"><div class="hide-pc"><h2>${S.ev.name}</h2><div class="muted">${S.ev.dates} · ${S.ev.venue}</div></div>
+ <div class="grid g3">
+  <div class="card"><div class="muted">Inscritos</div><div class="h num">${h.n}</div><div class="muted">${h.m} mujeres · ${h.h} hombres</div></div>
+  <div class="card"><div class="muted">Necesitan hospedaje</div><div class="h num">${S.people.filter(p=>p.hosp).length}</div><div class="muted">${S.people.filter(p=>p.hosp&&!p.lodging).length} sin asignar</div></div>
+  <div class="card"><div class="muted">${sess().name}</div><div class="h num">${Object.keys(sess().marks).length}<span class="muted" style="font-size:20px"> / ${h.n}</span></div><div class="muted">han pasado</div></div></div>
+ <div class="grid g2">
+  <button class="btn n" data-go="registro" style="min-height:64px">${ico('add')} Registrar asistente</button>
+  <button class="btn o" data-go="comidas" style="min-height:64px">${ico('food')} Control de comidas</button></div>
+ <div class="msg w">${ico('warn',26)}<div><b>Última copia de seguridad: nunca.</b><div class="muted" style="color:#18202B">Guarda una copia para no perder los datos si falla el dispositivo.</div></div><button class="btn w sm" data-act="backup">Guardar copia</button></div></div>`};
+V.mas=()=>`<div class="grid g2">${NAV.filter(n=>['asistentes','hospedajes','reportes','eventos'].includes(n[0])).map(n=>`<button class="card row" style="cursor:pointer;font-weight:700;font-size:18px;text-align:left" data-go="${n[0]}">${ico(n[2])}${n[1]}</button>`).join('')}
+ <button class="card row" style="cursor:pointer;font-weight:700;font-size:18px;text-align:left" data-act="backup">${ico('ok')}Guardar copia / Abrir copia</button></div>`;
+V.registro=()=>{const ch=S.churches.map(c=>`<option value="${c}">`).join('');return`<div class="col" style="max-width:720px">
+ ${S.lastReg?`<div class="msg ok">${ico('ok',28)}<div style="flex:1"><b>¡Listo!</b> ${S.lastReg.n} ${S.lastReg.a1} quedó registrada/o como asistente nº <b>${S.lastReg.num}</b>.</div>${S.lastReg.hosp&&S.ev.lodging?'<button class="btn o sm" data-go="sugerir">Sugerir hospedaje</button>':''}</div>`:''}
+ <form id="f" class="col" autocomplete="off">
+ <div><label for="n">Nombre</label><input id="n" class="in" required></div>
+ <div class="row"><div style="flex:1"><label for="a1">Primer apellido</label><input id="a1" class="in" required></div><div style="flex:1"><label for="a2">Segundo apellido</label><input id="a2" class="in"></div></div>
+ <div id="dup"></div>
+ <div><label>Sexo</label><div class="row"><button type="button" class="seg" data-sex="M">Hombre</button><button type="button" class="seg" data-sex="F">Mujer</button></div></div>
+ <div class="row"><div style="width:110px"><label for="age">Edad</label><input id="age" class="in" inputmode="numeric"></div><div style="flex:1"><label for="ph">Teléfono <span class="muted">(opcional)</span></label><input id="ph" class="in" inputmode="tel"></div></div>
+ <div><label for="ig">Iglesia</label><input id="ig" class="in" list="igs">${'<datalist id="igs">'+ch+'</datalist>'}<div id="igmsg"></div></div>
+ <div class="row"><div style="flex:1"><label>Provincia</label><select class="in"><option>Matanzas</option><option>La Habana</option><option>Villa Clara</option></select></div><div style="flex:1"><label>Municipio</label><select class="in"><option>Cárdenas</option><option>Colón</option><option>Perico</option></select></div></div>
+ <div class="card row sp"><div class="row">${ico('bed',28)}<div><b>Necesita hospedaje</b><div class="muted">Se podrá sugerir un lugar después</div></div></div><input type="checkbox" id="hosp" style="width:28px;height:28px"></div>
+ <details class="card"><summary style="font-weight:700;cursor:pointer;min-height:44px;display:flex;align-items:center">Más datos: matrimonio, grupo, observaciones</summary><div class="col" style="margin-top:12px">
+  <div class="row wrap"><button type="button" class="btn o sm" data-act="noop">Vincular matrimonio…</button><button type="button" class="btn o sm" data-act="noop">Añadir a un grupo…</button></div>
+  <div><label for="ob">Observaciones</label><textarea id="ob" class="in" placeholder="Ej.: llega el sábado"></textarea><div class="muted">Evita datos médicos innecesarios.</div></div></div></details>
+ <div class="row wrap"><button class="btn" type="submit" style="flex:1">Guardar asistente</button><button class="btn g" type="submit" data-again="1">Guardar y registrar otro</button></div>
+ </form></div>`};
+V.asistentes=()=>`<div class="col"><div class="row"><input id="q" class="in" placeholder="Buscar por nombre o número…"><button class="btn" data-go="registro">${ico('add')}Nuevo</button></div><div class="card" id="plist"></div></div>`;
+const plist=q=>{q=norm(q||'');const r=S.people.filter(p=>!q||norm(full(p)).includes(q)||String(p.num)===q).slice(0,40);
+ return r.map(p=>`<div class="li"><div class="av">${initials(p)}</div><div style="flex:1;min-width:0"><b>${full(p)}</b><div class="muted">#${p.num} · ${p.sex==='M'?'Hombre':'Mujer'} · ${p.age} años · ${p.church}</div></div>${p.spouse?'<span title="Matrimonio">'+ico('swap',20)+'</span>':''}${p.team?`<span class="chip" style="background:${team(p.team).color}"></span>`:''}<button class="btn g sm" data-act="noop">Editar</button></div>`).join('')||'<div class="muted">Sin resultados.</div>'};
+V.hospedajes=()=>`<div class="col"><div class="row sp wrap"><div class="muted">${S.lodgings.length} hospedajes · ${S.lodgings.reduce((a,l)=>a+l.cap,0)} plazas</div><div class="row"><button class="btn o" data-act="noop">+ Nuevo hospedaje</button><button class="btn" data-go="sugerir">Sugerir…</button></div></div>
+ <div class="grid g2">${S.lodgings.map(l=>{const u=used(l);return`<div class="card col"><div class="row sp"><b style="font-size:19px">${l.name}</b><span class="muted">${l.kind}</span></div>
+ <div class="muted">Acepta ${{H:'solo hombres',M:'solo mujeres',C:'matrimonios'}[l.acc]} · ${l.note}</div>
+ <div class="bar"><i style="width:${Math.min(100,u/l.cap*100)}%"></i></div><div class="row sp"><span>${u} de ${l.cap} ocupadas</span><button class="btn o sm" data-lod="${l.id}">${ico('list',18)} Imprimir lista</button></div></div>`}).join('')}</div></div>`;
+/* Algoritmo (versión de prototipo) */
+const accepts=(l,ps)=>ps.every(p=>l.acc==='C'?p.spouse&&ps.some(q=>q.id===p.spouse):(l.acc==='H'?p.sex==='M':p.sex==='F'));
+function suggest(ps){
+ const free=l=>l.cap-used(l);
+ const pack=(block)=>{ // un bloque homogéneo
+  const c=S.lodgings.filter(l=>accepts(l,block)&&free(l)>=block.length).sort((a,b)=>(free(a)-block.length)-(free(b)-block.length));
+  return c[0]?[{l:c[0],ps:block}]:null};
+ const one=S.lodgings.find(l=>accepts(l,ps)&&free(l)>=ps.length);
+ if(one)return{parts:[{l:one,ps}],why:'Todos caben juntos y son compatibles.'};
+ const couples=ps.filter(p=>p.spouse&&ps.some(q=>q.id===p.spouse));
+ const rest=ps.filter(p=>!couples.includes(p));
+ const H=rest.filter(p=>p.sex==='M'),M=rest.filter(p=>p.sex==='F');
+ const parts=[];let miss=[];
+ [[couples,'matrimonios'],[H,'hombres'],[M,'mujeres']].forEach(([b,nm])=>{if(!b.length)return;const r=pack(b);if(r)parts.push(...r);else miss.push(b.length+' '+nm)});
+ return{parts,miss,why:'Ningún hospedaje acepta a todos juntos, así que se propone separar por tipo ('+parts.length+' hospedajes).'}
+}
+V.sugerir=()=>{const groups=[{k:'g',label:'Grupo Asamblea Jovellanos',ps:S.people.filter(p=>p.group===1&&p.hosp!==undefined)},{k:'c',label:'Matrimonio '+full(S.people[10]).split(' ').slice(0,2).join(' '),ps:[S.people[10],S.people[11]]},{k:'p',label:full(S.people[3]),ps:[S.people[3]]}];
+ const g=groups.find(x=>x.k===(S.sug||'g'));const r=suggest(g.ps);
+ return`<div class="col"><div class="card"><div class="muted" style="font-weight:700;letter-spacing:.06em">¿PARA QUIÉN?</div><div class="row wrap" style="margin-top:8px">${groups.map(x=>`<button class="seg ${x.k===(S.sug||'g')?'on':''}" style="flex:none;padding:0 16px" data-sug="${x.k}">${x.label} (${x.ps.length})</button>`).join('')}</div></div>
+ <div class="prop"><span class="tag">PROPUESTA</span><h3>${r.parts.length>1?'Dividir en '+r.parts.length+' hospedajes':r.parts.length?'Un solo hospedaje':'Sin hospedaje compatible'}</h3><div class="muted" style="color:#18202B">${r.why}</div>
+ ${r.parts.map(x=>`<div class="card"><b>${x.l.name}</b> <span class="muted">· ${{H:'hombres',M:'mujeres',C:'matrimonios'}[x.l.acc]}</span><div>${x.ps.length} personas · ocupado ${used(x.l)} + ${x.ps.length} nuevas = ${used(x.l)+x.ps.length} de ${x.l.cap}</div></div>`).join('')}
+ ${r.miss&&r.miss.length?`<div class="msg w">${ico('warn')}<div><b>Faltan plazas:</b> ${r.miss.join(', ')}. Registra otro hospedaje o asigna a mano.</div></div>`:''}
+ <div class="row wrap"><button class="btn" data-acc="1">Aceptar</button><button class="btn o" data-act="noop">Modificar</button><button class="btn g" data-go="hospedajes">Descartar</button></div></div>
+ <div class="note">Prototipo: el algoritmo real (sección 3 del plan) puntúa por iglesia, cercanía y ajuste; este solo aplica capacidad y compatibilidad.</div></div>`};
+V.equipos=()=>`<div class="col"><div class="row sp wrap"><div class="muted">${S.teams.length} equipos · ${S.people.length} personas. Arrastra a una persona a otro equipo (PC) o usa «Trasladar».</div><div class="row"><button class="btn o" data-act="noop">${ico('team',20)} Generar automáticamente</button><button class="btn o" data-act="noop">+ Nuevo equipo</button></div></div>
+ ${(()=>{const i=issues(allStats());return i.length?`<div class="msg w">${ico('warn',24)}<div><b>Atención: los equipos no están balanceados.</b>${i.map(x=>`<div style="font-size:15px"><b>${x.k}:</b> ${x.txt}</div>`).join('')}<div class="muted" style="color:#18202B">Puedes continuar de todas formas.</div></div></div>`:`<div class="msg ok">${ico('ok',24)}<div>Equipos balanceados según los topes.</div></div>`})()}<div class="note">Criterio C: diferencia máxima entre equipos — tamaño ±${LIM.size}, hombres–mujeres ≤${LIM.sex}, edad media ±${LIM.age} años (configurable).</div>
+ <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">${S.teams.map(t=>{const s=tstats(t);const w=s.diff>LIM.sex;return`<div class="card team col" data-drop="${t.id}" style="border-top:6px solid ${t.color}">
+ <div class="row sp"><h3>${t.name}</h3><div class="h" style="font-size:32px">${s.n}</div></div>
+ <div class="muted">Capitán: ${t.cap?full(P(t.cap)):'sin capitán'}</div><div class="muted">${s.h} hombres · ${s.m} mujeres · edad media ${s.age}</div>
+ <div class="bar"><i style="width:${s.n?s.h/s.n*100:0}%;background:${t.color}"></i></div>
+ ${w?`<div class="msg w">${ico('warn',22)}<div style="font-size:15px">Hombres–mujeres: diferencia de ${s.diff} (máx. ${LIM.sex}).</div></div>`:''}
+ <div>${S.people.filter(p=>p.team===t.id).slice(0,6).map(p=>`<div class="li drag" draggable="true" data-p="${p.id}"><div class="av" style="width:36px;height:36px;font-size:14px">${initials(p)}</div><div style="flex:1;font-size:16px">${p.n} ${p.a1}<div class="muted" style="font-size:13px">${p.sex==='M'?'H':'M'} · ${p.age}</div></div><button class="btn g sm" data-mv="${p.id}" aria-label="Trasladar ${p.n}">${ico('swap',20)}</button></div>`).join('')}</div></div>`}).join('')}</div></div>`;
+V.comidas=()=>{const s=sess(),tot=S.people.length,done=Object.keys(s.marks).length;
+ return`<div class="col" style="max-width:820px"><div class="row sp wrap"><select id="ses" class="in" style="max-width:340px">${S.sessions.map(x=>`<option value="${x.id}" ${x.id===S.cur?'selected':''}>${x.name}${x.closed?' (cerrada)':''}</option>`).join('')}</select><button class="btn o" data-act="cerrar">Cerrar esta comida</button></div>
+ <div class="row" id="cnt"></div>
+ <div class="row"><input id="cq" class="in" placeholder="Buscar por nombre o número…" autofocus><button class="btn o" data-act="qr" title="Fase 2">${ico('add',20)} QR</button></div>
+ <div id="cres" class="card"></div>
+ <div class="row sp"><h3>Últimos en pasar</h3><button class="btn g sm" data-act="pend">Ver pendientes</button></div><div class="card" id="last"></div></div>`};
+const cnt=()=>{const s=sess(),tot=S.people.length,d=Object.keys(s.marks).length;
+ const e=document.getElementById('cnt');if(e)e.innerHTML=`<div class="card" style="flex:1;text-align:center"><div class="muted">Inscritos</div><div class="h num">${tot}</div></div><div class="card" style="flex:1;text-align:center;background:var(--ok-s)"><div class="muted" style="color:#14592F">Pasaron</div><div class="h num" style="color:#14592F">${d}</div></div><div class="card" style="flex:1;text-align:center;background:var(--nar-s)"><div class="muted" style="color:#8F4512">Faltan</div><div class="h num" style="color:#8F4512">${tot-d}</div></div>`;
+ const l=document.getElementById('last');if(l)l.innerHTML=Object.entries(s.marks).slice(-5).reverse().map(([k,m])=>{const p=P(+k);return`<div class="li"><div class="av">${initials(p)}</div><div style="flex:1"><b>${full(p)}</b></div><span class="muted">${m.t}</span><button class="btn g sm" data-undo="${p.id}">Deshacer</button></div>`}).join('')||'<div class="muted">Aún nadie.</div>'};
+const cres=q=>{const e=document.getElementById('cres');q=norm(q||'');if(!q){e.innerHTML='<div class="muted">Escribe un nombre o el número de inscripción. <b>Enter</b> marca el primero.</div>';return}
+ const r=S.people.filter(p=>norm(full(p)).includes(q)||String(p.num)===q).slice(0,6);const s=sess();
+ e.innerHTML=r.map(p=>{const m=s.marks[p.id];return`<div class="li"><div class="av">${initials(p)}</div><div style="flex:1"><b>${full(p)}</b><div class="muted">#${p.num} · ${p.church} · ${p.age} años</div></div>${m?`<span class="muted">pasó ${m.t}</span>`:`<button class="btn n sm" data-mark="${p.id}">Marcar</button>`}</div>`}).join('')||'<div class="muted">Nadie con ese nombre. ¿Falta registrarlo?</div>'};
+V.cierre=()=>{const s=sess(),tot=S.people.length,d=Object.keys(s.marks).length;
+ return`<div class="col" style="max-width:720px"><div class="msg ok">${ico('ok',28)}<b>${s.name} cerrado</b></div>
+ <div class="grid g3"><div class="card"><div class="muted">INSCRITOS</div><div class="h num">${tot}</div></div><div class="card" style="background:var(--ok-s)"><div class="muted">PASARON</div><div class="h num">${d}</div><div class="muted">${Math.round(d/tot*100)} %</div></div><div class="card" style="background:var(--nar-s)"><div class="muted">NO PASARON</div><div class="h num">${tot-d}</div></div></div>
+ <div class="card col"><h3>Por equipo</h3>${S.teams.map(t=>{const a=S.people.filter(p=>p.team===t.id),b=a.filter(p=>s.marks[p.id]).length;return`<div><div class="row sp"><span><span class="chip" style="background:${t.color}"></span>${t.name}</span><b>${b} / ${a.length}</b></div><div class="bar"><i style="width:${a.length?b/a.length*100:0}%;background:${t.color}"></i></div></div>`}).join('')}</div>
+ <div class="card col"><h3>Exportar</h3><div class="row wrap"><button class="btn o" data-act="csv">CSV</button><button class="btn o" data-act="xlsx">Excel (.xlsx)</button><button class="btn n" data-act="img">Imagen para WhatsApp</button></div><div class="muted">La imagen solo lleva cifras, nunca nombres. La lista de quienes no pasaron va en CSV/Excel.</div></div>
+ <button class="btn g" data-go="comidas">← Volver a comidas</button></div>`};
+V.reportes=()=>{const by=(f)=>{const m={};S.people.forEach(p=>{const k=f(p);m[k]=(m[k]||0)+1});return Object.entries(m)};
+ const rng=a=>a<18?'12–17':a<26?'18–25':a<41?'26–40':'41+';
+ const blk=(t,e)=>{const mx=Math.max(...e.map(x=>x[1]));return`<div class="card col"><h3>${t}</h3>${e.map(([k,v])=>`<div><div class="row sp"><span>${k}</span><b>${v}</b></div><div class="bar"><i style="width:${v/mx*100}%"></i></div></div>`).join('')}</div>`};
+ return`<div class="col"><div class="row wrap"><button class="btn o" data-act="csv">Exportar CSV</button><button class="btn o" data-act="xlsx">Excel</button><button class="btn o" data-act="print">Imprimir</button></div><div class="grid g2">
+ ${blk('Por sexo',by(p=>p.sex==='M'?'Hombres':'Mujeres'))}${blk('Por rango de edad',by(p=>rng(p.age)).sort())}${blk('Por iglesia',by(p=>p.church))}${blk('Por equipo',by(p=>team(p.team).name))}${blk('Por hospedaje',by(p=>p.lodging?S.lodgings.find(l=>l.id===p.lodging).name:p.hosp?'Sin asignar':'No necesita'))}</div></div>`};
+/* ===== Render y eventos ===== */
+function render(){
+ const r=S.route;
+ document.getElementById('side').innerHTML=`<div class="row" style="padding:8px 12px 16px"><svg width="40" height="40" viewBox="0 0 72 72"><rect width="72" height="72" rx="20" fill="#1D4E89"/><circle cx="28" cy="32" r="11" fill="none" stroke="#fff" stroke-width="5"/><circle cx="44" cy="32" r="11" fill="none" stroke="#E07A2E" stroke-width="5"/><path d="M20 54h32" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg><h3>Mi Evento</h3></div><div class="muted" style="padding:0 12px 10px">${S.ev.name}</div>`+NAV.map(n=>`<a href="#" class="nav ${n[0]===r||(r==='sugerir'&&n[0]==='hospedajes')||(r==='cierre'&&n[0]==='comidas')?'on':''}" data-go="${n[0]}">${ico(n[2])}${n[1]}</a>`).join('');
+ document.getElementById('bar').innerHTML=`<div class="t h">${TITLES[r]||''}</div><div class="s">${S.ev.name}</div>`;
+ document.getElementById('tabs').innerHTML=TABS.map(t=>`<a href="#" class="${t[0]===r||(t[0]==='mas'&&['asistentes','hospedajes','sugerir','reportes','eventos','cierre'].includes(r))?'on':''}" data-go="${t[0]}"><span>${ico(t[2])}</span>${t[1]}</a>`).join('');
+ const c=document.getElementById('content');
+ c.innerHTML=(window.innerWidth>=900?`<h2 style="margin-bottom:16px;font-size:30px">${TITLES[r]||''}</h2>`:'')+V[r]();
+ if(r==='asistentes'){const q=document.getElementById('q');const u=()=>document.getElementById('plist').innerHTML=plist(q.value);q.oninput=u;u()}
+ if(r==='comidas'){cnt();cres('');const q=document.getElementById('cq');q.oninput=()=>cres(q.value);q.onkeydown=e=>{if(e.key==='Enter'){const b=document.querySelector('[data-mark]');if(b)b.click()}if(e.key==='Escape'){q.value='';cres('')}};document.getElementById('ses').onchange=e=>{S.cur=+e.target.value;render()}}
+ if(r==='registro'){sex=null;const chk=()=>{const n=norm(v('n')),a=norm(v('a1')),ag=+v('age');const d=document.getElementById('dup');const m=S.people.find(p=>n&&a&&norm(p.n)===n&&norm(p.a1)===a&&(!ag||p.age===ag));
+  d.innerHTML=m&&!S.dismissedDup?`<div class="msg w" style="flex-direction:column"><div class="row">${ico('warn',26)}<div><b>¿Ya está registrado?</b><div style="font-size:15px">Hay un <b>${full(m)}</b>, ${m.age} años, de ${m.church}.</div></div></div><div class="row"><button type="button" class="btn o sm" data-act="noop">Ver ese registro</button><button type="button" class="btn g sm" data-act="otra">Es otra persona</button></div></div>`:''};
+  ['n','a1','age'].forEach(k=>document.getElementById(k).oninput=chk);
+  document.getElementById('ig').oninput=e=>{const x=e.target.value.trim();document.getElementById('igmsg').innerHTML=x&&!S.churches.some(c=>norm(c)===norm(x))?`<button type="button" class="btn g sm" data-act="newch">+ Registrar «${x}» como iglesia nueva</button>`:''};
+  document.getElementById('f').onsubmit=save}
+}
+let sex=null;const v=k=>document.getElementById(k).value.trim();
+function save(e){e.preventDefault();const errs=[];if(!v('n'))errs.push('el nombre');if(!v('a1'))errs.push('el primer apellido');if(!sex)errs.push('el sexo');if(!(+v('age')>0))errs.push('la edad');if(!v('ig'))errs.push('la iglesia');
+ if(errs.length){toast('Falta '+errs.join(', ')+'.');return}
+ const ig=v('ig');if(!S.churches.some(c=>norm(c)===norm(ig)))S.churches.push(ig);
+ const p={id:id(),n:v('n'),a1:v('a1'),a2:v('a2'),sex,age:+v('age'),church:ig,hosp:document.getElementById('hosp').checked,team:null,lodging:null,num:S.people.length+1,group:null,spouse:null};
+ S.people.push(p);S.lastReg=p;S.dismissedDup=false;toast('Listo. '+p.n+' quedó registrado/a.');render()}
+function go(r){S.route=r;if(r!=='registro')S.lastReg=r==='sugerir'?S.lastReg:null;render();scrollTo(0,0)}
+function modal(html,cls=''){const m=document.createElement('div');m.className='modal '+cls;m.innerHTML='<div>'+html+'</div>';m.onclick=e=>{if(e.target===m)m.remove()};document.body.appendChild(m);return m}
+function moveModal(pid,to){const p=P(pid);const from=team(p.team),dst=team(to);if(from.id===dst.id)return;
+ const a=[from,dst].map(t=>({t,b:tstats(t)}));const after=[from,dst].map(t=>{const pp=S.people.filter(x=>x.team===t.id&&x.id!==pid);if(t.id===dst.id)pp.push(p);return{t,b:stats(pp)}});
+ const nowAll=S.teams.map(t=>{let pp=S.people.filter(x=>x.team===t.id&&x.id!==pid);if(t.id===dst.id)pp=pp.concat([p]);return{t,b:stats(pp)}});
+ const before=issues(allStats()).map(x=>x.k+x.txt),aft=issues(nowAll);const warn=aft;
+ const m=modal(`<h3>Confirmar traslado</h3><div class="row"><div class="av">${initials(p)}</div><div><b>${full(p)}</b><div class="muted">${p.sex==='M'?'Hombre':'Mujer'} · ${p.age} años</div></div></div>
+ <div class="row sp"><b>${from.name}</b>${ico('swap')}<b>${dst.name}</b></div>
+ ${a.map((x,i)=>`<div class="card">${x.t.name}: <b>${x.b.h}H·${x.b.m}M</b> → <b>${after[i].b.h}H·${after[i].b.m}M</b> (edad media ${x.b.age} → ${after[i].b.age})</div>`).join('')}
+ ${warn.length?`<div class="msg w">${ico('warn',24)}<div>${warn.map(w=>`<div><b>${w.k}:</b> ${w.txt}</div>`).join('')}<div class="muted" style="color:#18202B">Puedes continuar si es necesario.</div></div></div>`:`<div class="msg ok">${ico('ok',24)}<div>El balance se mantiene dentro del límite.</div></div>`}
+ <button class="btn ${warn.length?'w':''}" id="okm">${warn.length?'Trasladar de todas formas':'Trasladar'}</button><button class="btn g" id="nom">Cancelar</button>`,warn.length?'w':'');
+ m.querySelector('#okm').onclick=()=>{p.team=to;m.remove();toast('Trasladado a '+dst.name+'.');render()};m.querySelector('#nom').onclick=()=>m.remove()}
+function lodgeSheet(l,phone){const pp=S.people.filter(p=>p.lodging===l.id).sort((a,b)=>norm(a.a1+a.n).localeCompare(norm(b.a1+b.n)));
+ return`<div class="ps"><div class="row sp"><div><h2>${l.name}</h2><div class="muted">${S.ev.name} · ${S.ev.dates}</div></div><div class="muted" style="text-align:right">Impreso: ${new Date().toLocaleDateString('es')}</div></div>
+ <div style="margin-top:10px"><b>Tipo:</b> ${l.kind} · <b>Capacidad:</b> ${l.cap} · <b>Ocupadas:</b> ${pp.length}<br><b>Cómo llegar:</b> ${l.note}</div>
+ <table><thead><tr><th>#</th><th>Nombre</th><th>Sexo</th><th>Edad</th><th>Iglesia</th>${phone?'<th>Teléfono</th>':''}<th>Observaciones</th></tr></thead><tbody>
+ ${pp.map((p,i)=>`<tr><td>${i+1}</td><td>${full(p)}</td><td>${p.sex==='M'?'H':'M'}</td><td>${p.age}</td><td>${p.church}</td>${phone?'<td>—</td>':''}<td></td></tr>`).join('')||'<tr><td colspan="6">Nadie asignado todavía.</td></tr>'}</tbody></table>
+ <div class="muted" style="margin-top:12px">Lista de uso exclusivo del anfitrión. Por favor no la compartas ni la dejes a la vista.</div></div>`}
+function lodgeModal(id){const l=S.lodgings.find(x=>x.id===id);let ph=false;
+ const m=modal(`<h3>Lista para ${l.name}</h3><div id="pv" style="max-height:46vh;overflow:auto;border:1px solid var(--borde);border-radius:12px"></div>
+ <label class="row" style="font-weight:400"><input type="checkbox" id="ph2" style="width:22px;height:22px"> Incluir teléfono de cada persona <span class="muted">(por defecto no se imprime)</span></label>
+ <div class="row wrap"><button class="btn" id="pr">Imprimir</button><button class="btn o" id="pdf">Guardar como PDF</button><button class="btn g" id="cl">Cerrar</button></div>
+ <div class="muted">En la app real: «Imprimir» abre el diálogo de la impresora conectada y «Guardar como PDF» crea el archivo para compartir por WhatsApp.</div>`);
+ const draw=()=>{m.querySelector('#pv').innerHTML=lodgeSheet(l,ph)};draw();
+ m.querySelector('#ph2').onchange=e=>{ph=e.target.checked;draw()};
+ const doPrint=()=>{document.getElementById('psheet').innerHTML=lodgeSheet(l,ph);window.print()};
+ m.querySelector('#pr').onclick=doPrint;m.querySelector('#pdf').onclick=()=>{toast('En el diálogo elige «Guardar como PDF».');setTimeout(doPrint,400)};m.querySelector('#cl').onclick=()=>m.remove()}
+function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
+function csv(){const s=sess();const rows=[['N','Nombre','Apellido 1','Apellido 2','Sexo','Edad','Iglesia','Equipo','Pasó','Hora']].concat(S.people.map(p=>[p.num,p.n,p.a1,p.a2,p.sex,p.age,p.church,p.team?team(p.team).name:'',s.marks[p.id]?'Sí':'No',s.marks[p.id]?.t||'']));
+ download('mi-evento.csv',new Blob(['﻿'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n')],{type:'text/csv'}))}
+function img(){const s=sess(),tot=S.people.length,d=Object.keys(s.marks).length;const c=document.createElement('canvas');c.width=1080;c.height=1350;const g=c.getContext('2d');
+ g.fillStyle='#F5F3EE';g.fillRect(0,0,1080,1350);g.fillStyle='#1D4E89';g.fillRect(0,0,1080,230);g.fillStyle='#fff';g.font='800 56px Nunito,system-ui,sans-serif';g.fillText(S.ev.name,60,110);g.font='36px system-ui';g.fillText(s.name,60,170);
+ g.fillStyle='#18202B';g.font='800 260px Nunito,system-ui,sans-serif';g.fillText(Math.round(d/tot*100)+'%',60,520);g.font='40px system-ui';g.fillStyle='#4A5565';g.fillText(d+' de '+tot+' pasaron · '+(tot-d)+' no pasaron',60,590);
+ S.teams.forEach((t,i)=>{const a=S.people.filter(p=>p.team===t.id),b=a.filter(p=>s.marks[p.id]).length,y=680+i*120;g.fillStyle='#18202B';g.font='700 38px system-ui';g.fillText(t.name,60,y+30);g.fillText(b+'/'+a.length,900,y+30);g.fillStyle='#E6EEF8';g.fillRect(60,y+48,960,22);g.fillStyle=t.color;g.fillRect(60,y+48,a.length?960*b/a.length:0,22)});
+ g.fillStyle='#4A5565';g.font='30px system-ui';g.fillText('Hecho con Mi Evento',60,1290);c.toBlob(b=>download('resumen-comida.png',b))}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-go],[data-act],[data-sex],[data-mark],[data-undo],[data-mv],[data-sug],[data-acc],[data-again],[data-lod]');if(!t)return;
+ if(t.dataset.lod)return lodgeModal(+t.dataset.lod);
+ if(t.dataset.go){e.preventDefault();return go(t.dataset.go)}
+ if(t.dataset.sex){sex=t.dataset.sex;document.querySelectorAll('[data-sex]').forEach(b=>b.classList.toggle('on',b===t));return}
+ if(t.dataset.mark){const s=sess(),p=P(+t.dataset.mark);if(s.marks[p.id])return;s.marks[p.id]={t:new Date().toTimeString().slice(0,5),by:'Operador'};cnt();document.getElementById('cq').select();cres('');toast('Pasó: '+full(p));return}
+ if(t.dataset.undo){delete sess().marks[+t.dataset.undo];cnt();return}
+ if(t.dataset.mv){const p=P(+t.dataset.mv);const m=modal('<h3>Trasladar a…</h3>'+S.teams.filter(x=>x.id!==p.team).map(x=>`<button class="btn o" data-to="${x.id}"><span class="chip" style="background:${x.color}"></span>${x.name}</button>`).join('')+'<button class="btn g" id="c">Cancelar</button>');m.querySelectorAll('[data-to]').forEach(b=>b.onclick=()=>{m.remove();moveModal(p.id,+b.dataset.to)});m.querySelector('#c').onclick=()=>m.remove();return}
+ if(t.dataset.sug){S.sug=t.dataset.sug;return render()}
+ if(t.dataset.acc){toast('Hospedaje aceptado (prototipo: no se guarda).');return go('hospedajes')}
+ const a=t.dataset.act;
+ if(a==='otra'){S.dismissedDup=true;document.getElementById('dup').innerHTML='';return}
+ if(a==='newch'){const x=v('ig');if(x){S.churches.push(x);document.getElementById('igs').innerHTML+=`<option value="${x}">`;document.getElementById('igmsg').innerHTML='';toast('Iglesia añadida al catálogo.')}return}
+ if(a==='cerrar'){const m=modal('<h3>¿Cerrar «'+sess().name+'»?</h3><div class="muted">Ya no se podrá marcar, pero puedes reabrirla.</div><button class="btn" id="y">Cerrar y ver resumen</button><button class="btn g" id="n">Cancelar</button>');m.querySelector('#y').onclick=()=>{sess().closed=true;m.remove();go('cierre')};m.querySelector('#n').onclick=()=>m.remove();return}
+ if(a==='pend'){const s=sess();const pp=S.people.filter(p=>!s.marks[p.id]);modal(`<h3>Faltan (${pp.length})</h3><div style="max-height:50vh;overflow:auto">${pp.map(p=>`<div class="li"><div class="av">${initials(p)}</div><div style="flex:1">${full(p)}<div class="muted">${p.church}</div></div></div>`).join('')}</div><button class="btn" onclick="this.closest('.modal').remove()">Cerrar</button>`);return}
+ if(a==='csv'||a==='xlsx'){if(a==='xlsx')toast('Prototipo: se descarga CSV (el .xlsx llega con la app real).');return csv()}
+ if(a==='img')return img();
+ if(a==='print')return window.print();
+ if(a==='backup')return toast('Prototipo: aquí se genera el archivo .mievento.');
+ if(a==='qr')return toast('Lectura de QR: Fase 2.');
+ if(a==='noop')return toast('Pantalla pendiente en el prototipo.')
+});
+document.addEventListener('submit',e=>{});
+/* arrastrar y soltar (PC) */
+document.addEventListener('dragstart',e=>{const d=e.target.closest('[data-p]');if(d){e.dataTransfer.setData('text/plain',d.dataset.p)}});
+document.addEventListener('dragover',e=>{const t=e.target.closest('[data-drop]');if(t){e.preventDefault();document.querySelectorAll('.team').forEach(x=>x.classList.toggle('over',x===t))}});
+document.addEventListener('drop',e=>{const t=e.target.closest('[data-drop]');document.querySelectorAll('.team').forEach(x=>x.classList.remove('over'));if(t){e.preventDefault();moveModal(+e.dataTransfer.getData('text/plain'),+t.dataset.drop)}});
+window.addEventListener('resize',()=>{clearTimeout(window._r);window._r=setTimeout(()=>{if(!document.querySelector('.modal')&&!['registro','comidas'].includes(S.route))render()},150)});
+/* "Guardar y registrar otro" */
+document.addEventListener('click',e=>{if(e.target.closest('[data-again]'))S.again=true});
+render();
+</script>
+</body>
+</html>

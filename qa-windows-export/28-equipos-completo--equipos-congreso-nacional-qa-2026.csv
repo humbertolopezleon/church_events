@@ -1,0 +1,217 @@
+﻿equipo;numero;nombre;sexo;edad;iglesia
+Amarillo;1;Lázara Fernández García;Mujer;39;Presbiteriana La Trinidad
+Amarillo;16;Yoandry Fernández Pedroso;Hombre;24;Metodista de Colón
+Amarillo;21;Osvaldo Sánchez Fernández;Hombre;40;Pentecostal Monte Sión
+Amarillo;22;Yaneisy Sánchez Pedroso;Mujer;44;Pentecostal Monte Sión
+Amarillo;28;Rubén O'Farrill Pedroso;Hombre;37;Pentecostal Monte Sión
+Amarillo;49;Yamilé Hernández Núñez;Mujer;37;Iglesia del Nazareno Peñas Altas
+Amarillo;57;Ana Lucía Álvarez Leyva;Mujer;12;Iglesia Evangélica Luz del Mundo
+Amarillo;61;Beatriz Peña Ibáñez;Mujer;39;Pentecostal Monte Sión
+Amarillo;67;Ezequiel Hernández Fernández;Hombre;56;Iglesia del Nazareno Peñas Altas
+Amarillo;68;Sarahí Hernández Echevarría;Mujer;56;Iglesia del Nazareno Peñas Altas
+Amarillo;72;Abel Valdés García;Hombre;30;Presbiteriana La Trinidad
+Amarillo;88;Ángel Valdés Pedroso;Hombre;23;Bautista Getsemaní
+Amarillo;111;Jesús Quiñones Núñez;Hombre;33;Iglesia del Nazareno Peñas Altas
+Amarillo;112;Beatriz Ochoa Álvarez;Mujer;17;Bautista Nuevo Pacto
+Amarillo;114;Joaquín Cabrera Hernández;Hombre;37;Iglesia Evangélica Luz del Mundo
+Amarillo;115;Noemí Cabrera Báez;Mujer;39;Iglesia Evangélica Luz del Mundo
+Amarillo;132;Débora Cabrera Echevarría;Mujer;22;Iglesia del Nazareno Peñas Altas
+Amarillo;134;Jesús Acosta Domínguez;Hombre;70;Bautista Getsemaní
+Amarillo;148;Joaquín Acosta Echevarría;Hombre;30;Bautista Nuevo Pacto
+Amarillo;157;Yudith Núñez Acosta;Mujer;36;Iglesia del Nazareno Peñas Altas
+Amarillo;163;Abel Núñez Peña;Hombre;44;Pentecostal Monte Sión
+Amarillo;175;Mireya Valdés Báez;Mujer;48;Bautista Ebenezer
+Amarillo;176;Andrés O'Farrill Echevarría;Hombre;19;Bautista Ebenezer
+Amarillo;187;Lázara Echevarría Ochoa;Mujer;28;Bautista Nuevo Pacto
+Amarillo;200;María O'Farrill Rodríguez;Mujer;49;Iglesia del Nazareno Peñas Altas
+Amarillo;201;Mario Ibáñez Leyva;Hombre;16;Bautista Ebenezer
+Amarillo;209;Héctor Pérez Pérez;Hombre;34;Bautista Ebenezer
+Azul;2;Abel Cabrera Ibáñez;Hombre;23;Bautista Ebenezer
+Azul;18;Sarahí Álvarez Ochoa;Mujer;25;Bautista Ebenezer
+Azul;19;Ángel Muñoz Núñez;Hombre;69;Metodista de Colón
+Azul;23;Yamilé Cabrera García;Mujer;19;Asambleas de Dios Betel
+Azul;26;José Domínguez Muñoz;Hombre;46;Presbiteriana La Trinidad
+Azul;58;Raúl Cabrera Núñez;Hombre;31;Bautista Nuevo Pacto
+Azul;62;Ezequiel Acosta Sánchez;Hombre;33;Pentecostal Monte Sión
+Azul;69;Ñuri Hernández Valdés;Mujer;53;Iglesia del Nazareno Peñas Altas
+Azul;77;Julián Fernández Núñez;Hombre;39;Bautista Nuevo Pacto
+Azul;78;Mireya Fernández Echevarría;Mujer;41;Bautista Nuevo Pacto
+Azul;84;Ángela Muñoz Peña;Mujer;22;Bautista Ebenezer
+Azul;93;Yudith Echevarría O'Farrill;Mujer;25;Metodista de Colón
+Azul;98;Ñuri García Quiñones;Mujer;38;Asambleas de Dios Betel
+Azul;101;Raúl Pérez Acosta;Hombre;53;Pentecostal Monte Sión
+Azul;102;Lourdes Pérez Acosta;Mujer;56;Pentecostal Monte Sión
+Azul;116;Yoandry García Pedroso;Hombre;16;Presbiteriana La Trinidad
+Azul;131;Osvaldo O'Farrill Hernández;Hombre;27;Pentecostal Monte Sión
+Azul;141;Rubén Peña Peña;Hombre;57;Iglesia Evangélica Luz del Mundo
+Azul;146;Jesús O'Farrill Leyva;Hombre;26;Pentecostal Monte Sión
+Azul;158;Niurka Pedroso Núñez;Mujer;37;Asambleas de Dios Betel
+Azul;164;Inés Ibáñez Muñoz;Mujer;27;Bautista Ebenezer
+Azul;177;Lourdes Leyva Rodríguez;Mujer;30;Asambleas de Dios Betel
+Azul;179;José Pedroso Pedroso;Hombre;39;Bautista Nuevo Pacto
+Azul;189;Elier Quiñones Quiñones;Hombre;34;Presbiteriana La Trinidad
+Azul;190;Yamilé Quiñones Fernández;Mujer;34;Presbiteriana La Trinidad
+Azul;202;Héctor Domínguez Fernández;Hombre;46;Bautista Ebenezer
+Azul;213;Mario Acosta Hernández;Hombre;18;Presbiteriana La Trinidad
+Morado;3;Yoandry Piñeiro Quiñones;Hombre;53;Metodista de Colón
+Morado;11;Ezequiel Muñoz Hernández;Hombre;20;Asambleas de Dios Betel
+Morado;29;Joaquín Hernández Sánchez;Hombre;57;Bautista Ebenezer
+Morado;30;Elier Fernández Báez;Hombre;41;Pentecostal Monte Sión
+Morado;31;Rebeca Fernández Fernández;Mujer;38;Pentecostal Monte Sión
+Morado;41;Héctor Ibáñez Domínguez;Hombre;12;Bautista Ebenezer
+Morado;54;Begoña Domínguez Domínguez;Mujer;22;Bautista Nuevo Pacto
+Morado;55;Mario Álvarez O'Farrill;Hombre;38;Bautista Getsemaní
+Morado;76;María Sánchez Domínguez;Mujer;67;Iglesia Evangélica Luz del Mundo
+Morado;80;Sarahí Báez Echevarría;Mujer;36;Presbiteriana La Trinidad
+Morado;81;Yosvany Piñeiro García;Hombre;28;Iglesia del Nazareno Peñas Altas
+Morado;82;Dayanis Piñeiro Leyva;Mujer;25;Iglesia del Nazareno Peñas Altas
+Morado;106;Mario Ñáñez-Sexom Pérez;Mujer;33;Bautista Ebenezer
+Morado;113;Iván Domínguez Ochoa;Hombre;20;Bautista Ebenezer
+Morado;121;Sarahí Muñoz Ochoa;Mujer;41;Bautista Ebenezer
+Morado;122;Ñuri Sánchez Quiñones;Mujer;38;Bautista Ebenezer
+Morado;133;Yoandry Pedroso Acosta;Hombre;54;Asambleas de Dios Betel
+Morado;138;Yosvany Fernández Báez;Hombre;25;Iglesia Evangélica Luz del Mundo
+Morado;151;Yoandry Hernández Muñoz;Hombre;70;Metodista de Colón
+Morado;153;Inés Sánchez Núñez;Mujer;24;Iglesia Evangélica Luz del Mundo
+Morado;162;Esther Pedroso Cabrera;Mujer;15;Metodista de Colón
+Morado;173;Dayron Cabrera Piñeiro;Hombre;56;Bautista Getsemaní
+Morado;174;Mireya Cabrera Domínguez;Mujer;53;Bautista Getsemaní
+Morado;185;Esther Álvarez Muñoz;Mujer;29;Metodista de Colón
+Morado;191;Dayron Hernández Fernández;Hombre;20;Iglesia del Nazareno Peñas Altas
+Morado;204;José Núñez Quiñones;Hombre;30;Pentecostal Monte Sión
+Morado;212;Niurka García Quiñones;Mujer;37;Bautista Nuevo Pacto
+Naranja;4;Julián Echevarría Valdés;Hombre;57;Presbiteriana La Trinidad
+Naranja;10;Lázara Domínguez García;Mujer;38;Bautista Getsemaní
+Naranja;12;Yamilé Núñez Domínguez;Mujer;15;Bautista Getsemaní
+Naranja;24;Ezequiel Sánchez Peña;Hombre;55;Presbiteriana La Trinidad
+Naranja;25;Yudith Sánchez Muñoz;Mujer;56;Presbiteriana La Trinidad
+Naranja;39;Abel Ochoa Núñez;Hombre;36;Metodista de Colón
+Naranja;46;Mireya Ochoa Rodríguez;Mujer;12;Metodista de Colón
+Naranja;53;María Pérez Báez;Mujer;21;Asambleas de Dios Betel
+Naranja;73;Julián Rodríguez Leyva;Hombre;50;Bautista Getsemaní
+Naranja;74;Dayanis Rodríguez Muñoz;Mujer;48;Bautista Getsemaní
+Naranja;79;Elier Álvarez Leyva;Hombre;22;Metodista de Colón
+Naranja;92;Dayron García Pérez;Hombre;31;Iglesia Evangélica Luz del Mundo
+Naranja;108;Begoña Báez Cabrera;Mujer;17;Metodista de Colón
+Naranja;109;Elier O'Farrill Piñeiro;Hombre;42;Bautista Getsemaní
+Naranja;125;Yosvany Núñez Pérez;Hombre;15;Pentecostal Monte Sión
+Naranja;127;Jesús Fernández Peña;Hombre;36;Pentecostal Monte Sión
+Naranja;128;Inés Fernández Ibáñez;Mujer;32;Pentecostal Monte Sión
+Naranja;136;Iván Valdés Báez;Hombre;62;Presbiteriana La Trinidad
+Naranja;149;María Quiñones O'Farrill;Mujer;66;Pentecostal Monte Sión
+Naranja;154;Lourdes Rodríguez Ibáñez;Mujer;16;Presbiteriana La Trinidad
+Naranja;166;Yosvany Pérez García;Hombre;31;Iglesia del Nazareno Peñas Altas
+Naranja;181;Yaneisy O'Farrill Pérez;Mujer;37;Bautista Nuevo Pacto
+Naranja;184;Rosa Báez Rodríguez;Mujer;56;Bautista Ebenezer
+Naranja;186;Osvaldo Pérez Álvarez;Hombre;37;Asambleas de Dios Betel
+Naranja;192;Raúl Valdés Peña;Hombre;33;Metodista de Colón
+Naranja;203;Joaquín Núñez Valdés;Hombre;25;Iglesia Evangélica Luz del Mundo
+Naranja;214;Mireya Piñeiro Muñoz;Mujer;21;Iglesia del Nazareno Peñas Altas
+Rojo;5;Nicolás Sánchez Fernández;Hombre;21;Pentecostal Monte Sión
+Rojo;14;Noemí García O'Farrill;Mujer;55;Metodista de Colón
+Rojo;17;Héctor O'Farrill Piñeiro;Hombre;17;Metodista de Colón
+Rojo;20;Begoña Valdés O'Farrill;Mujer;67;Metodista de Colón
+Rojo;27;Ana Lucía Pedroso Núñez;Mujer;14;Metodista de Colón
+Rojo;42;Yamilé Acosta Fernández;Mujer;43;Metodista de Colón
+Rojo;45;Magdalena García Peña;Mujer;70;Iglesia Evangélica Luz del Mundo
+Rojo;52;Yosvany García Valdés;Hombre;12;Bautista Getsemaní
+Rojo;65;Julián Leyva Báez;Hombre;13;Bautista Getsemaní
+Rojo;70;Yosvany Álvarez Pérez;Hombre;44;Bautista Getsemaní
+Rojo;71;Yaneisy Álvarez Sánchez;Mujer;47;Bautista Getsemaní
+Rojo;96;Rubén Rodríguez Álvarez;Hombre;54;Iglesia Evangélica Luz del Mundo
+Rojo;97;Ñuri Rodríguez Echevarría;Mujer;52;Iglesia Evangélica Luz del Mundo
+Rojo;100;Orestes García Domínguez;Hombre;21;Presbiteriana La Trinidad
+Rojo;105;Ezequiel Piñeiro Álvarez;Hombre;20;Bautista Getsemaní
+Rojo;117;Yaneisy Hernández Cabrera;Mujer;21;Bautista Getsemaní
+Rojo;139;Iván Muñoz Piñeiro;Hombre;58;Presbiteriana La Trinidad
+Rojo;143;Rubén Báez Quiñones;Hombre;22;Metodista de Colón
+Rojo;150;Niurka Núñez Echevarría;Mujer;30;Iglesia del Nazareno Peñas Altas
+Rojo;159;Yoandry Peña Echevarría;Hombre;33;Presbiteriana La Trinidad
+Rojo;165;Yosvany Báez Sánchez;Hombre;64;Presbiteriana La Trinidad
+Rojo;178;Yudith Pérez Ibáñez;Mujer;28;Presbiteriana La Trinidad
+Rojo;180;Lázara Báez Echevarría;Mujer;20;Bautista Ebenezer
+Rojo;197;Héctor Fernández Sánchez;Hombre;28;Pentecostal Monte Sión
+Rojo;198;Jesús Piñeiro O'Farrill;Hombre;60;Iglesia Evangélica Luz del Mundo
+Rojo;205;Rubén Domínguez Fernández;Hombre;17;Iglesia del Nazareno Peñas Altas
+Rojo;216;Dayanis Ibáñez Báez;Mujer;36;Bautista Ebenezer
+Rosa;6;Lourdes Piñeiro Piñeiro;Mujer;21;Bautista Ebenezer
+Rosa;13;Dayron Peña Leyva;Hombre;52;Metodista de Colón
+Rosa;32;Débora Muñoz Domínguez;Mujer;54;Iglesia del Nazareno Peñas Altas
+Rosa;33;Noemí Domínguez Echevarría;Mujer;23;Metodista de Colón
+Rosa;34;Elier Peña Hernández;Hombre;20;Presbiteriana La Trinidad
+Rosa;40;Lourdes Sánchez Ibáñez;Mujer;53;Presbiteriana La Trinidad
+Rosa;50;Yosvany Quiñones Báez;Hombre;49;Presbiteriana La Trinidad
+Rosa;51;Lázara Quiñones Pedroso;Mujer;49;Presbiteriana La Trinidad
+Rosa;64;Dayanis Acosta Pedroso;Mujer;20;Bautista Getsemaní
+Rosa;85;Sandro Pedroso Quiñones;Hombre;29;Asambleas de Dios Betel
+Rosa;86;Ángela Pedroso Fernández;Mujer;27;Asambleas de Dios Betel
+Rosa;94;Rubén Sánchez Valdés;Hombre;65;Bautista Getsemaní
+Rosa;95;Rubén Piñeiro Fernández;Hombre;17;Bautista Nuevo Pacto
+Rosa;103;Mario Valdés Núñez;Hombre;29;Iglesia Evangélica Luz del Mundo
+Rosa;104;María Valdés Fernández;Mujer;31;Iglesia Evangélica Luz del Mundo
+Rosa;118;Sandro Valdés Pedroso;Hombre;31;Pentecostal Monte Sión
+Rosa;137;Iván Acosta Muñoz;Hombre;45;Bautista Getsemaní
+Rosa;144;Julián Ochoa Núñez;Hombre;46;Pentecostal Monte Sión
+Rosa;147;Osvaldo Rodríguez Hernández;Hombre;21;Metodista de Colón
+Rosa;160;Sandro Ibáñez Rodríguez;Hombre;19;Pentecostal Monte Sión
+Rosa;170;Sarahí Cabrera Domínguez;Mujer;43;Iglesia Evangélica Luz del Mundo
+Rosa;171;Beatriz Echevarría Álvarez;Mujer;43;Bautista Nuevo Pacto
+Rosa;172;Ángel Quiñones Sánchez;Hombre;37;Bautista Nuevo Pacto
+Rosa;196;Begoña Cabrera Báez;Mujer;52;Iglesia del Nazareno Peñas Altas
+Rosa;199;Joaquín Pedroso Leyva;Hombre;23;Pentecostal Monte Sión
+Rosa;208;Yaneisy Rodríguez Cabrera;Mujer;14;Iglesia del Nazareno Peñas Altas
+Rosa;210;Dayanis Cabrera Ibáñez;Mujer;57;Metodista de Colón
+Turquesa;7;Jesús Muñoz Fernández;Hombre;60;Pentecostal Monte Sión
+Turquesa;9;María Domínguez Pedroso;Mujer;13;Iglesia del Nazareno Peñas Altas
+Turquesa;35;Sandro Hernández Pérez;Hombre;44;Metodista de Colón
+Turquesa;36;Dayanis Hernández Báez;Mujer;41;Metodista de Colón
+Turquesa;43;Abel Cabrera Ibáñez;Hombre;24;Bautista Ebenezer
+Turquesa;59;Esther Rodríguez Hernández;Mujer;15;Metodista de Colón
+Turquesa;60;Noemí Leyva Cabrera;Mujer;39;Metodista de Colón
+Turquesa;63;Osvaldo Álvarez García;Hombre;48;Asambleas de Dios Betel
+Turquesa;75;Yoandry Pérez Echevarría;Hombre;54;Bautista Ebenezer
+Turquesa;87;Rubén Pérez Hernández;Hombre;35;Metodista de Colón
+Turquesa;89;Esther Domínguez O'Farrill;Mujer;18;Bautista Ebenezer
+Turquesa;99;Mireya Domínguez Leyva;Mujer;36;Bautista Ebenezer
+Turquesa;107;Sandro Núñez Quiñones;Hombre;39;Bautista Nuevo Pacto
+Turquesa;119;Esther Pérez Sánchez;Mujer;32;Metodista de Colón
+Turquesa;126;Dayron Domínguez Leyva;Hombre;16;Bautista Getsemaní
+Turquesa;129;Noemí Álvarez Peña;Mujer;62;Pentecostal Monte Sión
+Turquesa;140;Noemí Rodríguez Echevarría;Mujer;68;Bautista Nuevo Pacto
+Turquesa;142;Yunier Quiñones Pérez;Hombre;44;Iglesia Evangélica Luz del Mundo
+Turquesa;145;Jesús Echevarría Pedroso;Hombre;18;Bautista Ebenezer
+Turquesa;156;Lourdes Pedroso Peña;Mujer;20;Bautista Nuevo Pacto
+Turquesa;167;Sandro Rodríguez Echevarría;Hombre;44;Pentecostal Monte Sión
+Turquesa;182;Orestes Ochoa Valdés;Hombre;14;Iglesia Evangélica Luz del Mundo
+Turquesa;183;Mario Leyva Rodríguez;Hombre;61;Pentecostal Monte Sión
+Turquesa;188;Joaquín Báez Piñeiro;Hombre;19;Presbiteriana La Trinidad
+Turquesa;193;Begoña Peña Cabrera;Mujer;32;Asambleas de Dios Betel
+Turquesa;206;Yosvany Leyva Muñoz;Hombre;59;Asambleas de Dios Betel
+Turquesa;211;Lázara Pedroso Echevarría;Mujer;21;Bautista Getsemaní
+Verde;8;Julián Sánchez Cabrera;Hombre;44;Bautista Ebenezer
+Verde;15;Niurka Acosta Pedroso;Mujer;26;Bautista Ebenezer
+Verde;37;Débora Echevarría Pedroso;Mujer;44;Bautista Ebenezer
+Verde;38;Iván Echevarría Sánchez;Hombre;41;Pentecostal Monte Sión
+Verde;44;Elier Núñez Rodríguez;Hombre;43;Bautista Getsemaní
+Verde;47;Yosvany Hernández Piñeiro;Hombre;30;Iglesia del Nazareno Peñas Altas
+Verde;48;Rosa Hernández Hernández;Mujer;27;Iglesia del Nazareno Peñas Altas
+Verde;56;Ezequiel Báez Báez;Hombre;15;Metodista de Colón
+Verde;66;Rebeca Domínguez Leyva;Mujer;47;Iglesia del Nazareno Peñas Altas
+Verde;83;Débora Valdés Ochoa;Mujer;57;Asambleas de Dios Betel
+Verde;90;Iván Hernández Ochoa;Hombre;32;Asambleas de Dios Betel
+Verde;91;Inés Hernández Álvarez;Mujer;35;Asambleas de Dios Betel
+Verde;110;Raúl Leyva Pedroso;Hombre;22;Bautista Nuevo Pacto
+Verde;120;Dayanis Álvarez Hernández;Mujer;22;Iglesia Evangélica Luz del Mundo
+Verde;123;Esther Peña Piñeiro;Mujer;38;Bautista Nuevo Pacto
+Verde;124;Mario Pedroso Sánchez;Hombre;18;Bautista Getsemaní
+Verde;130;Rosa Fernández Quiñones;Mujer;61;Bautista Getsemaní
+Verde;135;Yunier Hernández O'Farrill;Hombre;49;Presbiteriana La Trinidad
+Verde;152;Beatriz Muñoz Echevarría;Mujer;21;Bautista Nuevo Pacto
+Verde;155;Osvaldo Cabrera Pedroso;Hombre;14;Bautista Nuevo Pacto
+Verde;161;Raúl Echevarría Piñeiro;Hombre;40;Bautista Ebenezer
+Verde;168;Iván Núñez Ochoa;Hombre;52;Bautista Getsemaní
+Verde;169;Inés Núñez Sánchez;Mujer;54;Bautista Getsemaní
+Verde;194;Héctor Ochoa Pedroso;Hombre;33;Iglesia del Nazareno Peñas Altas
+Verde;195;Noemí Ochoa Domínguez;Mujer;36;Iglesia del Nazareno Peñas Altas
+Verde;207;Rebeca Cabrera Báez;Mujer;25;Iglesia Evangélica Luz del Mundo
+Verde;215;Sandro Álvarez Álvarez;Hombre;19;Metodista de Colón

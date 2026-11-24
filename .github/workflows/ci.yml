@@ -1,0 +1,122 @@
+name: CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Pruebas del núcleo
+        working-directory: packages/mi_evento_core
+        run: |
+          dart pub get
+          dart analyze
+          dart test
+
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Analizar y probar la app
+        working-directory: apps/mi_evento
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter analyze
+          flutter test
+
+  apk:
+    needs: [core, app]
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Firma con clave propia (si hay secretos configurados)
+        working-directory: apps/mi_evento/android
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > app/release.jks
+            printf 'storeFile=release.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+              "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > key.properties
+            echo "SIGNED=release" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sin clave de firma: el APK se firma con la clave de DEPURACIÓN (solo pruebas; no sirve para distribuir de forma definitiva)."
+            echo "SIGNED=debug" >> "$GITHUB_ENV"
+          fi
+      - name: Compilar APK (por ABI, liviano)
+        working-directory: apps/mi_evento
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build apk --release --split-per-abi
+      - name: Renombrar y resumir
+        working-directory: apps/mi_evento/build/app/outputs/flutter-apk
+        run: |
+          V=$(grep -m1 '^version:' ../../../../pubspec.yaml | sed -E 's/version:\s*([0-9.]+).*/\1/')
+          mkdir -p ../../../../dist
+          for f in app-*-release.apk; do
+            abi=${f#app-}; abi=${abi%-release.apk}
+            cp "$f" "../../../../dist/MiEvento-$V-$abi-$SIGNED.apk"
+          done
+          ls -lh ../../../../dist
+          echo "### APK (firma: $SIGNED)" >> "$GITHUB_STEP_SUMMARY"
+          ls -lh ../../../../dist | awk 'NR>1{print "- "$9" — "$5}' >> "$GITHUB_STEP_SUMMARY"
+          echo "Instala **arm64-v8a** en casi todos los móviles actuales; **armeabi-v7a** en móviles viejos de 32 bits." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-android
+          path: apps/mi_evento/dist/*.apk
+
+  windows:
+    needs: [core, app]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Compilar app de Windows
+        working-directory: apps/mi_evento
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build windows --release
+      - name: Incluir el runtime de Visual C++ (para PCs que no lo tengan)
+        working-directory: apps/mi_evento
+        shell: pwsh
+        run: |
+          foreach ($d in 'msvcp140.dll','vcruntime140.dll','vcruntime140_1.dll') {
+            Copy-Item "$env:WINDIR\System32\$d" 'build\windows\x64\runner\Release\' -Force
+          }
+      - name: Instalador (Inno Setup) y ZIP portable
+        working-directory: apps/mi_evento
+        shell: pwsh
+        run: |
+          $v = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9.]+)').Matches[0].Groups[1].Value
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) { choco install innosetup -y --no-progress | Out-Null }
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DAppVersion=$v" windows\installer\mi_evento.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup falló" }
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item "build\installer\MiEvento-Setup-$v.exe" dist\
+          Compress-Archive -Path 'build\windows\x64\runner\Release\*' -DestinationPath "dist\MiEvento-$v-portable.zip"
+          Get-ChildItem dist | ForEach-Object { "- $($_.Name) — {0:N1} MB" -f ($_.Length/1MB) } | Tee-Object -Append $env:GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: apps/mi_evento/dist/*

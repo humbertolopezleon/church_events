@@ -1,0 +1,14 @@
+﻿id;numero;nombre;apellido1;apellido2;sexo;edad;iglesia;provincia;municipio;telefono;necesita_hospedaje;hospedaje;equipo;pareja_numero;grupos;observaciones
+01a20ceb-15c3-7cae-b40f-c6964f7ee8a4;110;Raúl;Leyva;Pedroso;Hombre;22;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;5 573 9400;Sí;;Verde;;;
+01a20ceb-15c5-7a8a-a7c0-37a6e5123b90;112;Beatriz;Ochoa;Álvarez;Mujer;17;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;;Sí;;Amarillo;;;"Diabético, sin azúcar"
+01a20ceb-15d0-78cd-9257-a9a66b7c5b08;123;Esther;Peña;Piñeiro;Mujer;38;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;5 627 1245;Sí;;Verde;;;
+01a20ceb-15e3-7cd1-b4f3-a39b4a0a600e;140;Noemí;Rodríguez;Echevarría;Mujer;68;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;5 743 6858;Sí;;Turquesa;;;
+01a20ceb-15ec-7948-9ed5-c278fdd97f6a;148;Joaquín;Acosta;Echevarría;Hombre;30;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;5 872 4458;Sí;;Amarillo;;;
+01a20ceb-15f1-7377-b0a5-1b810b671788;152;Beatriz;Muñoz;Echevarría;Mujer;21;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;;Sí;;Verde;;;
+01a20ceb-15f4-7ed3-9675-29e50c2af688;155;Osvaldo;Cabrera;Pedroso;Hombre;14;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;;Sí;;Verde;;;
+01a20ceb-15f4-723b-865e-2f805711d28f;156;Lourdes;Pedroso;Peña;Mujer;20;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;;Sí;;Turquesa;;;
+01a20ceb-15ff-726f-a8e9-41324c6b76ea;171;Beatriz;Echevarría;Álvarez;Mujer;43;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;;Sí;;Rosa;;;
+01a20ceb-1600-787d-b175-35e3dcb823d0;172;Ángel;Quiñones;Sánchez;Hombre;37;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;;Sí;;Rosa;;;
+01a20ceb-1605-75eb-b979-885ab8856c6e;179;José;Pedroso;Pedroso;Hombre;39;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;5 633 8413;Sí;;Azul;;;
+01a20ceb-1607-77e2-a6ac-970dfdc85dd2;181;Yaneisy;O'Farrill;Pérez;Mujer;37;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;;Sí;;Naranja;;;
+01a20ceb-160b-7c84-ae0e-9e20479dbb4f;187;Lázara;Echevarría;Ochoa;Mujer;28;Bautista Nuevo Pacto;Cienfuegos;Cienfuegos;;Sí;;Amarillo;;;

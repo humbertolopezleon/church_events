@@ -1,0 +1,9 @@
+id;numero;nombre;apellido1;apellido2;sexo;edad;iglesia;provincia;municipio;telefono;necesita_hospedaje;hospedaje;equipo;pareja_numero;grupos;observaciones
+;;José;Peña;Núñez;Hombre;41;Metodista de Colón;Matanzas;Colón;;No;;;;;
+;;María Ángeles;Muñoz;Quiñones;Mujer;37;Bautista Ebenezer;;;;Sí;;;;;
+;;Ñico;Báez;Piñeiro;Hombre;19;Presbiteriana La Trinidad;;;;;;;;;
+;;Inés;Echevarría;Domínguez;Mujer;55;Iglesia del Nazareno Peñas Altas;;;;;;;;;Prefiere planta baja
+;;Raúl;Ibáñez;;Hombre;63;Pentecostal Monte Sión;;;;;;;;;
+;;Yamilé;Álvarez;Hernández;Mujer;27;Bautista Getsemaní;;;;;;;;;
+;;Joaquín;O'Farrill;;Hombre;33;Asambleas de Dios Betel;;;;;;;;;
+;;Débora;Valdés;Núñez;Mujer;29;Bautista Nuevo Pacto;;;;;;;;;

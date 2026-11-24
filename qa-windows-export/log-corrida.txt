@@ -1,0 +1,126 @@
+   Woah! You appear to be trying to run flutter as root.
+   We strongly recommend running the flutter tool without superuser privileges.
+  /
+    
+00:00 +0: loading /home/user/my_event/apps/mi_evento/qa/windows_qa_test.dart
+00:00 +0: QA Windows de punta a punta (1366x768 y 1920x1080)
+>>> PASO 0 Arranque y entrada a la app a 1366x768 (100 %)
+<<< PASO 0 PASA (0:00:00.002792)
+>>> PASO 1 Crear evento por la UI y configurar hospedajes (22) y equipos (8)
+<<< PASO 1 PASA (0:00:22.902763)
+>>> PASO 2a Formulario   Registrar  : etiquetas, sexo M/F, obligatorios, Tab
+
+Warning: A call to tap() with finder "Found 1 widget with key [<'f-nombre'>]: [
+  TextField-[<'f-nombre'>](controller: TextEditingController#e7cba(TextEditingValue(text:    Luc  a   , selection: TextSelection.collapsed(offset: 5, affinity: TextAffinity.downstream, isDirectional: false), composing: TextRange(start: -1, end: -1))), focusNode: FocusNode#2345a([PRIMARY FOCUS]), decoration: InputDecoration(labelText: "Nombre *"), autofocus: true, textInputAction: next, textCapitalization: words, dependencies: [DefaultSelectionStyle, InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#38880]], state: _TextFieldState#e282d),
+]" derived an Offset (Offset(798.0, -367.0)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(798.0, -367.0) is outside the bounds of the root of the render tree, Size(1366.0, 768.0).
+The finder corresponds to this RenderBox: RenderMouseRegion#3ed39 relayoutBoundary=up19
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#4eae7(_ReusableRenderView#f4383), HitTestEntry<HitTestTarget>#cd6fb(<AutomatedTestWidgetsFlutterBinding>))
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+<<< PASO 2a PASA (0:00:01.541490)
+>>> PASO 2b Registrar 42+ personas a mano (iglesia nueva provincia   municipio   comunidad, matrimonios, preinscritos, hospedaje)
+<<< PASO 2b PASA (0:00:55.917126)
+>>> PASO 2c Duplicado: aviso al escribir, di  logo al guardar (cancelar / guardar igual) y pantalla de   xito
+<<< PASO 2c PASA (0:00:02.840530)
+>>> PASO 3a Importar CSV A (confirmados): ;, UTF-8 con BOM, matrimonios por pareja_numero, filas malas y duplicado
+<<< PASO 3a PASA (0:00:02.160127)
+>>> PASO 3b Importar CSV B   como preinscripci  n   (, sin BOM, Windows-1252, columnas en otro orden, hospedaje del archivo ignorado)
+<<< PASO 3b PASA (0:00:01.786746)
+>>> PASO 3c Totales tras el registro
+<<< PASO 3c PASA (0:00:00.004228)
+>>> PASO 4 Confirmar asistencia por la UI: una a una +   Deshacer  , subconjunto, b  squeda y   a los que se ven  
+<<< PASO 4 PASA (0:00:13.410729)
+>>> PASO 5a Duplicar evento (todo) por   Mis eventos       men       Duplicar evento   
+<<< PASO 5a PASA (0:00:01.916544)
+>>> PASO 5b Duplicar evento solo estructura (sin participantes)
+<<< PASO 5b PASA (0:00:01.908105)
+>>> PASO 5c Pasar participantes a otro evento   : omite repetidos
+<<< PASO 5c PASA (0:00:05.773315)
+>>> PASO 6 Reportes y comidas cuentan SOLO confirmados; aviso al marcar a un preinscrito; filtro   Preinscritos  
+<<< PASO 6 PASA (0:00:09.794324)
+>>> PASO 7.1 Comidas    sesi  n   Almuerzo viernes   (Almuerzo): marcas por la UI, resto por repositorio, cierre y exportaciones
+  [7] abrir evento
+  [7] nueva sesi  n
+  [7] marcas por UI
+  [7] repositorio
+  [7] cerrar
+  [7] exportar
+<<< PASO 7.1 PASA (0:00:29.615013)
+>>> PASO 7.2 Comidas    sesi  n   Cena viernes   (Cena): marcas por la UI, resto por repositorio, cierre y exportaciones
+  [7] abrir evento
+  [7] nueva sesi  n
+  [7] marcas por UI
+  [7] repositorio
+  [7] cerrar
+  [7] exportar
+<<< PASO 7.2 PASA (0:00:17.734321)
+>>> PASO 7.3 Comidas    sesi  n   Almuerzo s  bado   (Almuerzo): marcas por la UI, resto por repositorio, cierre y exportaciones
+  [7] abrir evento
+  [7] nueva sesi  n
+  [7] marcas por UI
+  [7] repositorio
+  [7] cerrar
+  [7] exportar
+<<< PASO 7.3 PASA (0:00:14.886505)
+>>> PASO 7.4 Comidas    sesi  n   Cena s  bado   (Cena): marcas por la UI, resto por repositorio, cierre y exportaciones
+  [7] abrir evento
+  [7] nueva sesi  n
+  [7] marcas por UI
+  [7] repositorio
+  [7] cerrar
+  [7] exportar
+<<< PASO 7.4 PASA (0:00:14.314861)
+>>> PASO 7.5 Comidas    sesi  n   Almuerzo domingo   (Almuerzo): marcas por la UI, resto por repositorio, cierre y exportaciones
+  [7] abrir evento
+  [7] nueva sesi  n
+  [7] marcas por UI
+  [7] repositorio
+  [7] cerrar
+  [7] exportar
+<<< PASO 7.5 PASA (0:00:12.069263)
+>>> PASO 7.6 Comidas    sesi  n   Cena domingo   (Cena): marcas por la UI, resto por repositorio, cierre y exportaciones
+  [7] abrir evento
+  [7] nueva sesi  n
+  [7] marcas por UI
+  [7] repositorio
+  [7] cerrar
+  [7] exportar
+<<< PASO 7.6 PASA (0:00:12.481148)
+>>> PASO 7.7 Comidas    totales
+<<< PASO 7.7 PASA (0:00:00.011964)
+>>> PASO 8a Confirmar a todos (los preinscritos que quedaban) por la UI
+<<< PASO 8a PASA (0:00:01.192659)
+>>> PASO 8b Hospedaje:   Sugerir hospedaje       aceptar (varias rondas) hasta ubicar a todos
+<<< PASO 8b PASA (0:00:02.018932)
+>>> PASO 8b2 Hospedaje: comprobar la propuesta aceptada y, si hay sobrecupo, reubicar a mano por la ficha (buscador y filtros)
+<<< PASO 8b2 FALLA (0:01:38.274796)
+    FALLA: la propuesta aceptada no excede la capacidad de ning  n hospedaje (1 con sobrecupo)
+>>> PASO 8c Hospedaje: asignaci  n manual con buscador y filtros del formulario (reasignar solteros) y de quienes queden
+<<< PASO 8c PASA (0:00:09.529991)
+>>> PASO 8d Hospedaje: pendientes finales por   Asignar personas   del hospedaje (buscador, filtro y grupo) y verificaci  n
+<<< PASO 8d PASA (0:00:01.989775)
+>>> PASO 9a Asistentes: b  squeda, filtros (sexo/iglesia/hospedaje/equipo/asistencia), tabla ordenable y CSV
+<<< PASO 9a PASA (0:00:18.995354)
+>>> PASO 9b Hospedajes: b  squeda, filtro   Acepta  , plazas libres, tabla ordenable y CSV
+<<< PASO 9b PASA (0:00:05.190821)
+>>> PASO 9c Equipos: b  squeda y CSV (con   Sin equipo  )
+<<< PASO 9c PASA (0:00:02.242871)
+>>> PASO 9d Mis eventos: b  squeda, tabla ordenable y CSV
+<<< PASO 9d PASA (0:00:01.817836)
+>>> PASO 10a Exportaciones de   Copias de seguridad  : plantilla, CSV de asistentes y respaldo CSV del evento
+<<< PASO 10a PASA (0:00:02.410797)
+>>> PASO 10b Reportes finales (todos confirmados): xlsx, csv (con y sin tel  fono) y pdf
+<<< PASO 10b PASA (0:00:03.612193)
+>>> PASO 10c CSV de asistentes y respaldo de CADA evento
+<<< PASO 10c PASA (0:00:06.068377)
+>>> PASO 11 Ida y vuelta del respaldo CSV: reabrir en una base vac  a y comparar
+<<< PASO 11 PASA (0:00:01.179753)
+>>> PASO 12 Pasada a 1920x1080 por todas las pantallas
+<<< PASO 12 PASA (0:00:17.296524)
+>>> PASO 13 Cifras finales
+<<< PASO 13 PASA (0:00:00.003507)
+QA-FIN pasos=35 fallan=1 defectos=6
+06:35 +1: All tests passed!
