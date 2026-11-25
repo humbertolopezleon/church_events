@@ -8,7 +8,7 @@ import '../data/repository.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'auth_screens.dart' show ErrorBox;
-import 'lodgings_screen.dart' show LodgingFormDialog;
+import 'lodgings_screen.dart' show openLodgingForm;
 import 'teams_screen.dart' show LimitsDialog, showCreateTeamsDialog;
 
 /// Qué falta definir antes de abrir las inscripciones.
@@ -317,9 +317,7 @@ class _EventConfigScreenState extends ConsumerState<EventConfigScreen> {
                   const SizedBox(height: 8),
                   FilledButton.icon(
                       key: const Key('cfg-hospedajes'),
-                      onPressed: () => showDialog<void>(
-                          context: context,
-                          builder: (_) => LodgingFormDialog(eventId: eventId)),
+                      onPressed: () => openLodgingForm(context, eventId),
                       icon: const Icon(Icons.add),
                       label: Text(counts.lodgings == 0
                           ? 'Definir hospedajes'

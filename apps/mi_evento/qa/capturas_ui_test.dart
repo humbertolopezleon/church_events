@@ -9,7 +9,8 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart' show FocusHighlightStrategy, FocusManager;
+import 'package:flutter/widgets.dart'
+    show FocusHighlightStrategy, FocusManager, SingleChildScrollView;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -192,6 +193,39 @@ void main() {
       await shot(t, 'iglesias-escritorio');
       await _ir(t, 'Hospedajes');
       await shot(t, 'hospedajes-escritorio');
+    });
+  });
+
+  group('Fase 4 · Nuevo hospedaje', () {
+    cap('móvil formulario', (t) async {
+      await _abrir(t, _movil, datos: false);
+      await _ir(t, 'Hospedajes');
+      await tapKey(t, 'hosp-nuevo');
+      await shot(t, 'nuevo-hospedaje-albergue');
+      await t.tap(find.text('Casa particular'));
+      await t.pump();
+      await tapKey(t, 'lf-mas');
+      await tapKey(t, 'lf-mas');
+      await tapKey(t, 'lf-acepta-couples');
+      await shot(t, 'nuevo-hospedaje-casa');
+      await t.drag(
+          find.byType(SingleChildScrollView).last, const Offset(0, -700));
+      await t.pump();
+      await shot(t, 'nuevo-hospedaje-casa-abajo');
+      await tapKey(t, 'lf-guardar');
+      await shot(t, 'nuevo-hospedaje-errores');
+    });
+    cap('móvil formulario al 130 %', (t) async {
+      await _abrir(t, _movil, datos: false, escala: 1.3);
+      await _ir(t, 'Hospedajes');
+      await tapKey(t, 'hosp-nuevo');
+      await shot(t, 'nuevo-hospedaje-letra130');
+    });
+    cap('escritorio formulario', (t) async {
+      await _abrir(t, _pc, datos: false);
+      await _ir(t, 'Hospedajes');
+      await tapKey(t, 'hosp-nuevo');
+      await shot(t, 'nuevo-hospedaje-escritorio');
     });
   });
 }

@@ -19,6 +19,7 @@ import 'lodging_suggest_screen.dart';
 import 'widgets/data_table_view.dart';
 import 'widgets/list_toolbar.dart';
 import 'widgets/input_formats.dart';
+import 'widgets/labeled_field.dart';
 import '../data/lodging_exchange.dart';
 import 'table_import_flow.dart';
 import 'widgets/app_fab.dart';
@@ -238,9 +239,7 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
       floatingActionButton: (event?.offersLodging ?? true)
           ? AppFab(
               key: const Key('hosp-nuevo'),
-              onPressed: () => showDialog<void>(
-                  context: context,
-                  builder: (_) => LodgingFormDialog(eventId: eventId)),
+              onPressed: () => openLodgingForm(context, eventId),
               icon: Icons.add,
               label: 'Nuevo hospedaje',
             )
@@ -385,15 +384,24 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
   }
 }
 
-class LodgingFormDialog extends ConsumerStatefulWidget {
-  const LodgingFormDialog({super.key, required this.eventId, this.lodging});
+/// Abre el formulario de hospedaje a pantalla completa (nuevo o edición). Devuelve si se guardó.
+Future<bool?> openLodgingForm(BuildContext context, String eventId,
+        {LodgingRow? lodging}) =>
+    Navigator.of(context).push<bool>(MaterialPageRoute<bool>(
+        fullscreenDialog: true,
+        builder: (_) => LodgingFormScreen(eventId: eventId, lodging: lodging)));
+
+/// Nuevo / editar hospedaje: pantalla completa con cabecera (X), campos con la etiqueta encima y
+/// barra inferior «Cancelar / Guardar hospedaje».
+class LodgingFormScreen extends ConsumerStatefulWidget {
+  const LodgingFormScreen({super.key, required this.eventId, this.lodging});
   final String eventId;
   final LodgingRow? lodging;
   @override
-  ConsumerState<LodgingFormDialog> createState() => _LodgingFormDialogState();
+  ConsumerState<LodgingFormScreen> createState() => _LodgingFormScreenState();
 }
 
-class _LodgingFormDialogState extends ConsumerState<LodgingFormDialog> {
+class _LodgingFormScreenState extends ConsumerState<LodgingFormScreen> {
   late final name = TextEditingController(text: widget.lodging?.name);
   late final capacity =
       TextEditingController(text: widget.lodging?.capacity.toString());
@@ -406,12 +414,44 @@ class _LodgingFormDialogState extends ConsumerState<LodgingFormDialog> {
   late LodgingAccepts accepts = widget.lodging == null
       ? LodgingAccepts.men
       : lodgingAcceptsFromDb(widget.lodging!.accepts);
-  String? error;
+  String? nameError, capacityError, error;
+  final _nameKey = GlobalKey(), _capacityKey = GlobalKey();
+
+  @override
+  void dispose() {
+    for (final c in [name, capacity, host, phone, directions, near]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _step(int delta) {
+    final c = int.tryParse(capacity.text.trim()) ?? 0;
+    final next = (c + delta).clamp(1, 500);
+    setState(() {
+      capacity.text = '$next';
+      capacityError = null;
+    });
+  }
 
   Future<void> _save() async {
     final c = int.tryParse(capacity.text.trim());
-    if (c == null) {
-      setState(() => error = 'Falta la capacidad (número de plazas).');
+    setState(() {
+      nameError =
+          name.text.trim().isEmpty ? 'Falta el nombre del hospedaje.' : null;
+      capacityError =
+          c == null ? 'Falta la capacidad (número de plazas).' : null;
+      error = null;
+    });
+    if (nameError != null || c == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx =
+            (nameError != null ? _nameKey : _capacityKey).currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(ctx,
+              duration: const Duration(milliseconds: 250), alignment: 0.1);
+        }
+      });
       return;
     }
     try {
@@ -424,7 +464,7 @@ class _LodgingFormDialogState extends ConsumerState<LodgingFormDialog> {
           accepts: accepts,
           contactPhone: phone.text,
           directions: directions.text,
-          hostName: host.text,
+          hostName: kind == 'private_home' ? host.text : '',
           distanceNote: near.text);
       // Si al cambiar «acepta» alguien ya hospedado dejó de ser compatible, se avisa y se lista
       // (no se quita ni se borra a nadie: se decide en la ficha del hospedaje).
@@ -469,108 +509,239 @@ class _LodgingFormDialogState extends ConsumerState<LodgingFormDialog> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: Text(
-            widget.lodging == null ? 'Nuevo hospedaje' : 'Editar hospedaje'),
-        content: SingleChildScrollView(
-          child: SizedBox(
-            width: 440,
-            child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                      key: const Key('lf-nombre'),
-                      controller: name,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
-                          labelText: 'Nombre',
-                          helperText:
-                              'Un albergue o la casa de quien se ofrece')),
-                  const SizedBox(height: 12),
-                  SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'shelter', label: Text('Albergue')),
-                      ButtonSegment(
-                          value: 'private_home',
-                          label: Text('Casa particular')),
-                    ],
-                    selected: {kind},
-                    onSelectionChanged: (s) => setState(() => kind = s.first),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                      key: const Key('lf-capacidad'),
-                      controller: capacity,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: digitsOnly(),
-                      decoration: const InputDecoration(
-                          labelText: 'Capacidad (plazas)')),
-                  const SizedBox(height: 12),
-                  const Text('Acepta',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 6),
-                  SegmentedButton<LodgingAccepts>(
-                    segments: [
-                      for (final a in LodgingAccepts.values)
-                        ButtonSegment(
-                            value: a,
-                            label: Text(lodgingAcceptsLabel(a)),
-                            icon: null)
-                    ],
-                    selected: {accepts},
-                    onSelectionChanged: (s) =>
-                        setState(() => accepts = s.first),
-                  ),
-                  const SizedBox(height: 12),
-                  if (kind == 'private_home') ...[
-                    TextField(
-                        key: const Key('lf-anfitrion'),
-                        controller: host,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: const InputDecoration(
-                            labelText: 'Anfitrión (opcional)')),
-                    const SizedBox(height: 12),
-                  ],
-                  TextField(
-                      key: const Key('lf-telefono'),
-                      controller: phone,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: phoneChars(),
-                      decoration: const InputDecoration(
-                          labelText: 'Teléfono de contacto (opcional)')),
-                  const SizedBox(height: 12),
-                  TextField(
-                      key: const Key('lf-direccion'),
-                      controller: directions,
+  Widget _acceptsOption(LodgingAccepts a) {
+    final sel = accepts == a;
+    return Expanded(
+      child: Semantics(
+        inMutuallyExclusiveGroup: true,
+        checked: sel,
+        label: lodgingAcceptsLabel(a),
+        excludeSemantics: true,
+        child: InkWell(
+          key: Key('lf-acepta-${a.name}'),
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => setState(() => accepts = a),
+          child: Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: sel ? Brand.azulSuave : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: sel ? Brand.azul : Brand.borde, width: sel ? 2 : 1),
+            ),
+            child: Row(children: [
+              Icon(sel ? Icons.radio_button_checked : Icons.radio_button_off,
+                  color: sel ? Brand.azul : Brand.gris),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: Text(lodgingAcceptsLabel(a),
                       maxLines: 2,
-                      decoration: const InputDecoration(
-                          labelText: 'Dirección o cómo llegar')),
-                  const SizedBox(height: 12),
-                  TextField(
-                      key: const Key('lf-cerca'),
-                      controller: near,
-                      decoration: const InputDecoration(
-                          labelText: 'Cercanía (opcional)',
-                          helperText: 'Ej.: a 300 m del templo')),
-                  if (error != null) ...[
-                    const SizedBox(height: 12),
-                    ErrorBox(error!)
-                  ],
-                ]),
+                      overflow: TextOverflow.ellipsis,
+                      style: bodyStyle(16,
+                          weight: sel ? FontWeight.w700 : FontWeight.w400))),
+            ]),
           ),
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar')),
-          FilledButton(
-              key: const Key('lf-guardar'),
-              onPressed: _save,
-              child: const Text('Guardar')),
-        ],
+      ),
+    );
+  }
+
+  Widget _stepper(IconData icon, String tip, Key key, VoidCallback f) =>
+      SizedBox(
+        width: 56,
+        height: 56,
+        child: IconButton.outlined(
+            key: key, tooltip: tip, icon: Icon(icon), onPressed: f),
       );
+
+  @override
+  Widget build(BuildContext context) {
+    final editing = widget.lodging != null;
+    const gap = SizedBox(height: 20);
+    return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 64,
+        titleSpacing: 0,
+        leading: IconButton(
+            key: const Key('lf-cerrar'),
+            tooltip: 'Cerrar sin guardar',
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context)),
+        title: Text(editing ? 'Editar hospedaje' : 'Nuevo hospedaje'),
+      ),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    LabeledField(
+                      label: 'Tipo',
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: SegmentedButton<String>(
+                          style: SegmentedButton.styleFrom(
+                              minimumSize: const Size(0, 56)),
+                          segments: const [
+                            ButtonSegment(
+                                value: 'shelter', label: Text('Albergue')),
+                            ButtonSegment(
+                                value: 'private_home',
+                                label: Text('Casa particular')),
+                          ],
+                          selected: {kind},
+                          onSelectionChanged: (s) =>
+                              setState(() => kind = s.first),
+                        ),
+                      ),
+                    ),
+                    gap,
+                    LabeledField(
+                      key: _nameKey,
+                      label: 'Nombre',
+                      error: nameError,
+                      child: TextField(
+                          key: const Key('lf-nombre'),
+                          controller: name,
+                          textCapitalization: TextCapitalization.words,
+                          onChanged: (_) {
+                            if (nameError != null)
+                              setState(() => nameError = null);
+                          },
+                          decoration: InputDecoration(
+                              hintText: kind == 'shelter'
+                                  ? 'Ej.: Albergue Central'
+                                  : 'Ej.: Casa de la Hna. Teresa')),
+                    ),
+                    gap,
+                    if (kind == 'private_home') ...[
+                      LabeledField(
+                        label: 'Anfitrión',
+                        optional: true,
+                        child: TextField(
+                            key: const Key('lf-anfitrion'),
+                            controller: host,
+                            textCapitalization: TextCapitalization.words),
+                      ),
+                      gap,
+                    ],
+                    LabeledField(
+                      label: 'Zona o dirección',
+                      optional: true,
+                      helper: 'Ej.: a 300 m del templo',
+                      child: TextField(
+                          key: const Key('lf-cerca'), controller: near),
+                    ),
+                    gap,
+                    LabeledField(
+                      label: 'Cómo llegar',
+                      optional: true,
+                      child: TextField(
+                          key: const Key('lf-direccion'),
+                          controller: directions,
+                          maxLines: 2),
+                    ),
+                    gap,
+                    LabeledField(
+                      key: _capacityKey,
+                      label: 'Capacidad (plazas)',
+                      error: capacityError,
+                      child: Row(children: [
+                        _stepper(Icons.remove, 'Una plaza menos',
+                            const Key('lf-menos'), () => _step(-1)),
+                        Expanded(
+                          child: TextField(
+                              key: const Key('lf-capacidad'),
+                              controller: capacity,
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: digitsOnly(3),
+                              onChanged: (_) {
+                                if (capacityError != null) {
+                                  setState(() => capacityError = null);
+                                }
+                              },
+                              style: headStyle(32),
+                              decoration: const InputDecoration(hintText: '1')),
+                        ),
+                        _stepper(Icons.add, 'Una plaza más',
+                            const Key('lf-mas'), () => _step(1)),
+                      ]),
+                    ),
+                    gap,
+                    LabeledField(
+                      label: 'Acepta',
+                      child: Column(children: [
+                        Row(children: [
+                          _acceptsOption(LodgingAccepts.men),
+                          const SizedBox(width: 10),
+                          _acceptsOption(LodgingAccepts.women),
+                        ]),
+                        const SizedBox(height: 10),
+                        Row(children: [
+                          _acceptsOption(LodgingAccepts.couples),
+                          const SizedBox(width: 10),
+                          _acceptsOption(LodgingAccepts.any),
+                        ]),
+                      ]),
+                    ),
+                    gap,
+                    LabeledField(
+                      label: 'Teléfono de contacto',
+                      optional: true,
+                      child: TextField(
+                          key: const Key('lf-telefono'),
+                          controller: phone,
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: phoneChars()),
+                    ),
+                    if (error != null) ...[gap, ErrorBox(error!)],
+                  ])),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Brand.borde))),
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Row(children: [
+                Expanded(
+                    flex: 5,
+                    child: OutlinedButton(
+                        key: const Key('lf-cancelar'),
+                        style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 56)),
+                        onPressed: () => Navigator.pop(context),
+                        child: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('Cancelar', maxLines: 1)))),
+                const SizedBox(width: 12),
+                Expanded(
+                    flex: 6,
+                    child: FilledButton(
+                        key: const Key('lf-guardar'),
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size(0, 56)),
+                        onPressed: _save,
+                        child: Text(editing
+                            ? 'Guardar cambios'
+                            : 'Guardar hospedaje'))),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Confirma y elimina (borrado lógico) un hospedaje. Quienes estaban hospedados NO se borran:
@@ -618,10 +789,7 @@ class _LodgingMenu extends ConsumerWidget {
             await Navigator.of(context).push(MaterialPageRoute<void>(
                 builder: (_) => LodgingDetailScreen(lodgingId: lv.row.id)));
           case 'editar':
-            await showDialog<void>(
-                context: context,
-                builder: (_) => LodgingFormDialog(
-                    eventId: lv.row.eventId, lodging: lv.row));
+            await openLodgingForm(context, lv.row.eventId, lodging: lv.row);
           case 'eliminar':
             await confirmDeleteLodging(context, ref, lv);
         }
@@ -679,10 +847,7 @@ class LodgingDetailScreen extends ConsumerWidget {
             key: const Key('hd-editar'),
             tooltip: 'Editar',
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () => showDialog<void>(
-                context: context,
-                builder: (_) =>
-                    LodgingFormDialog(eventId: eventId, lodging: l))),
+            onPressed: () => openLodgingForm(context, eventId, lodging: l)),
         if (me?.isAdmin ?? false)
           IconButton(
               key: const Key('hd-eliminar'),
