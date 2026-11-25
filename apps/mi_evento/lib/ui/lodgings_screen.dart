@@ -13,6 +13,7 @@ import '../providers.dart';
 import '../theme/app_theme.dart';
 import '../data/list_filters.dart';
 import '../export/csv_export.dart';
+import 'csv_spec_ui.dart';
 import 'auth_screens.dart' show ErrorBox;
 import 'lodging_pdf.dart';
 import 'lodging_suggest_screen.dart';
@@ -236,6 +237,12 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
         onImport: () => runTableImport(
             context, ref, LodgingExchange(ref.read(databaseProvider), eventId)),
         onExport: () => _export(event?.name ?? '', shown),
+        onTemplate: () =>
+            saveCsvTemplate(context, ref, LodgingExchange.csvSpec),
+        onColumns: () =>
+            showCsvSpecDialog(context, ref, LodgingExchange.csvSpec),
+        templateKey: const Key('hosp-plantilla'),
+        columnsKey: const Key('hosp-columnas'),
         exportEnabled: shown.isNotEmpty,
       ),
       floatingActionButton: (event?.offersLodging ?? true)
@@ -315,16 +322,21 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
                         alignment: Alignment.centerLeft,
                         child: Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: OutlinedButton.icon(
-                                key: const Key('hosp-importar-vacio'),
-                                onPressed: () => runTableImport(
-                                    context,
-                                    ref,
-                                    LodgingExchange(
-                                        ref.read(databaseProvider), eventId)),
-                                icon: const Icon(Icons.upload_file_outlined),
-                                label:
-                                    const Text('Importar hospedajes (CSV)')))),
+                            child: Wrap(spacing: 8, children: [
+                              OutlinedButton.icon(
+                                  key: const Key('hosp-importar-vacio'),
+                                  onPressed: () => runTableImport(
+                                      context,
+                                      ref,
+                                      LodgingExchange(
+                                          ref.read(databaseProvider), eventId)),
+                                  icon: const Icon(Icons.upload_file_outlined),
+                                  label:
+                                      const Text('Importar hospedajes (CSV)')),
+                              const CsvHelpButtons(
+                                  spec: LodgingExchange.csvSpec,
+                                  prefix: 'hosp'),
+                            ]))),
                   if (lodgings.isEmpty)
                     const Card(
                         child: Padding(

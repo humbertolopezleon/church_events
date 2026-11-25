@@ -3,6 +3,7 @@ import 'package:mi_evento_core/mi_evento_core.dart';
 
 import 'database.dart';
 import 'repository.dart';
+import 'csv_spec.dart';
 import 'table_import.dart';
 
 /// Importar en «Confirmar asistencia»: el CSV que exporta la vista (numero, nombre, …, estado) se
@@ -12,6 +13,9 @@ class AttendanceExchange implements TableImporter {
   AttendanceExchange(this.db, this.eventId);
   final AppDatabase db;
   final String eventId;
+
+  @override
+  CsvSpec? get spec => null;
 
   @override
   String get title => 'Importar confirmaciones';

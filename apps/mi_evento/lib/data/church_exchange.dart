@@ -1,5 +1,6 @@
 import 'package:mi_evento_core/mi_evento_core.dart';
 
+import 'csv_spec.dart';
 import 'database.dart';
 import 'repository.dart';
 import 'table_import.dart';
@@ -10,6 +11,21 @@ class ChurchExchange implements TableImporter {
   final AppDatabase db;
 
   static const headers = ['nombre', 'provincia', 'municipio', 'comunidad'];
+
+  static const csvSpec = CsvSpec(
+      title: 'Columnas del CSV de iglesias',
+      fileName: 'plantilla-iglesias.csv',
+      columns: [
+        CsvColumn('nombre', 'nombre de la iglesia', required: true),
+        CsvColumn('provincia', 'provincia (una de las de Cuba)',
+            required: true),
+        CsvColumn('municipio', 'municipio', required: true),
+        CsvColumn('comunidad', 'comunidad o barrio'),
+      ],
+      note: csvSeparatorNote);
+
+  @override
+  CsvSpec get spec => csvSpec;
 
   static String? _province(String raw) {
     final n = normalizeText(raw);

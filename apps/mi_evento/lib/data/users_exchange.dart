@@ -4,6 +4,7 @@ import 'package:mi_evento_core/mi_evento_core.dart';
 
 import '../auth/auth_service.dart';
 import 'database.dart';
+import 'csv_spec.dart';
 import 'table_import.dart';
 
 /// Exportar e importar usuarios en CSV (usuario, nombre, rol, estado). Al importar NUNCA se lee una
@@ -16,6 +17,9 @@ class UsersExchange implements TableImporter {
   final AppUser actor;
 
   static const headers = ['usuario', 'nombre', 'rol', 'estado'];
+
+  @override
+  CsvSpec? get spec => null;
 
   @override
   String get title => 'Importar usuarios';

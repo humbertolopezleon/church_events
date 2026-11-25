@@ -2,6 +2,7 @@ import 'package:mi_evento_core/mi_evento_core.dart';
 
 import 'database.dart';
 import 'repository.dart';
+import 'csv_spec.dart';
 import 'table_import.dart';
 
 /// Exportar e importar la lista de eventos (Mis eventos) en CSV. Solo los datos del evento; las
@@ -19,6 +20,9 @@ class EventExchange implements TableImporter {
     'hospedaje',
     'equipos'
   ];
+
+  @override
+  CsvSpec? get spec => null;
 
   @override
   String get title => 'Importar eventos';

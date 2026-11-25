@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
+import 'csv_spec.dart';
 import 'database.dart';
 import 'repos_b.dart';
 import 'table_import.dart';
@@ -24,6 +25,30 @@ class LodgingExchange implements TableImporter {
     'indicaciones',
     'cercania'
   ];
+
+  static const csvSpec = CsvSpec(
+      title: 'Columnas del CSV de hospedajes',
+      fileName: 'plantilla-hospedajes.csv',
+      columns: [
+        CsvColumn('nombre', 'nombre del hospedaje (si ya existe, se actualiza)',
+            required: true),
+        CsvColumn('tipo', 'Albergue o Casa particular'),
+        CsvColumn('acepta',
+            'Solo hombres, Solo mujeres, Matrimonios o Sin preferencia'),
+        CsvColumn('capacidad', 'número de plazas (al menos 1)', required: true),
+        CsvColumn(
+            'ocupadas', 'solo informativa: se calcula, se ignora al importar'),
+        CsvColumn(
+            'libres', 'solo informativa: se calcula, se ignora al importar'),
+        CsvColumn('anfitrion', 'nombre del anfitrión'),
+        CsvColumn('telefono', 'teléfono de contacto'),
+        CsvColumn('indicaciones', 'cómo llegar'),
+        CsvColumn('cercania', 'distancia o zona'),
+      ],
+      note: csvSeparatorNote);
+
+  @override
+  CsvSpec get spec => csvSpec;
 
   @override
   String get title => 'Importar hospedajes';

@@ -4,6 +4,7 @@ import 'package:mi_evento_core/mi_evento_core.dart';
 import 'database.dart';
 import 'repos_b.dart';
 import 'repository.dart';
+import 'csv_spec.dart';
 
 enum PlanAction { create, update, skipDuplicate }
 
@@ -427,3 +428,30 @@ class AttendeeExchange {
     return rep;
   }
 }
+
+/// Columnas del CSV de asistentes, en el mismo orden que `attendeeCsvHeaders`.
+const attendeeCsvSpec = CsvSpec(
+    title: 'Columnas del CSV',
+    fileName: 'plantilla-asistentes.csv',
+    columns: [
+      CsvColumn('id', 'identificador interno (lo pone la app al exportar)'),
+      CsvColumn('numero', 'número de inscripción'),
+      CsvColumn('nombre', 'nombre de la persona', required: true),
+      CsvColumn('apellido1', 'primer apellido', required: true),
+      CsvColumn('apellido2', 'segundo apellido'),
+      CsvColumn('sexo', 'Hombre o Mujer (también M o F)', required: true),
+      CsvColumn('edad', 'edad en años (1 a 110)', required: true),
+      CsvColumn('iglesia', 'nombre de la iglesia (si no existe, se crea)',
+          required: true),
+      CsvColumn('provincia', 'provincia de la iglesia'),
+      CsvColumn('municipio', 'municipio de la iglesia'),
+      CsvColumn('telefono', 'teléfono'),
+      CsvColumn('necesita_hospedaje', 'Sí o No'),
+      CsvColumn('hospedaje', 'nombre del hospedaje'),
+      CsvColumn('equipo', 'nombre del equipo'),
+      CsvColumn('pareja_numero', 'número de inscripción del cónyuge'),
+      CsvColumn('grupos', 'grupos separados por |'),
+      CsvColumn('observaciones', 'notas'),
+      CsvColumn('estado', 'Preinscrito o Confirmado'),
+    ],
+    note: csvSeparatorNote);

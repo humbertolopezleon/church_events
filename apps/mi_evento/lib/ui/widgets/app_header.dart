@@ -11,9 +11,13 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.subtitle,
     this.onImport,
     this.onExport,
+    this.onTemplate,
+    this.onColumns,
     this.exportEnabled = true,
     this.importKey = const Key('importar-csv'),
     this.exportKey = const Key('exportar-csv'),
+    this.templateKey = const Key('plantilla-csv'),
+    this.columnsKey = const Key('columnas-csv'),
     this.actions = const [],
   });
   final String title;
@@ -21,9 +25,12 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onImport;
   final VoidCallback? onExport;
 
+  /// Plantilla vacía y ayuda de columnas (opcionales; salen tras importar/exportar).
+  final VoidCallback? onTemplate, onColumns;
+
   /// Sin nada que exportar, la opción aparece deshabilitada.
   final bool exportEnabled;
-  final Key importKey, exportKey;
+  final Key importKey, exportKey, templateKey, columnsKey;
   final List<Widget> actions;
 
   @override
@@ -48,13 +55,20 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
             ]),
         actions: [
           ...actions,
-          if (onImport != null || onExport != null)
+          if (onImport != null ||
+              onExport != null ||
+              onTemplate != null ||
+              onColumns != null)
             PopupMenuButton<String>(
               key: const Key('menu-csv'),
               tooltip: 'Más opciones: importar y exportar CSV',
               icon: const Icon(Icons.more_vert, color: Colors.white),
-              onSelected: (v) =>
-                  v == 'importar' ? onImport?.call() : onExport?.call(),
+              onSelected: (v) => switch (v) {
+                'importar' => onImport?.call(),
+                'exportar' => onExport?.call(),
+                'plantilla' => onTemplate?.call(),
+                _ => onColumns?.call(),
+              },
               itemBuilder: (_) => [
                 if (onImport != null)
                   PopupMenuItem(
@@ -75,6 +89,24 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.table_view_outlined),
                           title: Text('Exportar CSV'))),
+                if (onTemplate != null)
+                  PopupMenuItem(
+                      key: templateKey,
+                      value: 'plantilla',
+                      child: const ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.download_outlined),
+                          title: Text('Plantilla CSV vacía'))),
+                if (onColumns != null)
+                  PopupMenuItem(
+                      key: columnsKey,
+                      value: 'columnas',
+                      child: const ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.help_outline),
+                          title: Text('Columnas del CSV'))),
               ],
             ),
           const SizedBox(width: 4),
