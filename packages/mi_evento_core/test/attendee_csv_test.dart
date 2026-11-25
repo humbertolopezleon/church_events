@@ -138,9 +138,44 @@ void main() {
       expect(parseSexCell('Hombre'), Sex.male);
       expect(parseSexCell(' h '), Sex.male);
       expect(parseSexCell('Mujer'), Sex.female);
-      expect(parseSexCell('M'), Sex.male); // M = masculino, como en el formulario
+      expect(
+          parseSexCell('M'), Sex.male); // M = masculino, como en el formulario
       expect(parseSexCell('F'), Sex.female);
       expect(parseSexCell('x'), isNull);
+    });
+  });
+
+  group('compatibilidad con Excel (línea sep=;)', () {
+    test('lo exportado empieza con BOM + «sep=;» y se vuelve a leer igual', () {
+      final rows = [
+        ['nombre', 'edad', 'nota'],
+        ['María', '30', 'a;b'],
+        ['=SUMA(A1)', '5', 'dice "hola"\nlínea 2'],
+      ];
+      final text = buildCsvDelimited(rows);
+      expect(text.startsWith('\u{FEFF}sep=;\r\n'), isTrue);
+      expect(parseCsv(text), rows);
+    });
+    test('sin la ayuda, igual que antes (sin línea sep)', () {
+      final text = buildCsvDelimited([
+        ['a', 'b']
+      ], excelHint: false);
+      expect(text.startsWith('\u{FEFF}a;b'), isTrue);
+    });
+    test(
+        'un archivo con «sep=,» se lee con coma aunque el resto sugiera otra cosa',
+        () {
+      expect(parseCsv('sep=,\r\na;b,c\r\n1,2\r\n'), [
+        ['a;b', 'c'],
+        ['1', '2']
+      ]);
+    });
+    test('un archivo guardado por Excel (sin la línea sep) sigue leyéndose',
+        () {
+      expect(parseCsv('a;b\r\n1;2\r\n'), [
+        ['a', 'b'],
+        ['1', '2']
+      ]);
     });
   });
 }

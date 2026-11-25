@@ -24,7 +24,7 @@ class EventExchange implements TableImporter {
   String get title => 'Importar eventos';
   @override
   String get help =>
-      'Columnas: nombre, inicio y fin (AAAA-MM-DD), lugar, organizador, hospedaje y equipos (Sí/No). '
+      'Columnas: nombre, inicio y fin (AAAA-MM-DD o d/m/aaaa), lugar, organizador, hospedaje y equipos (Sí/No). '
       'Un evento con el mismo nombre y fechas que otro ya existente se omite.';
 
   static bool? _yesNo(String raw) {
@@ -35,7 +35,29 @@ class EventExchange implements TableImporter {
     return null;
   }
 
-  static final _date = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+  /// Acepta AAAA-MM-DD y también d/m/aaaa o d-m-aaaa (como Excel cambia las fechas al guardar).
+  /// Devuelve AAAA-MM-DD o nulo si no es una fecha válida.
+  static String? parseDate(String raw) {
+    final s = raw.trim();
+    int? y, m, d;
+    final iso = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})$').firstMatch(s);
+    final dmy =
+        RegExp(r'^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$').firstMatch(s);
+    if (iso != null) {
+      y = int.parse(iso.group(1)!);
+      m = int.parse(iso.group(2)!);
+      d = int.parse(iso.group(3)!);
+    } else if (dmy != null) {
+      d = int.parse(dmy.group(1)!);
+      m = int.parse(dmy.group(2)!);
+      y = int.parse(dmy.group(3)!);
+    } else {
+      return null;
+    }
+    final dt = DateTime.utc(y, m, d);
+    if (dt.year != y || dt.month != m || dt.day != d) return null;
+    return '${y.toString().padLeft(4, '0')}-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
+  }
 
   Future<TableImportSummary> _run(String csvText, {required bool write}) async {
     final repo = Repository(db);
@@ -71,16 +93,17 @@ class EventExchange implements TableImporter {
     var created = 0, skipped = 0;
     for (final (line, r) in rows) {
       final name = r['nombre'] ?? '';
-      final a = r['inicio'] ?? '', b = r['fin'] ?? '';
+      final a = parseDate(r['inicio'] ?? '') ?? '';
+      final b = parseDate(r['fin'] ?? '') ?? '';
       final lodging = _yesNo(r['hospedaje'] ?? '');
       final teams = _yesNo(r['equipos'] ?? '');
       if (name.isEmpty) {
         out.warnings.add('Fila $line: falta el nombre del evento.');
         continue;
       }
-      if (!_date.hasMatch(a) || !_date.hasMatch(b)) {
+      if (a.isEmpty || b.isEmpty) {
         out.warnings.add(
-            'Fila $line: las fechas de «$name» deben ser AAAA-MM-DD (inicio «$a», fin «$b»).');
+            'Fila $line: las fechas de «$name» no se entienden (usa AAAA-MM-DD o d/m/aaaa; inicio «${r['inicio']}», fin «${r['fin']}»).');
         continue;
       }
       if (b.compareTo(a) < 0) {

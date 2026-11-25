@@ -42,7 +42,9 @@ void main() {
       final q = await _full120(db);
       final csv = await AttendeeExchange(db).exportCsv(q.eventId);
       expect(csv.startsWith('\u{FEFF}'), isTrue);
-      expect(csv.split('\r\n').first.replaceFirst('\u{FEFF}', ''), _head);
+      final lineas = csv.split('\r\n');
+      expect(lineas.first.replaceFirst('\u{FEFF}', ''), 'sep=;');
+      expect(lineas[1], _head);
       final t = parseCsv(csv);
       expect(t.length, 121);
       expect(t.every((r) => r.length == 18), isTrue);

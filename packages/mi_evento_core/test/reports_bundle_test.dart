@@ -103,7 +103,8 @@ void main() {
       final bytes = make();
       expect(bytes.take(3), [0xEF, 0xBB, 0xBF]); // BOM UTF-8
       final text = utf8.decode(bytes);
-      expect(text.startsWith('tabla;'), isTrue);
+      // Primera línea «sep=;»: Excel separa en columnas con cualquier configuración regional.
+      expect(text.startsWith('sep=;\r\ntabla;'), isTrue);
       expect(text, contains('meta;'));
       expect(text, contains('attendees;'));
       expect(text, contains('María')); // sin cifrar: se puede leer

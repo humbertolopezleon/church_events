@@ -67,7 +67,7 @@ void main() {
       final bytes = await BackupService(a).export(q.eventId);
       expect(bytes.take(3), [0xEF, 0xBB, 0xBF]);
       final texto = utf8.decode(bytes);
-      expect(texto.startsWith('tabla;'), isTrue);
+      expect(texto.startsWith('sep=;\r\ntabla;'), isTrue);
       expect(texto.contains('Yamil') || texto.contains('Valdés'), isTrue);
       expect(
           BackupService.fileName('Congreso QA', DateTime(2026, 1, 2, 3, 4, 5)),
