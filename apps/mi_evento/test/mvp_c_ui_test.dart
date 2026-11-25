@@ -9,6 +9,8 @@ import 'package:mi_evento/export/file_saver.dart';
 import 'package:mi_evento/providers.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
+import 'package:mi_evento/ui/notifications.dart';
+
 import 'helpers.dart';
 
 const _pc = Size(1200, 2400);
@@ -294,7 +296,11 @@ void main() {
     final a = ZipDecoder().decodeBytes(x.saver.saved[xlsx]!);
     expect(a.findFile('xl/worksheets/sheet3.xml'), isNotNull);
     expect(x.saver.saved[png]!.take(4).toList(), [137, 80, 78, 71]);
-    expect(find.text('Listo. Archivo exportado.'), findsWidgets);
+    // En escritorio el aviso queda en el centro de notificaciones (no sale abajo).
+    expect(
+        NotificationCenter.instance.items
+            .where((n) => n.text == 'Listo. Archivo exportado.'),
+        isNotEmpty);
   });
 
   testWidgets(
