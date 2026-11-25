@@ -47,8 +47,11 @@ class _ListToolbarState extends State<ListToolbar> {
 
   @override
   Widget build(BuildContext context) {
+    // En el móvil los filtros empiezan plegados (si no, ocupan toda la pantalla y tapan la lista);
+    // en escritorio, desplegados si hay altura.
+    final size = MediaQuery.sizeOf(context);
     final open = _open ??
-        (MediaQuery.sizeOf(context).height >= 720 || widget.activeFilters > 0);
+        ((size.width >= 900 && size.height >= 720) || widget.activeFilters > 0);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       TextField(
         key: widget.searchKey,
