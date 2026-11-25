@@ -141,34 +141,12 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
   LodgingAccepts? accepts;
   bool onlyFree = false;
 
-  Future<void> _export(String eventName, List<LodgingView> shown) =>
-      saveCsv(context, ref, name: csvFileName('hospedajes', eventName), rows: [
-        [
-          'nombre',
-          'tipo',
-          'acepta',
-          'capacidad',
-          'ocupadas',
-          'libres',
-          'anfitrion',
-          'telefono',
-          'indicaciones',
-          'cercania'
-        ],
-        for (final l in shown)
-          [
-            l.row.name,
-            kindLabel(l.row.kind),
-            lodgingAcceptsLabel(lodgingAcceptsFromDb(l.row.accepts)),
-            '${l.row.capacity}',
-            '${l.occupied}',
-            '${l.free}',
-            l.row.hostName ?? '',
-            l.row.contactPhone ?? '',
-            l.row.directions,
-            l.row.distanceNote,
-          ],
-      ]);
+  /// Exporta TODOS los hospedajes del evento (no solo los filtrados): es la definición para
+  /// reutilizar en otro evento.
+  Future<void> _export(String eventName, List<LodgingView> all) =>
+      saveCsv(context, ref,
+          name: csvFileName('hospedajes', eventName),
+          rows: LodgingExchange.toRows([for (final l in all) l.row]));
 
   /// Vista de escritorio: tabla con columnas ordenables (el móvil sigue con tarjetas).
   Widget _table(List<LodgingView> list) => DataTableView<LodgingView>(
@@ -236,14 +214,14 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
         exportKey: const Key('hosp-exportar'),
         onImport: () => runTableImport(
             context, ref, LodgingExchange(ref.read(databaseProvider), eventId)),
-        onExport: () => _export(event?.name ?? '', shown),
+        onExport: () => _export(event?.name ?? '', lodgings),
         onTemplate: () =>
             saveCsvTemplate(context, ref, LodgingExchange.csvSpec),
         onColumns: () =>
             showCsvSpecDialog(context, ref, LodgingExchange.csvSpec),
         templateKey: const Key('hosp-plantilla'),
         columnsKey: const Key('hosp-columnas'),
-        exportEnabled: shown.isNotEmpty,
+        exportEnabled: lodgings.isNotEmpty,
       ),
       floatingActionButton: (event?.offersLodging ?? true)
           ? AppFab(

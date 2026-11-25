@@ -171,9 +171,12 @@ void main() {
     await tapKey(t, 'hosp-filtro-libres'); // Casa de Teresa está llena
     expect(find.text('1 de 2'), findsOneWidget);
     await tapKey(t, 'hosp-exportar');
+    // Se exportan TODOS los hospedajes del evento (el filtro no recorta el CSV).
     final rows = _csv(saver, 'hospedajes');
-    expect(rows.length, 2);
-    expect(rows[1].first, 'Albergue Norte');
+    expect(rows.length, 3);
+    expect(rows.first, ['nombre', ...rows.first.skip(1)]);
+    expect(rows.map((r) => r.first),
+        containsAll(['Albergue Norte', 'Casa de Teresa']));
   });
 
   testWidgets('Equipos: buscar por persona y exportar una fila por persona',
