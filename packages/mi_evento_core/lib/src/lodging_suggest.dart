@@ -16,6 +16,7 @@ class LodgingCandidate {
     this.hostChurchId,
     this.occupantChurchIds = const {},
     this.distanceNote,
+    this.occupantMix = OccupantMix.none,
   });
   final String id;
   final String name;
@@ -27,13 +28,24 @@ class LodgingCandidate {
   final Set<String> occupantChurchIds;
   final String? distanceNote;
 
+  /// Quiénes hay ya dentro (solo importa en los hospedajes mixtos: no mezclan solteros y
+  /// matrimonios).
+  final OccupantMix occupantMix;
+
   /// Plazas libres (nunca negativas, aunque una edición manual lo haya sobrecargado).
   int get free => (capacity - occupied) < 0 ? 0 : capacity - occupied;
 }
 
 class SuggestOptions {
   const SuggestOptions(
-      {this.keepTogether = true, this.preferHostChurch = true});
+      {this.keepTogether = true,
+      this.preferHostChurch = true,
+      this.splitCouples = false});
+
+  /// Último recurso: si no hay hospedaje que reciba a todos los matrimonios, los que sobran se
+  /// reparten SEPARADOS (el esposo en uno de hombres, la esposa en uno de mujeres). Desactivado,
+  /// un matrimonio nunca se separa. Los separados se listan en [LodgingProposal.splitCoupleIds].
+  final bool splitCouples;
 
   /// «Mantener juntos si es posible». Si es falso, se reparte llenando hospedajes.
   final bool keepTogether;
@@ -68,8 +80,12 @@ class LodgingProposal {
     required this.unplaced,
     required this.notes,
     required this.score,
+    this.splitCoupleIds = const {},
   });
   final List<ProposalLeg> legs;
+
+  /// Personas de matrimonios que esta propuesta SEPARA (solo con [SuggestOptions.splitCouples]).
+  final Set<String> splitCoupleIds;
 
   /// Personas que no caben en ningún sitio compatible.
   final List<PersonRef> unplaced;
@@ -152,6 +168,37 @@ List<LodgingProposal> suggestLodging(
     }
   }
 
+  // Último recurso (opcional): si no hay hospedaje para todos los matrimonios, los que sobran se
+  // separan y se tratan como personas solas (esposo con hombres, esposa con mujeres).
+  final splitIds = <String>{};
+  if (options.splitCouples && couplePeople.isNotEmpty) {
+    var pairRoom = 0;
+    for (final l in lodgings) {
+      final ok = acceptsCouples(l.accepts) &&
+          l.capacity > 0 &&
+          (!isMixedLodging(l.accepts) ||
+              l.occupantMix == OccupantMix.none ||
+              l.occupantMix == OccupantMix.couples);
+      if (ok) pairRoom += l.free ~/ 2;
+    }
+    final couples = couplePeople.length ~/ 2;
+    final overflow = couples - pairRoom;
+    if (overflow > 0) {
+      for (var i = 0; i < overflow; i++) {
+        final b = couplePeople.removeLast();
+        final a2 = couplePeople.removeLast();
+        for (final x in [a2, b]) {
+          (x.sex == Sex.male ? men : women).add(x);
+          splitIds.add(x.id);
+        }
+        notes.add(
+            'No hay hospedaje de matrimonios para ${a2.name} y ${b.name}: se alojan por separado '
+            '(${a2.name} con ${a2.sex == Sex.male ? 'hombres' : 'mujeres'} y ${b.name} con ${b.sex == Sex.male ? 'hombres' : 'mujeres'}). '
+            'Si no estás de acuerdo, desactiva «Alojar matrimonios por separado».');
+      }
+    }
+  }
+
   final blocks = <_Block>[
     if (couplePeople.isNotEmpty) _Block(_BlockKind.couples, couplePeople),
     if (men.isNotEmpty) _Block(_BlockKind.men, men),
@@ -191,6 +238,7 @@ List<LodgingProposal> suggestLodging(
   // se planifican en orden y cada uno ve las plazas que ya tomaron los anteriores (QA-WIN-06).
   List<_Plan> chooseFor(int i) {
     final used = <String, int>{...taken};
+    final usedMix = <String, OccupantMix>{};
     final chosen = <_Plan>[];
     for (final b in blocks) {
       final adjusted = [
@@ -205,12 +253,18 @@ List<LodgingProposal> suggestLodging(
             hostChurchId: l.hostChurchId,
             occupantChurchIds: l.occupantChurchIds,
             distanceNote: l.distanceNote,
+            occupantMix: _joinMix(l.occupantMix, usedMix[l.id]),
           )
       ];
       final plans = _plansFor(b, adjusted, options, targetChurches, notes);
       final plan = plans[i < plans.length ? i : plans.length - 1];
       for (final leg in plan.legs) {
         used[leg.lodgingId] = (used[leg.lodgingId] ?? 0) + leg.people.length;
+        usedMix[leg.lodgingId] = _joinMix(
+            usedMix[leg.lodgingId],
+            b.kind == _BlockKind.couples
+                ? OccupantMix.couples
+                : OccupantMix.singles);
       }
       chosen.add(plan);
     }
@@ -250,24 +304,46 @@ List<LodgingProposal> suggestLodging(
       unplaced: unplaced,
       notes: pNotes.toSet().toList(),
       score: chosen.fold(0, (a, c) => a + c.score),
+      splitCoupleIds: splitIds,
     ));
   }
   return out;
 }
 
+/// Mezcla de dos estados de ocupación (para no mezclar solteros y matrimonios en un mixto).
+OccupantMix _joinMix(OccupantMix? a, OccupantMix? b) {
+  final x = a ?? OccupantMix.none, y = b ?? OccupantMix.none;
+  if (y == OccupantMix.none) return x;
+  if (x == OccupantMix.none || x == y) return y;
+  return OccupantMix.mixed;
+}
+
 List<_Plan> _plansFor(_Block b, List<LodgingCandidate> all, SuggestOptions o,
     Set<String> churches, List<String> notes) {
-  final accepts = switch (b.kind) {
-    _BlockKind.couples => LodgingAccepts.couples,
-    _BlockKind.men => LodgingAccepts.men,
-    _BlockKind.women => LodgingAccepts.women,
-  };
-  final compatible = all
-      .where((l) =>
-          (l.accepts == accepts || l.accepts == LodgingAccepts.any) &&
-          l.capacity > 0 &&
-          l.free > 0)
-      .toList();
+  // ¿Sirve el hospedaje [l] para este bloque? Los mixtos no mezclan solteros y matrimonios.
+  bool fitsBlock(LodgingCandidate l) {
+    if (l.accepts == LodgingAccepts.any) return true;
+    switch (b.kind) {
+      case _BlockKind.couples:
+        return l.accepts == LodgingAccepts.couples ||
+            (isMixedLodging(l.accepts) &&
+                (l.occupantMix == OccupantMix.none ||
+                    l.occupantMix == OccupantMix.couples));
+      case _BlockKind.men:
+        return l.accepts == LodgingAccepts.men ||
+            (l.accepts == LodgingAccepts.menOrCouples &&
+                (l.occupantMix == OccupantMix.none ||
+                    l.occupantMix == OccupantMix.singles));
+      case _BlockKind.women:
+        return l.accepts == LodgingAccepts.women ||
+            (l.accepts == LodgingAccepts.womenOrCouples &&
+                (l.occupantMix == OccupantMix.none ||
+                    l.occupantMix == OccupantMix.singles));
+    }
+  }
+
+  final compatible =
+      all.where((l) => fitsBlock(l) && l.capacity > 0 && l.free > 0).toList();
 
   int score(LodgingCandidate l, int size, {required bool whole}) {
     var s = 0;
@@ -283,6 +359,8 @@ List<_Plan> _plansFor(_Block b, List<LodgingCandidate> all, SuggestOptions o,
     if (l.capacity >= 4 && (l.occupied + size) / l.capacity < 0.25) s -= 10;
     // «Sin preferencia» es el comodín: se usa cuando no hay uno específico que sirva igual de bien.
     if (l.accepts == LodgingAccepts.any) s -= 8;
+    // Los mixtos sirven a dos tipos de huésped: se usan después de los específicos.
+    if (isMixedLodging(l.accepts)) s -= 3;
     return s;
   }
 

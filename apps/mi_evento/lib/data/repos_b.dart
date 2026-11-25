@@ -38,6 +38,24 @@ class GroupView {
   final int memberCount;
 }
 
+/// Quiénes hay en un hospedaje: matrimonios (los dos cónyuges dentro) o personas solas. Los
+/// hospedajes «mixtos» no mezclan ambos.
+OccupantMix occupantMixOfRows(Iterable<AttendeeRow> occupants) {
+  final list = occupants.toList();
+  if (list.isEmpty) return OccupantMix.none;
+  final perCouple = <String, int>{};
+  for (final r in list) {
+    if (r.coupleId != null) {
+      perCouple[r.coupleId!] = (perCouple[r.coupleId!] ?? 0) + 1;
+    }
+  }
+  final coupled = list
+      .where((r) => r.coupleId != null && (perCouple[r.coupleId!] ?? 0) >= 2)
+      .length;
+  if (coupled == 0) return OccupantMix.singles;
+  return coupled == list.length ? OccupantMix.couples : OccupantMix.mixed;
+}
+
 class LodgingView {
   const LodgingView(this.row, this.occupied);
   final LodgingRow row;
