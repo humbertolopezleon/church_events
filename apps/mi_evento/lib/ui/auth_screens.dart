@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'widgets/labeled_field.dart';
 
 import '../auth/auth_service.dart';
 import '../providers.dart';
@@ -117,14 +118,15 @@ class PasswordField extends StatefulWidget {
 class _PasswordFieldState extends State<PasswordField> {
   bool hide = true;
   @override
-  Widget build(BuildContext context) => TextField(
+  Widget build(BuildContext context) => LabeledField(
+      label: widget.label,
+      child: TextField(
         controller: widget.controller,
         obscureText: hide,
         enableSuggestions: false,
         autocorrect: false,
         onSubmitted: (_) => widget.onSubmitted?.call(),
         decoration: InputDecoration(
-          labelText: widget.label,
           suffixIcon: IconButton(
             tooltip: hide ? 'Mostrar contraseña' : 'Ocultar contraseña',
             icon: Icon(hide
@@ -133,7 +135,7 @@ class _PasswordFieldState extends State<PasswordField> {
             onPressed: () => setState(() => hide = !hide),
           ),
         ),
-      );
+      ));
 }
 
 /// Primer uso: crear el administrador.
@@ -253,19 +255,22 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       subtitle:
           'Es la primera vez que se abre la app en este dispositivo. El administrador crea a los demás usuarios.',
       children: [
-        TextField(
-            key: const Key('setup-nombre'),
-            controller: name,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Tu nombre')),
+        LabeledField(
+            label: 'Tu nombre',
+            child: TextField(
+                key: const Key('setup-nombre'),
+                controller: name,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration())),
         const SizedBox(height: 12),
-        TextField(
-            key: const Key('setup-usuario'),
-            controller: user,
-            autocorrect: false,
-            decoration: const InputDecoration(
-                labelText: 'Usuario',
-                helperText: 'Sin espacios ni tildes. Ej.: ana.perez')),
+        LabeledField(
+            label: 'Usuario',
+            child: TextField(
+                key: const Key('setup-usuario'),
+                controller: user,
+                autocorrect: false,
+                decoration: const InputDecoration(
+                    helperText: 'Sin espacios ni tildes. Ej.: ana.perez'))),
         const SizedBox(height: 12),
         PasswordField(
             key: const Key('setup-clave'),
@@ -356,12 +361,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             const SizedBox(height: 12),
           ],
-          TextField(
-              key: const Key('login-usuario'),
-              controller: user,
-              autocorrect: false,
-              textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(labelText: 'Usuario')),
+          LabeledField(
+              label: 'Usuario',
+              child: TextField(
+                  key: const Key('login-usuario'),
+                  controller: user,
+                  autocorrect: false,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration())),
           const SizedBox(height: 12),
           PasswordField(
               key: const Key('login-clave'),
@@ -451,13 +458,14 @@ class _RecoverDialogState extends ConsumerState<RecoverDialog> {
               const Text(
                   'Administrador: escribe el código de recuperación que recibiste al crear la cuenta y elige una contraseña nueva.\n\nOperador: pide al administrador que restablezca tu contraseña.'),
               const SizedBox(height: 12),
-              TextField(
-                  key: const Key('rec-codigo'),
-                  controller: code,
-                  autocorrect: false,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                      labelText: 'Código de recuperación')),
+              LabeledField(
+                  label: 'Código de recuperación',
+                  child: TextField(
+                      key: const Key('rec-codigo'),
+                      controller: code,
+                      autocorrect: false,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: const InputDecoration())),
               const SizedBox(height: 12),
               PasswordField(
                   key: const Key('rec-clave'),
