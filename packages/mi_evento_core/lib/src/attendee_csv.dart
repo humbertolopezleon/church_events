@@ -99,7 +99,9 @@ List<List<String>> parseCsv(String text) {
   var t = text.startsWith('\u{FEFF}') ? text.substring(1) : text;
   // Primera línea «sep=;» (la pone la exportación para Excel): fija el separador y se omite.
   String? hinted;
-  final hint = RegExp(r'^sep=(.)\r?\n', caseSensitive: false).firstMatch(t);
+  // (Una hoja de cálculo que la guardó como fila pudo rellenarla con separadores: «sep=;;;;» o entre comillas.)
+  final hint =
+      RegExp(r'^"?sep=(.)"?\1*\r?\n', caseSensitive: false).firstMatch(t);
   if (hint != null) {
     hinted = hint.group(1);
     t = t.substring(hint.end);
