@@ -165,3 +165,11 @@ Implementa la tabla aprobada (§9). Solo escritorio; en móvil no estorban.
 - **Excepción deliberada:** un aviso **con acción** («Deshacer» al confirmar asistencia, al generar equipos…) **sigue saliendo abajo también en escritorio** (se perdería a tiempo si solo estuviera en la campana) y además queda anotado en el centro.
 - **Riesgo asumido:** en escritorio un **error** ya no salta a la vista: aumenta el contador de la campana. Los errores de formulario que se muestran dentro de la propia pantalla (`ErrorBox`) no cambian. Si en el evento se pasan por alto errores, valorar que los de tipo error también salgan abajo.
 - **Pruebas:** `pr11_notificaciones_test.dart`; `pumpApp` vacía el centro en cada prueba.
+
+## 17. Asistente de configuración inicial (rama `feat/asistente-configuracion`)
+
+- **Qué:** la pantalla de configuración del evento (admin, primer momento) muestra al principio una **lista numerada de pasos** con su estado: Datos del evento (Listo / Sin guardar), Hospedajes y Equipos (n definidos o «Pendiente (se puede omitir)»). Solo salen los pasos que el evento usa (si no ofrece hospedaje o equipos, no hay paso ni numeración para ellos). Se actualiza al guardar o definir.
+- **Omitir:** ya era posible: «Terminar configuración» avisa de lo que falta («Faltan los hospedajes y los equipos…») y deja abrir las inscripciones de todas formas o seguir configurando.
+- **Por qué no un asistente modal paso a paso:** la pantalla de una sola página ya cubre «pasos omitibles + advertencia» y evita reescribir ~20 pruebas y el flujo de la QA de Windows que dependen de ella; la lista de pasos da la guía que faltaba. Si en el evento real se queda corto, el siguiente paso sería pasar cada sección a una página con Atrás/Siguiente reutilizando las mismas claves.
+- **Comidas** no es un paso: las sesiones se crean cuando se necesitan (cada una lleva su fecha).
+- **Pruebas:** `setup_assign_ui_test.dart` (lista de pasos).

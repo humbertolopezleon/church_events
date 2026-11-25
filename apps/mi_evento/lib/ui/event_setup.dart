@@ -219,12 +219,35 @@ class _EventConfigScreenState extends ConsumerState<EventConfigScreen> {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
                     admin
-                        ? 'Paso 1 de 2: deja el evento listo. Después abrirás las inscripciones y el resto de las actividades.'
+                        ? 'Deja el evento listo siguiendo estos pasos. Puedes omitir los que quieras: al terminar se te avisará de lo que falte y podrás completarlo después.'
                         : 'El administrador está configurando este evento. Cuando lo termine podrás inscribir y usar el resto de las actividades.',
                     key: const Key('cfg-intro'),
                     style: const TextStyle(fontSize: 16, color: Brand.gris)),
               ),
             if (admin) ...[
+              if (configuring) ...[
+                _StepsCard(steps: [
+                  _Step('cfg-paso-datos', 'Datos del evento', !dirty,
+                      dirty ? 'Sin guardar' : 'Listo'),
+                  if (lodging)
+                    _Step(
+                        'cfg-paso-hospedajes',
+                        'Hospedajes',
+                        counts.lodgings > 0,
+                        counts.lodgings > 0
+                            ? '${counts.lodgings} · ${counts.places} plazas'
+                            : 'Pendiente (se puede omitir)'),
+                  if (teams)
+                    _Step(
+                        'cfg-paso-equipos',
+                        'Equipos',
+                        counts.teams > 0,
+                        counts.teams > 0
+                            ? '${counts.teams}'
+                            : 'Pendiente (se puede omitir)'),
+                ]),
+                const SizedBox(height: 12),
+              ],
               section('Datos del evento', Icons.event_note_outlined, [
                 LabeledField(
                     label: 'Nombre',
@@ -383,4 +406,50 @@ class _EventConfigScreenState extends ConsumerState<EventConfigScreen> {
       ),
     );
   }
+}
+
+class _Step {
+  const _Step(this.key, this.title, this.done, this.state);
+  final String key;
+  final String title;
+  final bool done;
+  final String state;
+}
+
+/// Lista numerada de los pasos de la configuración con su estado.
+class _StepsCard extends StatelessWidget {
+  const _StepsCard({required this.steps});
+  final List<_Step> steps;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(children: [
+            for (var i = 0; i < steps.length; i++)
+              Padding(
+                key: Key(steps[i].key),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(children: [
+                  Icon(
+                      steps[i].done
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      color: steps[i].done ? Brand.exito : Brand.avisoTexto),
+                  const SizedBox(width: 10),
+                  Expanded(
+                      child: Text('${i + 1}. ${steps[i].title}',
+                          style: const TextStyle(fontWeight: FontWeight.w700))),
+                  Flexible(
+                      child: Text(steps[i].state,
+                          textAlign: TextAlign.end,
+                          style: TextStyle(
+                              color: steps[i].done
+                                  ? Brand.exito
+                                  : Brand.avisoTexto))),
+                ]),
+              ),
+          ]),
+        ),
+      );
 }

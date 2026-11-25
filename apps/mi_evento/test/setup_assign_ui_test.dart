@@ -115,6 +115,35 @@ void main() {
     });
 
     testWidgets(
+        'la lista de pasos muestra qué falta y se actualiza al definirlo; sin hospedaje o sin equipos el paso no sale',
+        (t) async {
+      await pumpApp(t, _pc);
+      await login(t, 'admin', 'secreto1');
+      await _newEvent(t);
+      expect(find.byKey(const Key('cfg-paso-datos')), findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byKey(const Key('cfg-paso-hospedajes')),
+              matching: find.textContaining('Pendiente')),
+          findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byKey(const Key('cfg-paso-equipos')),
+              matching: find.textContaining('se puede omitir')),
+          findsOneWidget);
+      expect(find.text('3. Equipos'), findsOneWidget);
+      // Cambiar un dato deja el primer paso «Sin guardar».
+      await enter(t, 'cfg-nombre', 'Otro nombre');
+      expect(find.text('Sin guardar'), findsOneWidget);
+      await tapKey(t, 'cfg-guardar-datos');
+      expect(find.text('Sin guardar'), findsNothing);
+      // Sin hospedaje: el paso desaparece y los equipos pasan a ser el 2.
+      await tapKey(t, 'cfg-hospedaje');
+      expect(find.byKey(const Key('cfg-paso-hospedajes')), findsNothing);
+      expect(find.text('2. Equipos'), findsOneWidget);
+    });
+
+    testWidgets(
         'al definir los equipos se confirman los criterios de balance propuestos (y se pueden cambiar)',
         (t) async {
       await pumpApp(t, _pc);
