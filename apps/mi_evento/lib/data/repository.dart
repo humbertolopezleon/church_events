@@ -584,14 +584,18 @@ class Repository {
   }
 
   /// Búsqueda por nombre (cualquier orden de palabras, sin tildes) o por número de inscripción.
-  static List<AttendeeView> search(List<AttendeeView> all, String query) {
+  /// Búsqueda por nombre y número (y por iglesia si [includeChurch]; las pantallas que ya tienen un
+  /// filtro de iglesia la desactivan: la búsqueda solo cubre lo que NO tiene filtro propio).
+  static List<AttendeeView> search(List<AttendeeView> all, String query,
+      {bool includeChurch = true}) {
     final q = normalizeText(query);
     if (q.isEmpty) return all;
     final n = int.tryParse(q);
     final words = q.split(' ');
     return all.where((v) {
       if (n != null && v.a.regNumber == n) return true;
-      final hay = normalizeText('${v.fullName} ${v.churchName ?? ''}');
+      final hay = normalizeText(
+          '${v.fullName} ${includeChurch ? v.churchName ?? '' : ''}');
       return words.every(hay.contains);
     }).toList();
   }

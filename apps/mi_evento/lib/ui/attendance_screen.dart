@@ -238,7 +238,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         const <AttendeeView>[];
     final pendingCount = all.where((v) => v.isPreregistered).length;
     final confirmedCount = all.length - pendingCount;
-    final shown = _filter.apply(Repository.search(all, query.text));
+    final shown =
+        _filter.apply(Repository.search(all, query.text, includeChurch: false));
     final shownIds = {for (final v in shown) v.a.id};
     selected.retainAll({for (final v in all) v.a.id});
     final sel = selected.where(shownIds.contains).toSet();
@@ -288,15 +289,16 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: ListToolbar(
             controller: query,
-            hint: 'Nombre, iglesia o número',
+            hint: 'Nombre o número',
             searchKey: const Key('ca-buscar'),
             countKey: const Key('ca-conteo'),
             onChanged: () => setState(() {}),
             count: filtering
                 ? '${shown.length} de ${all.length} coinciden'
                 : '$pendingCount por confirmar · $confirmedCount ya confirmados',
-            resultCount: () =>
-                _filter.apply(Repository.search(all, query.text)).length,
+            resultCount: () => _filter
+                .apply(Repository.search(all, query.text, includeChurch: false))
+                .length,
             resultLabel: (n) => n == 0
                 ? 'Nadie coincide con estos filtros'
                 : 'Ver ${plural(n, 'persona', 'personas')}',

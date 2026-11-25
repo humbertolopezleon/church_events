@@ -25,7 +25,9 @@ void main() {
     expect(find.text('Registrar'), findsNothing);
     await t.tap(find.text('Asistentes').first);
     await settle(t);
-    await tapKey(t, 'asis-registrar');
+    // Sin asistentes no hay botón flotante: la invitación del estado vacío registra.
+    expect(find.byKey(const Key('asis-registrar')), findsNothing);
+    await tapKey(t, 'asis-vacio-registrar');
     expect(find.text('Nuevo asistente'), findsOneWidget);
   });
 
