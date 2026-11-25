@@ -176,3 +176,10 @@ Implementa la tabla aprobada (§9). Solo escritorio; en móvil no estorban.
 - **Zona horaria:** la hora se exporta y se lee en **hora local** del equipo; entre equipos en husos distintos las horas se desplazarían. No se tuvo en cuenta (el evento es en un solo lugar).
 - **No hecho:** las marcas importadas no cuentan los «avisos de repetido no marcado» (`blockedRepeats`) de la sesión; es una cifra del resumen de cierre propia de cada dispositivo.
 - **Pruebas:** `pr12_comidas_intercambio_test.dart` (formatos, ida y vuelta entre eventos, fechas, filas con avisos, no duplicar, repetidos, y el menú de la pantalla).
+## 17. Asistente de configuración inicial (rama `feat/asistente-configuracion`)
+
+- **Qué:** la pantalla de configuración del evento (admin, primer momento) muestra al principio una **lista numerada de pasos** con su estado: Datos del evento (Listo / Sin guardar), Hospedajes y Equipos (n definidos o «Pendiente (se puede omitir)»). Solo salen los pasos que el evento usa (si no ofrece hospedaje o equipos, no hay paso ni numeración para ellos). Se actualiza al guardar o definir.
+- **Omitir:** ya era posible: «Terminar configuración» avisa de lo que falta («Faltan los hospedajes y los equipos…») y deja abrir las inscripciones de todas formas o seguir configurando.
+- **Por qué no un asistente modal paso a paso:** la pantalla de una sola página ya cubre «pasos omitibles + advertencia» y evita reescribir ~20 pruebas y el flujo de la QA de Windows que dependen de ella; la lista de pasos da la guía que faltaba. Si en el evento real se queda corto, el siguiente paso sería pasar cada sección a una página con Atrás/Siguiente reutilizando las mismas claves.
+- **Comidas** no es un paso: las sesiones se crean cuando se necesitan (cada una lleva su fecha).
+- **Pruebas:** `setup_assign_ui_test.dart` (lista de pasos).
