@@ -82,6 +82,11 @@ class Attendees extends Table with BaseColumns {
   TextColumn get status => text().withDefault(const Constant('confirmed'))();
   DateTimeColumn get confirmedAt => dateTime().nullable()();
 
+  /// Registrado en el momento desde el control de comidas (no estaba inscrito de antes): se marca
+  /// para identificarlo y revisarlo después.
+  BoolColumn get registeredAtControl =>
+      boolean().withDefault(const Constant(false))();
+
   @override
   List<Set<Column>> get uniqueKeys => [
         {eventId, regNumber}

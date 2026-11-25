@@ -18,7 +18,8 @@ class MealRow {
       required this.team,
       this.time,
       this.by = '',
-      this.times = 0});
+      this.times = 0,
+      this.registeredAtControl = false});
   final int regNumber;
   final String name, sex, church, team, by;
   final int age;
@@ -26,6 +27,9 @@ class MealRow {
 
   /// Veces que pasó (registros activos): 0 = no pasó, 1 = una vez, 2 o más = repitió.
   final int times;
+
+  /// Se registró en el momento, desde el control de comidas (no estaba inscrita de antes).
+  final bool registeredAtControl;
 }
 
 class TeamLine {
@@ -113,6 +117,7 @@ MealReport buildMealReport({
       time: r?.markedAt.toLocal(),
       by: r?.operatorName ?? '',
       times: times[a.id] ?? 0,
+      registeredAtControl: a.registeredAtControl,
     );
   }
 
@@ -176,7 +181,8 @@ String mealCsv(MealReport r) => buildCsv([
         'Pasó',
         'Hora',
         'Marcado por',
-        'Veces'
+        'Veces',
+        'Registrado en el control'
       ],
       for (final p in [
         ...r.passed,
@@ -192,7 +198,8 @@ String mealCsv(MealReport r) => buildCsv([
           p.time == null ? 'No' : 'Sí',
           p.time == null ? '' : hhmm(p.time!),
           p.by,
-          '${p.times}'
+          '${p.times}',
+          p.registeredAtControl ? 'Sí' : ''
         ],
     ]);
 
@@ -205,7 +212,12 @@ Uint8List mealXlsx(MealReport r) {
         p.age,
         p.church,
         p.team,
-        if (withTime) ...[hhmm(p.time!), p.by, p.times]
+        if (withTime) ...[
+          hhmm(p.time!),
+          p.by,
+          p.times,
+          p.registeredAtControl ? 'Sí' : ''
+        ]
       ];
   const head = ['Nº', 'Nombre', 'Sexo', 'Edad', 'Iglesia', 'Equipo'];
   return buildXlsx([
@@ -237,7 +249,7 @@ Uint8List mealXlsx(MealReport r) {
       for (final b in r.buckets) [hhmm(b.$1), b.$2],
     ]),
     XlsxSheet('Pasaron', [
-      [...head, 'Hora', 'Marcado por', 'Veces'],
+      [...head, 'Hora', 'Marcado por', 'Veces', 'Registrado en el control'],
       for (final p in r.passed) person(p),
     ]),
     XlsxSheet('No pasaron', [

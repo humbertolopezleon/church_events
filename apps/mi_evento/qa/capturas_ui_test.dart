@@ -515,4 +515,42 @@ void main() {
       await shot(t, 'comidas-resumen-repeticiones');
     });
   });
+
+  group('Comidas · registrar persona nueva', () {
+    cap('móvil: no aparece → registrar, y marca visible', (t) async {
+      final c = await _abrir(t, _movil);
+      await t.runAsync(() async {
+        final meals = MealRepo(c.db);
+        final ev = (await c.db.select(c.db.events).getSingle()).id;
+        await meals.ensureDefaultTypes(ev);
+        final tp =
+            (await meals.types(ev)).firstWhere((x) => x.name == 'Almuerzo');
+        await meals.createSession(ev, tp.id, 'Almuerzo del viernes');
+      });
+      await _ir(t, 'Comidas');
+      await enter(t, 'cm-buscar', 'Zoe Gómez');
+      await shot(t, 'comidas-no-aparece');
+      await tapKey(t, 'cm-registrar-vacio');
+      await shot(t, 'comidas-registrar-dialogo');
+      await tapKey(t, 'qr-mujer');
+      await enter(t, 'qr-edad', '25');
+      await tapKey(t, 'qr-guardar');
+      await settle(t);
+      await shot(t, 'comidas-registrado-y-marcado');
+    });
+    cap('móvil al 130 %: diálogo de registro', (t) async {
+      final c = await _abrir(t, _movil, escala: 1.3);
+      await t.runAsync(() async {
+        final meals = MealRepo(c.db);
+        final ev = (await c.db.select(c.db.events).getSingle()).id;
+        await meals.ensureDefaultTypes(ev);
+        final tp =
+            (await meals.types(ev)).firstWhere((x) => x.name == 'Almuerzo');
+        await meals.createSession(ev, tp.id, 'Almuerzo del viernes');
+      });
+      await _ir(t, 'Comidas');
+      await tapKey(t, 'cm-registrar');
+      await shot(t, 'comidas-registrar-dialogo-letra130');
+    });
+  });
 }

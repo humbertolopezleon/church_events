@@ -174,7 +174,12 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
                     key: Key('preinscrito-${v.a.regNumber}'),
                     label: const Text('Preinscrito'),
                     visualDensity: VisualDensity.compact)
-                : const Text('Confirmada'),
+                : v.a.registeredAtControl
+                    ? Chip(
+                        key: Key('reg-control-${v.a.regNumber}'),
+                        label: const Text('Registrado en comidas'),
+                        visualDensity: VisualDensity.compact)
+                    : const Text('Confirmada'),
             sortValue: (v) => v.isPreregistered ? 0 : 1),
         TableCol('', (v) => _menu(eventId, v)),
       ],
@@ -246,6 +251,13 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
                           child: Chip(
                               key: Key('preinscrito-${v.a.regNumber}'),
                               label: const Text('Preinscrito'),
+                              visualDensity: VisualDensity.compact))
+                    else if (v.a.registeredAtControl)
+                      Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Chip(
+                              key: Key('reg-control-${v.a.regNumber}'),
+                              label: const Text('Registrado en comidas'),
                               visualDensity: VisualDensity.compact)),
                   ]),
             ),

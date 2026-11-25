@@ -164,8 +164,12 @@ void main() {
       expect(byName, {'A X': 2, 'B X': 3, 'C X': 2, 'D X': 1});
       final csv = mealCsv(r);
       expect(csv, contains(';Veces'));
-      expect(csv.split('\r\n').where((l) => l.startsWith('2;B X')).single,
-          endsWith(';3'));
+      final cols = csv
+          .split('\r\n')
+          .where((l) => l.startsWith('2;B X'))
+          .single
+          .split(';');
+      expect(cols[9], '3', reason: 'columna «Veces»');
     });
   });
 

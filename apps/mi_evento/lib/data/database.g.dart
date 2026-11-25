@@ -2054,6 +2054,16 @@ class $AttendeesTable extends Attendees
   late final GeneratedColumn<DateTime> confirmedAt = GeneratedColumn<DateTime>(
       'confirmed_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _registeredAtControlMeta =
+      const VerificationMeta('registeredAtControl');
+  @override
+  late final GeneratedColumn<bool> registeredAtControl = GeneratedColumn<bool>(
+      'registered_at_control', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("registered_at_control" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -2080,7 +2090,8 @@ class $AttendeesTable extends Attendees
         dedupeKey,
         createdBy,
         status,
-        confirmedAt
+        confirmedAt,
+        registeredAtControl
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2221,6 +2232,12 @@ class $AttendeesTable extends Attendees
           confirmedAt.isAcceptableOrUnknown(
               data['confirmed_at']!, _confirmedAtMeta));
     }
+    if (data.containsKey('registered_at_control')) {
+      context.handle(
+          _registeredAtControlMeta,
+          registeredAtControl.isAcceptableOrUnknown(
+              data['registered_at_control']!, _registeredAtControlMeta));
+    }
     return context;
   }
 
@@ -2284,6 +2301,8 @@ class $AttendeesTable extends Attendees
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
       confirmedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}confirmed_at']),
+      registeredAtControl: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}registered_at_control'])!,
     );
   }
 
@@ -2319,6 +2338,10 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
   final String? createdBy;
   final String status;
   final DateTime? confirmedAt;
+
+  /// Registrado en el momento desde el control de comidas (no estaba inscrito de antes): se marca
+  /// para identificarlo y revisarlo después.
+  final bool registeredAtControl;
   const AttendeeRow(
       {required this.id,
       required this.createdAt,
@@ -2344,7 +2367,8 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
       required this.dedupeKey,
       this.createdBy,
       required this.status,
-      this.confirmedAt});
+      this.confirmedAt,
+      required this.registeredAtControl});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2389,6 +2413,7 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
     if (!nullToAbsent || confirmedAt != null) {
       map['confirmed_at'] = Variable<DateTime>(confirmedAt);
     }
+    map['registered_at_control'] = Variable<bool>(registeredAtControl);
     return map;
   }
 
@@ -2433,6 +2458,7 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
       confirmedAt: confirmedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(confirmedAt),
+      registeredAtControl: Value(registeredAtControl),
     );
   }
 
@@ -2465,6 +2491,8 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
       createdBy: serializer.fromJson<String?>(json['createdBy']),
       status: serializer.fromJson<String>(json['status']),
       confirmedAt: serializer.fromJson<DateTime?>(json['confirmedAt']),
+      registeredAtControl:
+          serializer.fromJson<bool>(json['registeredAtControl']),
     );
   }
   @override
@@ -2496,6 +2524,7 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
       'createdBy': serializer.toJson<String?>(createdBy),
       'status': serializer.toJson<String>(status),
       'confirmedAt': serializer.toJson<DateTime?>(confirmedAt),
+      'registeredAtControl': serializer.toJson<bool>(registeredAtControl),
     };
   }
 
@@ -2524,7 +2553,8 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
           String? dedupeKey,
           Value<String?> createdBy = const Value.absent(),
           String? status,
-          Value<DateTime?> confirmedAt = const Value.absent()}) =>
+          Value<DateTime?> confirmedAt = const Value.absent(),
+          bool? registeredAtControl}) =>
       AttendeeRow(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -2551,6 +2581,7 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
         createdBy: createdBy.present ? createdBy.value : this.createdBy,
         status: status ?? this.status,
         confirmedAt: confirmedAt.present ? confirmedAt.value : this.confirmedAt,
+        registeredAtControl: registeredAtControl ?? this.registeredAtControl,
       );
   AttendeeRow copyWithCompanion(AttendeesCompanion data) {
     return AttendeeRow(
@@ -2586,6 +2617,9 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
       status: data.status.present ? data.status.value : this.status,
       confirmedAt:
           data.confirmedAt.present ? data.confirmedAt.value : this.confirmedAt,
+      registeredAtControl: data.registeredAtControl.present
+          ? data.registeredAtControl.value
+          : this.registeredAtControl,
     );
   }
 
@@ -2616,7 +2650,8 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
           ..write('dedupeKey: $dedupeKey, ')
           ..write('createdBy: $createdBy, ')
           ..write('status: $status, ')
-          ..write('confirmedAt: $confirmedAt')
+          ..write('confirmedAt: $confirmedAt, ')
+          ..write('registeredAtControl: $registeredAtControl')
           ..write(')'))
         .toString();
   }
@@ -2647,7 +2682,8 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
         dedupeKey,
         createdBy,
         status,
-        confirmedAt
+        confirmedAt,
+        registeredAtControl
       ]);
   @override
   bool operator ==(Object other) =>
@@ -2677,7 +2713,8 @@ class AttendeeRow extends DataClass implements Insertable<AttendeeRow> {
           other.dedupeKey == this.dedupeKey &&
           other.createdBy == this.createdBy &&
           other.status == this.status &&
-          other.confirmedAt == this.confirmedAt);
+          other.confirmedAt == this.confirmedAt &&
+          other.registeredAtControl == this.registeredAtControl);
 }
 
 class AttendeesCompanion extends UpdateCompanion<AttendeeRow> {
@@ -2706,6 +2743,7 @@ class AttendeesCompanion extends UpdateCompanion<AttendeeRow> {
   final Value<String?> createdBy;
   final Value<String> status;
   final Value<DateTime?> confirmedAt;
+  final Value<bool> registeredAtControl;
   final Value<int> rowid;
   const AttendeesCompanion({
     this.id = const Value.absent(),
@@ -2733,6 +2771,7 @@ class AttendeesCompanion extends UpdateCompanion<AttendeeRow> {
     this.createdBy = const Value.absent(),
     this.status = const Value.absent(),
     this.confirmedAt = const Value.absent(),
+    this.registeredAtControl = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AttendeesCompanion.insert({
@@ -2761,6 +2800,7 @@ class AttendeesCompanion extends UpdateCompanion<AttendeeRow> {
     this.createdBy = const Value.absent(),
     this.status = const Value.absent(),
     this.confirmedAt = const Value.absent(),
+    this.registeredAtControl = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         createdAt = Value(createdAt),
@@ -2799,6 +2839,7 @@ class AttendeesCompanion extends UpdateCompanion<AttendeeRow> {
     Expression<String>? createdBy,
     Expression<String>? status,
     Expression<DateTime>? confirmedAt,
+    Expression<bool>? registeredAtControl,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2827,6 +2868,8 @@ class AttendeesCompanion extends UpdateCompanion<AttendeeRow> {
       if (createdBy != null) 'created_by': createdBy,
       if (status != null) 'status': status,
       if (confirmedAt != null) 'confirmed_at': confirmedAt,
+      if (registeredAtControl != null)
+        'registered_at_control': registeredAtControl,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2857,6 +2900,7 @@ class AttendeesCompanion extends UpdateCompanion<AttendeeRow> {
       Value<String?>? createdBy,
       Value<String>? status,
       Value<DateTime?>? confirmedAt,
+      Value<bool>? registeredAtControl,
       Value<int>? rowid}) {
     return AttendeesCompanion(
       id: id ?? this.id,
@@ -2884,6 +2928,7 @@ class AttendeesCompanion extends UpdateCompanion<AttendeeRow> {
       createdBy: createdBy ?? this.createdBy,
       status: status ?? this.status,
       confirmedAt: confirmedAt ?? this.confirmedAt,
+      registeredAtControl: registeredAtControl ?? this.registeredAtControl,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2966,6 +3011,9 @@ class AttendeesCompanion extends UpdateCompanion<AttendeeRow> {
     if (confirmedAt.present) {
       map['confirmed_at'] = Variable<DateTime>(confirmedAt.value);
     }
+    if (registeredAtControl.present) {
+      map['registered_at_control'] = Variable<bool>(registeredAtControl.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3000,6 +3048,7 @@ class AttendeesCompanion extends UpdateCompanion<AttendeeRow> {
           ..write('createdBy: $createdBy, ')
           ..write('status: $status, ')
           ..write('confirmedAt: $confirmedAt, ')
+          ..write('registeredAtControl: $registeredAtControl, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -10022,6 +10071,7 @@ typedef $$AttendeesTableCreateCompanionBuilder = AttendeesCompanion Function({
   Value<String?> createdBy,
   Value<String> status,
   Value<DateTime?> confirmedAt,
+  Value<bool> registeredAtControl,
   Value<int> rowid,
 });
 typedef $$AttendeesTableUpdateCompanionBuilder = AttendeesCompanion Function({
@@ -10050,6 +10100,7 @@ typedef $$AttendeesTableUpdateCompanionBuilder = AttendeesCompanion Function({
   Value<String?> createdBy,
   Value<String> status,
   Value<DateTime?> confirmedAt,
+  Value<bool> registeredAtControl,
   Value<int> rowid,
 });
 
@@ -10192,6 +10243,10 @@ class $$AttendeesTableFilterComposer
 
   ColumnFilters<DateTime> get confirmedAt => $composableBuilder(
       column: $table.confirmedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get registeredAtControl => $composableBuilder(
+      column: $table.registeredAtControl,
+      builder: (column) => ColumnFilters(column));
 
   $$EventsTableFilterComposer get eventId {
     final $$EventsTableFilterComposer composer = $composerBuilder(
@@ -10357,6 +10412,10 @@ class $$AttendeesTableOrderingComposer
   ColumnOrderings<DateTime> get confirmedAt => $composableBuilder(
       column: $table.confirmedAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get registeredAtControl => $composableBuilder(
+      column: $table.registeredAtControl,
+      builder: (column) => ColumnOrderings(column));
+
   $$EventsTableOrderingComposer get eventId {
     final $$EventsTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -10475,6 +10534,9 @@ class $$AttendeesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get confirmedAt => $composableBuilder(
       column: $table.confirmedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get registeredAtControl => $composableBuilder(
+      column: $table.registeredAtControl, builder: (column) => column);
 
   $$EventsTableAnnotationComposer get eventId {
     final $$EventsTableAnnotationComposer composer = $composerBuilder(
@@ -10611,6 +10673,7 @@ class $$AttendeesTableTableManager extends RootTableManager<
             Value<String?> createdBy = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<DateTime?> confirmedAt = const Value.absent(),
+            Value<bool> registeredAtControl = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               AttendeesCompanion(
@@ -10639,6 +10702,7 @@ class $$AttendeesTableTableManager extends RootTableManager<
             createdBy: createdBy,
             status: status,
             confirmedAt: confirmedAt,
+            registeredAtControl: registeredAtControl,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -10667,6 +10731,7 @@ class $$AttendeesTableTableManager extends RootTableManager<
             Value<String?> createdBy = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<DateTime?> confirmedAt = const Value.absent(),
+            Value<bool> registeredAtControl = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               AttendeesCompanion.insert(
@@ -10695,6 +10760,7 @@ class $$AttendeesTableTableManager extends RootTableManager<
             createdBy: createdBy,
             status: status,
             confirmedAt: confirmedAt,
+            registeredAtControl: registeredAtControl,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

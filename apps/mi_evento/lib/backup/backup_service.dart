@@ -193,7 +193,8 @@ class BackupService {
         }
       }
       for (final j in t('attendees')) {
-        var inc = AttendeeRow.fromJson(j);
+        // Las copias anteriores a la v10 no traen «registeredAtControl»: se toma como falso.
+        var inc = AttendeeRow.fromJson({'registeredAtControl': false, ...j});
         if (inc.churchId != null && churchMap.containsKey(inc.churchId)) {
           inc = inc.copyWith(churchId: Value(churchMap[inc.churchId]));
         }
