@@ -498,7 +498,25 @@ class _PeoplePicker extends StatefulWidget {
 
 class _PeoplePickerState extends State<_PeoplePicker> {
   late final sel = {...widget.initial};
+  final search = TextEditingController();
 
+  @override
+  void dispose() {
+    search.dispose();
+    super.dispose();
+  }
+
+  /// Personas que coinciden con la búsqueda (nombre o número, sin tildes ni mayúsculas).
+  List<AttendeeView> get _shown {
+    final q = normalizeText(search.text);
+    if (q.isEmpty) return widget.people;
+    return [
+      for (final v in widget.people)
+        if (normalizeText('${v.fullName} ${v.a.regNumber}').contains(q)) v
+    ];
+  }
+
+  /// Marcar/desmarcar a una persona arrastra a su cónyuge (siempre juntos en un hospedaje).
   void _toggle(AttendeeView v, bool on) {
     final ids = {
       v.a.id,
@@ -507,26 +525,87 @@ class _PeoplePickerState extends State<_PeoplePicker> {
     setState(() => on ? sel.addAll(ids) : sel.removeAll(ids));
   }
 
+  /// «Marcar todos» / «Desmarcar todos» actúan sobre los que se ven (los de la búsqueda).
+  void _all(bool on) {
+    final ids = <String>{};
+    for (final v in _shown) {
+      ids.add(v.a.id);
+      final sp = widget.spouses[v.a.id];
+      if (sp != null) ids.add(sp);
+    }
+    setState(() => on ? sel.addAll(ids) : sel.removeAll(ids));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final shown = _shown;
+    final filtering = search.text.trim().isNotEmpty;
     return AlertDialog(
       title: const Text('Elegir personas'),
       content: SizedBox(
         width: 460,
-        height: 460,
-        child: ListView(children: [
-          for (final v in widget.people)
-            CheckboxListTile(
-              key: Key('sgp-${v.a.regNumber}'),
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              value: sel.contains(v.a.id),
-              onChanged: (on) => _toggle(v, on ?? false),
-              title: Text(v.fullName,
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: Text(
-                  '${v.isMale ? 'Hombre' : 'Mujer'} · ${v.a.age} años${widget.spouses[v.a.id] != null ? ' · con su cónyuge' : ''}'),
+        height: 520,
+        child: Column(children: [
+          TextField(
+            key: const Key('sgp-buscar'),
+            controller: search,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'Buscar por nombre o número…',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: search.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Limpiar',
+                      icon: const Icon(Icons.close),
+                      onPressed: () => setState(search.clear)),
             ),
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+                filtering
+                    ? '${shown.length} de ${widget.people.length} · ${sel.length} marcadas'
+                    : '${sel.length} de ${widget.people.length} marcadas',
+                key: const Key('sgp-conteo'),
+                style: const TextStyle(color: Brand.gris)),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(spacing: 8, children: [
+              TextButton(
+                  key: const Key('sgp-marcar-todos'),
+                  onPressed: shown.isEmpty ? null : () => _all(true),
+                  child: const Text('Marcar todos')),
+              TextButton(
+                  key: const Key('sgp-desmarcar-todos'),
+                  onPressed: shown.isEmpty ? null : () => _all(false),
+                  child: const Text('Desmarcar todos')),
+            ]),
+          ),
+          Expanded(
+            child: shown.isEmpty
+                ? const Center(
+                    child: Text('Nadie coincide con la búsqueda.',
+                        key: Key('sgp-vacio'),
+                        style: TextStyle(color: Brand.gris)))
+                : ListView(children: [
+                    for (final v in shown)
+                      CheckboxListTile(
+                        key: Key('sgp-${v.a.regNumber}'),
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        value: sel.contains(v.a.id),
+                        onChanged: (on) => _toggle(v, on ?? false),
+                        title: Text(v.fullName,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w700)),
+                        subtitle: Text(
+                            '${v.isMale ? 'Hombre' : 'Mujer'} · ${v.a.age} años${widget.spouses[v.a.id] != null ? ' · con su cónyuge' : ''}'),
+                      ),
+                  ]),
+          ),
         ]),
       ),
       actions: [

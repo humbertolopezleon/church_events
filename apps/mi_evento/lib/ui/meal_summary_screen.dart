@@ -141,8 +141,20 @@ class _MealSummaryScreenState extends ConsumerState<MealSummaryScreen> {
               key: const Key('res-no-pasaron'), bg: Brand.naranjaSuave),
           _Stat('Repetidos evitados', '${r.blockedRepeats}', null,
               key: const Key('res-repetidos')),
+          _Stat(
+              'Repitieron',
+              r.repeaters == 0 ? 'Nadie' : '${r.repeaters}',
+              r.extraPasses == 0
+                  ? null
+                  : '${r.extraPasses} ${r.extraPasses == 1 ? 'pasada de más' : 'pasadas de más'}',
+              key: const Key('res-repitieron'),
+              bg: r.repeaters == 0 ? null : Brand.avisoSuave),
         ]),
         const SizedBox(height: 16),
+        if (r.repeatCounts.isNotEmpty) ...[
+          _RepeatCard(r.repeatCounts),
+          const SizedBox(height: 12),
+        ],
         if (r.teams.isNotEmpty)
           Card(
             child: Padding(
@@ -293,4 +305,55 @@ class _Stat extends StatelessWidget {
           ]),
         ),
       );
+}
+
+/// Cuántas personas pasaron 2, 3, 4… veces por la sesión (las que repitieron a propósito, tras el
+/// aviso). Una barra por cantidad de veces; el ancho es proporcional al número de personas.
+class _RepeatCard extends StatelessWidget {
+  const _RepeatCard(this.counts);
+  final Map<int, int> counts;
+
+  @override
+  Widget build(BuildContext context) {
+    final max = counts.values.fold<int>(1, (m, n) => n > m ? n : m);
+    return Card(
+      key: const Key('res-repeticiones'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Cuántas veces repitieron', style: headStyle(20)),
+          const SizedBox(height: 4),
+          const Text('Personas que pasaron más de una vez por esta sesión.',
+              style: TextStyle(color: Brand.gris)),
+          const SizedBox(height: 10),
+          for (final e in counts.entries)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(children: [
+                SizedBox(
+                    width: 92,
+                    child: Text('${e.key} veces',
+                        key: Key('res-rep-${e.key}'),
+                        style: const TextStyle(fontWeight: FontWeight.w700))),
+                Expanded(
+                  child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                          minHeight: 14,
+                          value: e.value / max,
+                          backgroundColor: Brand.azulSuave,
+                          color: const Color(0xFFC98A00))),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                    width: 36,
+                    child: Text('${e.value}',
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(fontWeight: FontWeight.w800))),
+              ]),
+            ),
+        ]),
+      ),
+    );
+  }
 }

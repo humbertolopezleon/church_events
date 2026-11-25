@@ -101,7 +101,9 @@ void main() {
     await _open(t);
     expect(find.byKey(const Key('cm-vacio')), findsOneWidget);
     await tapKey(t, 'cm-nueva');
-    final sugerido = suggestSessionName('Almuerzo', DateTime.now());
+    // La sugerencia usa el primer día del evento (2026-12-12, sábado), no el de hoy.
+    final sugerido = suggestSessionName('Almuerzo', DateTime(2026, 12, 12));
+    expect(sugerido, 'Almuerzo del sábado');
     expect(
         t
             .widget<TextField>(find.byKey(const Key('ns-nombre')))
