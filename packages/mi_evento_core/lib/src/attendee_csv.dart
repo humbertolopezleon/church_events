@@ -70,9 +70,12 @@ String neutralizeFormula(String c) {
 String restoreFormula(String c) =>
     RegExp(r"^'[=+\-@\t]").hasMatch(c) ? c.substring(1) : c;
 
-/// Escribe un CSV con [delimiter] (en Excel en español se usa «;»). Lleva BOM para que Excel
-/// respete las tildes y saltos de línea CRLF.
-String buildCsvDelimited(List<List<String>> rows, {String delimiter = ';'}) {
+/// Escribe un CSV con [delimiter]. Lleva BOM (Excel respeta las tildes), saltos de línea CRLF y,
+/// con [excelHint], la primera línea `sep=;`: Excel la obedece sea cual sea el separador de lista
+/// de su configuración regional (sin ella, un Excel configurado con «,» mostraba todo en una sola
+/// columna). [parseCsv] la reconoce y la omite.
+String buildCsvDelimited(List<List<String>> rows,
+    {String delimiter = ';', bool excelHint = true}) {
   String cell(String raw) {
     final c = neutralizeFormula(raw);
     final needs = c.contains(delimiter) ||
@@ -85,13 +88,22 @@ String buildCsvDelimited(List<List<String>> rows, {String delimiter = ';'}) {
     return needs ? '"$esc"' : esc;
   }
 
-  return '﻿${rows.map((r) => r.map(cell).join(delimiter)).join('\r\n')}\r\n';
+  final body =
+      '${rows.map((r) => r.map(cell).join(delimiter)).join('\r\n')}\r\n';
+  return '\u{FEFF}${excelHint ? 'sep=$delimiter\r\n' : ''}$body';
 }
 
 /// Lee un CSV: quita el BOM, adivina el separador (`;`, `,` o tabulador) por la primera fila,
 /// respeta comillas (con saltos de línea y comillas dobles escapadas) y omite filas vacías.
 List<List<String>> parseCsv(String text) {
-  var t = text.startsWith('﻿') ? text.substring(1) : text;
+  var t = text.startsWith('\u{FEFF}') ? text.substring(1) : text;
+  // Primera línea «sep=;» (la pone la exportación para Excel): fija el separador y se omite.
+  String? hinted;
+  final hint = RegExp(r'^sep=(.)\r?\n', caseSensitive: false).firstMatch(t);
+  if (hint != null) {
+    hinted = hint.group(1);
+    t = t.substring(hint.end);
+  }
   if (t.trim().isEmpty) return const [];
   // Separador: el más frecuente fuera de comillas en la primera línea.
   final counts = {';': 0, ',': 0, '\t': 0};
@@ -106,7 +118,7 @@ List<List<String>> parseCsv(String text) {
     }
   }
   final delimiter =
-      counts.entries.reduce((a, b) => b.value > a.value ? b : a).key;
+      hinted ?? counts.entries.reduce((a, b) => b.value > a.value ? b : a).key;
 
   final rows = <List<String>>[];
   var row = <String>[];
