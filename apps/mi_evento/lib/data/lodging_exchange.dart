@@ -35,10 +35,6 @@ class LodgingExchange implements TableImporter {
         CsvColumn('acepta',
             'Solo hombres, Solo mujeres, Matrimonios o Sin preferencia'),
         CsvColumn('capacidad', 'número de plazas (al menos 1)', required: true),
-        CsvColumn(
-            'ocupadas', 'solo informativa: se calcula, se ignora al importar'),
-        CsvColumn(
-            'libres', 'solo informativa: se calcula, se ignora al importar'),
         CsvColumn('anfitrion', 'nombre del anfitrión'),
         CsvColumn('telefono', 'teléfono de contacto'),
         CsvColumn('indicaciones', 'cómo llegar'),
