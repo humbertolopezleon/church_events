@@ -92,7 +92,15 @@ Future<void> login(WidgetTester t, String user, String pass) async {
 }
 
 Future<void> tapKey(WidgetTester t, String key) async {
+  // Importar/Exportar CSV viven en el menú ⋮ de la cabecera: si la clave no está a la vista y hay
+  // menú, se abre primero.
+  if (find.byKey(Key(key)).evaluate().isEmpty &&
+      find.byKey(const Key('menu-csv')).evaluate().isNotEmpty) {
+    await t.tap(find.byKey(const Key('menu-csv')));
+    await settle(t);
+  }
   await t.ensureVisible(find.byKey(Key(key)));
+  await t.pump(); // la lista perezosa termina de colocarse antes de tocar
   await t.tap(find.byKey(Key(key)));
   await settle(t);
 }
@@ -132,5 +140,17 @@ Future<void> leaveForm(WidgetTester t) async {
   t
       .state<NavigatorState>(find.byType(Navigator).first)
       .popUntil((r) => r.isFirst);
+  await settle(t);
+}
+
+/// Abre la hoja de filtros de la lista (botón «Filtros» junto al buscador).
+Future<void> openFilters(WidgetTester t) async {
+  await t.tap(find.byKey(const Key('filtros-toggle')));
+  await settle(t);
+}
+
+/// Cierra la hoja de filtros con «Ver N …».
+Future<void> closeFilters(WidgetTester t) async {
+  await t.tap(find.byKey(const Key('filtros-ver')));
   await settle(t);
 }

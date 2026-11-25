@@ -148,9 +148,9 @@ void main() {
     await settle(t);
     expect(find.text('2 iglesias'), findsOneWidget);
 
-    await t.enterText(find.byKey(const Key('ig-buscar')), 'colon');
+    await t.enterText(find.byKey(const Key('ig-buscar')), 'metod');
     await settle(t);
-    expect(find.text('1 de 2'), findsOneWidget);
+    expect(find.text('1 de 2 · orden alfabético'), findsOneWidget);
     await tapKey(t, 'ig-exportar');
     final rows = parseCsv(utf8.decode(saver.saved.values.first));
     expect(rows.first, ChurchExchange.headers);

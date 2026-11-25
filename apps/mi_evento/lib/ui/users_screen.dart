@@ -11,6 +11,9 @@ import 'auth_screens.dart';
 import 'widgets/list_toolbar.dart';
 import '../data/users_exchange.dart';
 import 'table_import_flow.dart';
+import 'widgets/app_fab.dart';
+import 'widgets/app_header.dart';
+import 'widgets/plural.dart';
 
 /// Administración de usuarios (solo administrador).
 class UsersScreen extends ConsumerStatefulWidget {
@@ -57,13 +60,26 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
     final auth = ref.watch(authServiceProvider);
     final me = ref.watch(currentUserProvider)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Usuarios')),
-      floatingActionButton: FloatingActionButton.extended(
+      appBar: AppHeader(
+        title: 'Usuarios',
+        importKey: const Key('usr-importar'),
+        exportKey: const Key('usr-exportar'),
+        onImport: () => runTableImport(
+            context,
+            ref,
+            UsersExchange(
+                ref.read(databaseProvider), ref.read(authServiceProvider), me)),
+        onExport: () async {
+          final all = await auth.listUsers();
+          if (mounted) await _export(_filter(all));
+        },
+      ),
+      floatingActionButton: AppFab(
         key: const Key('usuario-nuevo'),
         onPressed: () => showDialog<void>(
             context: context, builder: (_) => _UserDialog(actor: me)),
-        icon: const Icon(Icons.person_add_alt),
-        label: const Text('Nuevo usuario'),
+        icon: Icons.person_add_alt,
+        label: 'Nuevo usuario',
       ),
       body: StreamBuilder<List<AppUser>>(
         stream: auth.watchUsers(),
@@ -78,21 +94,13 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
               if (i == 0) {
                 return ListToolbar(
                   controller: query,
-                  hint: 'Buscar por nombre, usuario o rol…',
+                  hint: 'Nombre, usuario o rol',
                   searchKey: const Key('usr-buscar'),
-                  exportKey: const Key('usr-exportar'),
                   countKey: const Key('usr-conteo'),
                   onChanged: () => setState(() {}),
                   count: list.length == all.length
-                      ? '${all.length} usuarios'
+                      ? plural(all.length, 'usuario', 'usuarios')
                       : '${list.length} de ${all.length}',
-                  onExport: list.isEmpty ? null : () => _export(list),
-                  importKey: const Key('usr-importar'),
-                  onImport: () => runTableImport(
-                      context,
-                      ref,
-                      UsersExchange(ref.read(databaseProvider),
-                          ref.read(authServiceProvider), me)),
                 );
               }
               final u = list[i - 1];

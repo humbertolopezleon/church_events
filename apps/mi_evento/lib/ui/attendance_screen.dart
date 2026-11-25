@@ -12,6 +12,9 @@ import 'widgets/highlight_text.dart';
 import 'widgets/list_toolbar.dart';
 import '../data/attendance_exchange.dart';
 import 'table_import_flow.dart';
+import 'widgets/app_header.dart';
+import 'widgets/filter_spec.dart';
+import 'widgets/plural.dart';
 
 /// Asistencia el día del evento: confirmar a los preinscritos (uno, un subconjunto o todos los que
 /// se ven) y desconfirmar a quien se confirmó por error. En escritorio es una tabla con filtros.
@@ -269,34 +272,39 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         teamStatus != null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Confirmar asistencia')),
+      appBar: AppHeader(
+        title: 'Confirmar asistencia',
+        subtitle:
+            '${plural(pendingCount, 'por confirmar', 'por confirmar', zero: 'Nadie por confirmar')} · ${plural(confirmedCount, 'confirmado', 'confirmados', zero: 'Nadie confirmado')}',
+        importKey: const Key('ca-importar'),
+        exportKey: const Key('ca-exportar'),
+        onImport: () => runTableImport(context, ref,
+            AttendanceExchange(ref.read(databaseProvider), eventId)),
+        onExport: () => _export(eventId, shown),
+        exportEnabled: shown.isNotEmpty,
+      ),
       body: Column(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: ListToolbar(
             controller: query,
-            hint: 'Buscar por nombre, iglesia o número…',
+            hint: 'Nombre, iglesia o número',
             searchKey: const Key('ca-buscar'),
             countKey: const Key('ca-conteo'),
-            exportKey: const Key('ca-exportar'),
-            importKey: const Key('ca-importar'),
-            onImport: () => runTableImport(context, ref,
-                AttendanceExchange(ref.read(databaseProvider), eventId)),
-            onExport: shown.isEmpty ? null : () => _export(eventId, shown),
             onChanged: () => setState(() {}),
-            activeFilters: [
-              if (showPre != true) showPre,
-              sex,
-              churchId,
-              lodgingStatus,
-              teamStatus
-            ].where((f) => f != null).length,
-            count:
-                '$pendingCount por confirmar · $confirmedCount ya confirmados${filtering ? ' · ${shown.length} coinciden' : ''}',
-            filters: [
-              FilterDropdown<String>(
+            count: filtering
+                ? '${shown.length} de ${all.length} coinciden'
+                : '$pendingCount por confirmar · $confirmedCount ya confirmados',
+            resultCount: () =>
+                _filter.apply(Repository.search(all, query.text)).length,
+            resultLabel: (n) => n == 0
+                ? 'Nadie coincide con estos filtros'
+                : 'Ver ${plural(n, 'persona', 'personas')}',
+            filters: () => [
+              ChoiceFilter<String>(
                   key: const Key('ca-filtro-estado'),
                   label: 'Mostrar',
+                  allLabel: 'Por confirmar',
                   value: showPre == null
                       ? 'todos'
                       : showPre!
@@ -304,7 +312,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                           : 'confirmados',
                   options: const {
                     'confirmados': 'Confirmados',
-                    'todos': 'Todos (preinscritos y confirmados)'
+                    'todos': 'Todos'
                   },
                   onChanged: (v) => setState(() {
                         showPre = v == 'todos'
@@ -313,20 +321,22 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                                 ? false
                                 : true;
                       })),
-              FilterDropdown<String>(
+              ChoiceFilter<String>(
                   key: const Key('ca-filtro-sexo'),
                   label: 'Sexo',
                   value: sex,
                   options: const {'M': 'Hombres', 'F': 'Mujeres'},
                   onChanged: (v) => setState(() => sex = v)),
-              FilterDropdown<String>(
+              ChoiceFilter<String>(
                   key: const Key('ca-filtro-iglesia'),
                   label: 'Iglesia',
+                  allLabel: 'Todas',
+                  wide: true,
                   value: churchId,
                   options: churches,
                   onChanged: (v) => setState(() => churchId = v)),
               if (hasLodging)
-                FilterDropdown<LodgingStatus>(
+                ChoiceFilter<LodgingStatus>(
                     key: const Key('ca-filtro-hospedaje'),
                     label: 'Hospedaje',
                     value: lodgingStatus,
@@ -337,7 +347,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                     },
                     onChanged: (v) => setState(() => lodgingStatus = v)),
               if (hasTeams)
-                FilterDropdown<TeamStatus>(
+                ChoiceFilter<TeamStatus>(
                     key: const Key('ca-filtro-equipo'),
                     label: 'Equipo',
                     value: teamStatus,

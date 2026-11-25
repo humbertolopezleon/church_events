@@ -40,14 +40,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await into(appMeta).insert(AppMetaCompanion.insert(
-              key: const Value(1), deviceId: newUuidV7(), schemaVersion: 8));
+              key: const Value(1), deviceId: newUuidV7(), schemaVersion: 9));
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
@@ -84,6 +84,10 @@ class AppDatabase extends _$AppDatabase {
             // v8: contraseña temporal con cambio obligatorio (si la tabla de usuarios ya existía;
             // en una base v1 la crea el paso v2 con la columna incluida).
             await m.addColumn(appUsers, appUsers.mustChangePassword);
+          }
+          if (from < 9) {
+            // v9: «Recordar más tarde» del aviso de contraseña inicial.
+            await m.addColumn(appMeta, appMeta.passwordReminderHiddenAt);
           }
           await (update(appMeta)..where((t) => t.key.equals(1)))
               .write(AppMetaCompanion(schemaVersion: Value(to)));

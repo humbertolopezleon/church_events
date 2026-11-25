@@ -181,6 +181,9 @@ class AppMeta extends Table {
   IntColumn get schemaVersion => integer()();
   DateTimeColumn get lastBackupAt => dateTime().nullable()();
 
+  /// Cuándo se pulsó «Recordar más tarde» en el aviso de contraseña inicial (se oculta ese día).
+  DateTimeColumn get passwordReminderHiddenAt => dateTime().nullable()();
+
   /// Hash del código de recuperación del administrador (un solo uso).
   TextColumn get recoveryHash => text().nullable()();
 

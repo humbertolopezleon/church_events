@@ -1,151 +1,196 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../theme/app_theme.dart';
+import 'filter_spec.dart';
 
-/// Barra común de las listas: búsqueda, filtros, conteo y «Exportar CSV» (de lo que se ve).
-/// Los filtros se pueden plegar: en ventanas bajas (< 720 px) arrancan plegados para dejar sitio a la lista.
-class ListToolbar extends StatefulWidget {
+/// Barra común de las listas: buscador con lupa, botón «Filtros» (con el número de filtros activos
+/// en un círculo naranja) que abre una hoja desde abajo, chips de los filtros activos y la línea de
+/// resultados. Importar y exportar CSV van en el menú ⋮ de la cabecera ([AppHeader]).
+///
+/// Con [inline] (listas de 2 filtros o menos, p. ej. Hospedajes) los filtros van directamente en
+/// pantalla, sin hoja.
+class ListToolbar extends StatelessWidget {
   const ListToolbar({
     super.key,
     required this.controller,
     required this.hint,
     required this.onChanged,
     required this.count,
-    this.filters = const [],
-    this.activeFilters = 0,
-    this.onExport,
-    this.onImport,
-    this.importKey = const Key('importar-csv'),
+    this.filters,
+    this.resultCount,
+    this.resultLabel,
+    this.inline = false,
     this.searchKey = const Key('buscar'),
-    this.exportKey = const Key('exportar-csv'),
     this.countKey = const Key('lista-conteo'),
   });
 
   final TextEditingController controller;
+
+  /// Ejemplo corto que no se corte (sin «Buscar por…»).
   final String hint;
   final VoidCallback onChanged;
 
-  /// Texto del conteo («120 inscritos», «12 de 120»).
+  /// Línea de resultados («12 de 248 · más recientes primero»).
   final String count;
-  final List<Widget> filters;
 
-  /// Cuántos filtros están activos (se muestra en el botón «Filtros»).
-  final int activeFilters;
-  final VoidCallback? onExport;
+  /// Filtros con su estado actual (se vuelve a llamar tras cada cambio).
+  final List<FilterSpec> Function()? filters;
 
-  /// Importar CSV (donde se exporta, también se importa).
-  final VoidCallback? onImport;
-  final Key importKey;
-  final Key searchKey, exportKey, countKey;
-
-  @override
-  State<ListToolbar> createState() => _ListToolbarState();
-}
-
-class _ListToolbarState extends State<ListToolbar> {
-  bool? _open;
+  /// Resultados con los filtros actuales (para «Ver N …» en la hoja).
+  final int Function()? resultCount;
+  final String Function(int)? resultLabel;
+  final bool inline;
+  final Key searchKey, countKey;
 
   @override
   Widget build(BuildContext context) {
-    // En el móvil los filtros empiezan plegados (si no, ocupan toda la pantalla y tapan la lista);
-    // en escritorio, desplegados si hay altura.
-    final size = MediaQuery.sizeOf(context);
-    final open = _open ??
-        ((size.width >= 900 && size.height >= 720) || widget.activeFilters > 0);
+    final specs = filters?.call() ?? const <FilterSpec>[];
+    final active = [
+      for (final f in specs)
+        if (f.active) f
+    ];
+    final useSheet = specs.isNotEmpty && !inline;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      TextField(
-        key: widget.searchKey,
-        controller: widget.controller,
-        onChanged: (_) => widget.onChanged(),
-        decoration: InputDecoration(
-          hintText: widget.hint,
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: widget.controller.text.isEmpty
-              ? null
-              : IconButton(
-                  tooltip: 'Limpiar',
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    widget.controller.clear();
-                    widget.onChanged();
-                  }),
+      Row(children: [
+        Expanded(
+          child: TextField(
+            key: searchKey,
+            controller: controller,
+            onChanged: (_) => onChanged(),
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: hint,
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: controller.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Borrar búsqueda',
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        controller.clear();
+                        onChanged();
+                      }),
+            ),
+          ),
         ),
-      ),
-      if (open && widget.filters.isNotEmpty) ...[
+        if (useSheet) ...[
+          const SizedBox(width: 8),
+          _FiltersButton(
+              count: active.length,
+              onPressed: () => showFilterSheet(context,
+                  filters: filters!,
+                  resultCount: resultCount ?? () => 0,
+                  resultLabel: resultLabel ?? ((n) => 'Ver resultados'))),
+        ],
+      ]),
+      if (inline && specs.isNotEmpty) ...[
         const SizedBox(height: 8),
-        Wrap(spacing: 8, runSpacing: 8, children: widget.filters),
+        InlineFilters(filters: specs),
       ],
-      const SizedBox(height: 4),
-      Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 8,
-          children: [
-            Text(widget.count,
-                key: widget.countKey,
-                style: const TextStyle(color: Brand.gris)),
-            Wrap(
-                spacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  if (widget.filters.isNotEmpty)
-                    TextButton.icon(
-                        key: const Key('filtros-toggle'),
-                        onPressed: () => setState(() => _open = !open),
-                        icon:
-                            Icon(open ? Icons.expand_less : Icons.filter_list),
-                        label: Text(widget.activeFilters > 0
-                            ? 'Filtros (${widget.activeFilters})'
-                            : 'Filtros')),
-                  if (widget.onImport != null)
-                    OutlinedButton.icon(
-                        key: widget.importKey,
-                        onPressed: widget.onImport,
-                        icon: const Icon(Icons.upload_file_outlined),
-                        label: const Text('Importar CSV')),
-                  if (widget.onExport != null)
-                    OutlinedButton.icon(
-                        key: widget.exportKey,
-                        onPressed: widget.onExport,
-                        icon: const Icon(Icons.table_view_outlined),
-                        label: const Text('Exportar CSV')),
-                ]),
-          ]),
+      if (useSheet && active.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            child: Wrap(spacing: 8, runSpacing: 6, children: [
+              for (final f in active) _ActiveChip(f),
+            ]),
+          ),
+          TextButton(
+              key: const Key('filtros-limpiar'),
+              onPressed: () {
+                for (final f in active) {
+                  f.clear();
+                }
+              },
+              child: const Text('Limpiar')),
+        ]),
+      ],
+      if (count.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(count,
+              key: countKey, style: bodyStyle(15, color: Brand.gris)),
+        ),
     ]);
   }
 }
 
-/// Filtro desplegable compacto: «Sexo: Todos». [value] null = sin filtrar.
-class FilterDropdown<T> extends StatelessWidget {
-  const FilterDropdown({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-  final String label;
-  final T? value;
-
-  /// Opciones (valor → texto). La opción «Todos» la pone este widget.
-  final Map<T, String> options;
-  final ValueChanged<T?> onChanged;
+class _FiltersButton extends StatelessWidget {
+  const _FiltersButton({required this.count, required this.onPressed});
+  final int count;
+  final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 150, maxWidth: 240),
-        child: DropdownButtonFormField<T?>(
-          isExpanded: true,
-          initialValue: value,
-          decoration: InputDecoration(labelText: label, isDense: true),
-          items: [
-            DropdownMenuItem<T?>(value: null, child: const Text('Todos')),
-            for (final e in options.entries)
-              DropdownMenuItem<T?>(
-                  value: e.key,
-                  child: Text(e.value, overflow: TextOverflow.ellipsis)),
-          ],
-          onChanged: onChanged,
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        label: count == 0
+            ? 'Filtros'
+            : 'Filtros, ${count == 1 ? '1 activo' : '$count activos'}',
+        excludeSemantics: true,
+        onTap: onPressed,
+        child: OutlinedButton(
+          key: const Key('filtros-toggle'),
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+              minimumSize: const Size(64, 56),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              side: const BorderSide(color: Brand.azul, width: 1.5)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.tune, size: 20),
+            const SizedBox(width: 6),
+            const Text('Filtros'),
+            if (count > 0) ...[
+              const SizedBox(width: 8),
+              Container(
+                key: const Key('filtros-contador'),
+                width: 24,
+                height: 24,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                    color: Brand.naranja, shape: BoxShape.circle),
+                child: Text('$count',
+                    style: bodyStyle(14,
+                        color: Brand.tinta, weight: FontWeight.w700)),
+              ),
+            ],
+          ]),
+        ),
+      );
+}
+
+class _ActiveChip extends StatelessWidget {
+  const _ActiveChip(this.f);
+  final FilterSpec f;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        label: 'Quitar filtro ${f.activeText}',
+        excludeSemantics: true,
+        onTap: f.clear,
+        child: Material(
+          color: Brand.azulSuave,
+          shape: const StadiumBorder(side: BorderSide(color: Brand.azul)),
+          child: InkWell(
+            customBorder: const StadiumBorder(),
+            onTap: f.clear,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 44),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 14, right: 8),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Flexible(
+                    child: Text(f.activeText ?? '',
+                        overflow: TextOverflow.ellipsis,
+                        style: bodyStyle(15,
+                            color: Brand.azul, weight: FontWeight.w700)),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.close, size: 18, color: Brand.azul),
+                ]),
+              ),
+            ),
+          ),
         ),
       );
 }
