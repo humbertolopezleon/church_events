@@ -119,15 +119,7 @@ class TeamExchange implements TableImporter {
       ..add('Personas sin equipo: $cleared');
     if (!write || out.work == 0) return out;
     for (final e in newTeams.entries) {
-      await teamRepo.createMany(eventId, 1);
-      final created = await (db.select(db.teams)
-            ..where((t) => t.eventId.equals(eventId) & t.deletedAt.isNull())
-            ..orderBy([(t) => OrderingTerm.desc(t.sortOrder)])
-            ..limit(1))
-          .getSingle();
-      await teamRepo.update(created.id,
-          name: e.value, color: created.color, captainId: null);
-      teamId[e.key] = created.id;
+      teamId[e.key] = (await teamRepo.create(eventId, name: e.value)).id;
     }
     for (final e in plan.entries) {
       await teamRepo.setTeam([for (final n in e.value) byNumber[n]!.id],
@@ -140,6 +132,7 @@ class TeamExchange implements TableImporter {
   Future<TableImportSummary> preview(String csvText) =>
       _run(csvText, write: false);
   @override
-  Future<TableImportSummary> apply(String csvText) async =>
+  Future<TableImportSummary> apply(String csvText,
+          {Map<String, int> choices = const {}}) async =>
       db.transaction(() => _run(csvText, write: true));
 }

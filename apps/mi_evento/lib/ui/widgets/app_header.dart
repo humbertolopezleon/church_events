@@ -2,6 +2,19 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../theme/app_theme.dart';
 
+/// Una opción extra del menú ⋮ (además de importar/exportar/plantilla/columnas).
+class HeaderMenuItem {
+  const HeaderMenuItem(
+      {required this.key,
+      required this.label,
+      required this.icon,
+      required this.onTap});
+  final Key key;
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+}
+
 /// Cabecera de las pantallas: título de 24 sp, subtítulo opcional (conteo) y, a la derecha, un
 /// menú ⋮ con «Importar CSV» y «Exportar CSV» (los botones grandes ya no van en el cuerpo).
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
@@ -13,6 +26,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onExport,
     this.onTemplate,
     this.onColumns,
+    this.importLabel = 'Importar CSV',
+    this.exportLabel = 'Exportar CSV',
+    this.extraItems = const [],
     this.exportEnabled = true,
     this.importKey = const Key('importar-csv'),
     this.exportKey = const Key('exportar-csv'),
@@ -27,6 +43,12 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   /// Plantilla vacía y ayuda de columnas (opcionales; salen tras importar/exportar).
   final VoidCallback? onTemplate, onColumns;
+
+  /// Textos de «Importar»/«Exportar» cuando la vista tiene más de un CSV (p. ej. Equipos).
+  final String importLabel, exportLabel;
+
+  /// Opciones extra al final del menú (otros CSV de la misma vista).
+  final List<HeaderMenuItem> extraItems;
 
   /// Sin nada que exportar, la opción aparece deshabilitada.
   final bool exportEnabled;
@@ -58,7 +80,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           if (onImport != null ||
               onExport != null ||
               onTemplate != null ||
-              onColumns != null)
+              onColumns != null ||
+              extraItems.isNotEmpty)
             PopupMenuButton<String>(
               key: const Key('menu-csv'),
               tooltip: 'Más opciones: importar y exportar CSV',
@@ -67,28 +90,29 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                 'importar' => onImport?.call(),
                 'exportar' => onExport?.call(),
                 'plantilla' => onTemplate?.call(),
-                _ => onColumns?.call(),
+                'columnas' => onColumns?.call(),
+                _ => extraItems[int.parse(v.substring(6))].onTap(),
               },
               itemBuilder: (_) => [
                 if (onImport != null)
                   PopupMenuItem(
                       key: importKey,
                       value: 'importar',
-                      child: const ListTile(
+                      child: ListTile(
                           dense: true,
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.upload_file_outlined),
-                          title: Text('Importar CSV'))),
+                          title: Text(importLabel))),
                 if (onExport != null)
                   PopupMenuItem(
                       key: exportKey,
                       value: 'exportar',
                       enabled: exportEnabled,
-                      child: const ListTile(
+                      child: ListTile(
                           dense: true,
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.table_view_outlined),
-                          title: Text('Exportar CSV'))),
+                          title: Text(exportLabel))),
                 if (onTemplate != null)
                   PopupMenuItem(
                       key: templateKey,
@@ -107,6 +131,15 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.help_outline),
                           title: Text('Columnas del CSV'))),
+                for (var i = 0; i < extraItems.length; i++)
+                  PopupMenuItem(
+                      key: extraItems[i].key,
+                      value: 'extra:$i',
+                      child: ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(extraItems[i].icon),
+                          title: Text(extraItems[i].label))),
               ],
             ),
           const SizedBox(width: 4),

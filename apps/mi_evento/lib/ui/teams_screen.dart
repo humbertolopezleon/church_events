@@ -19,6 +19,7 @@ import 'widgets/list_toolbar.dart';
 import 'people_pickers.dart';
 import 'team_generate_screen.dart';
 import 'widgets/input_formats.dart';
+import '../data/team_definition_exchange.dart';
 import '../data/team_exchange.dart';
 import 'table_import_flow.dart';
 import 'widgets/app_header.dart';
@@ -223,10 +224,52 @@ class TeamsScreen extends ConsumerWidget {
             eventName: event?.name ?? '',
             query: ref.read(teamQueryProvider)),
         exportEnabled: shownTeams.isNotEmpty,
-        onTemplate: () => saveCsvTemplate(context, ref, TeamExchange.csvSpec),
-        onColumns: () => showCsvSpecDialog(context, ref, TeamExchange.csvSpec),
-        templateKey: const Key('eq-plantilla'),
-        columnsKey: const Key('eq-columnas'),
+        importLabel: 'Importar personas por equipo',
+        exportLabel: 'Exportar personas por equipo',
+        extraItems: [
+          HeaderMenuItem(
+              key: const Key('eq-def-importar'),
+              label: 'Importar equipos (nombre, color, capitán)',
+              icon: Icons.upload_file_outlined,
+              onTap: () => runTableImport(context, ref,
+                  TeamDefinitionExchange(ref.read(databaseProvider), eventId))),
+          HeaderMenuItem(
+              key: const Key('eq-def-exportar'),
+              label: 'Exportar equipos (nombre, color, capitán)',
+              icon: Icons.table_view_outlined,
+              onTap: () async {
+                final rows = await TeamDefinitionExchange(
+                        ref.read(databaseProvider), eventId)
+                    .export();
+                if (!context.mounted) return;
+                await saveCsv(context, ref,
+                    name: csvFileName('equipos-definicion', event?.name ?? ''),
+                    rows: rows);
+              }),
+          HeaderMenuItem(
+              key: const Key('eq-plantilla'),
+              label: 'Plantilla vacía: equipos',
+              icon: Icons.download_outlined,
+              onTap: () => saveCsvTemplate(
+                  context, ref, TeamDefinitionExchange.csvSpec)),
+          HeaderMenuItem(
+              key: const Key('eq-plantilla-personas'),
+              label: 'Plantilla vacía: personas por equipo',
+              icon: Icons.download_outlined,
+              onTap: () => saveCsvTemplate(context, ref, TeamExchange.csvSpec)),
+          HeaderMenuItem(
+              key: const Key('eq-columnas'),
+              label: 'Columnas del CSV de equipos',
+              icon: Icons.help_outline,
+              onTap: () => showCsvSpecDialog(
+                  context, ref, TeamDefinitionExchange.csvSpec)),
+          HeaderMenuItem(
+              key: const Key('eq-columnas-personas'),
+              label: 'Columnas del CSV de personas por equipo',
+              icon: Icons.help_outline,
+              onTap: () =>
+                  showCsvSpecDialog(context, ref, TeamExchange.csvSpec)),
+        ],
       ),
       body: event != null && !event.offersTeams && teams.isEmpty
           ? const Center(
@@ -261,12 +304,12 @@ class TeamsScreen extends ConsumerWidget {
                           onPressed: () => runTableImport(
                               context,
                               ref,
-                              TeamExchange(
+                              TeamDefinitionExchange(
                                   ref.read(databaseProvider), eventId)),
                           icon: const Icon(Icons.upload_file_outlined),
                           label: const Text('Importar equipos (CSV)')),
                       const CsvHelpButtons(
-                          spec: TeamExchange.csvSpec, prefix: 'eq'),
+                          spec: TeamDefinitionExchange.csvSpec, prefix: 'eq'),
                     ]),
                   ),
                 )

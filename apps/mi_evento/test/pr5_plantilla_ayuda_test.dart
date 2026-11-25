@@ -7,6 +7,7 @@ import 'package:mi_evento/data/church_exchange.dart';
 import 'package:mi_evento/data/database.dart';
 import 'package:mi_evento/data/lodging_exchange.dart';
 import 'package:mi_evento/data/repository.dart';
+import 'package:mi_evento/data/team_definition_exchange.dart';
 import 'package:mi_evento/data/team_exchange.dart';
 import 'package:mi_evento/export/file_saver.dart';
 import 'package:mi_evento/providers.dart';
@@ -20,6 +21,8 @@ void main() {
       expect(attendeeCsvSpec.headers, attendeeCsvHeaders);
       expect(LodgingExchange.csvSpec.headers, LodgingExchange.headers);
       expect(TeamExchange.csvSpec.headers, TeamExchange.headers);
+      expect(TeamDefinitionExchange.csvSpec.headers,
+          TeamDefinitionExchange.headers);
       expect(ChurchExchange.csvSpec.headers, ChurchExchange.headers);
     });
 
@@ -34,6 +37,7 @@ void main() {
       for (final (imp, spec) in [
         (LodgingExchange(db, ev), LodgingExchange.csvSpec),
         (TeamExchange(db, ev), TeamExchange.csvSpec),
+        (TeamDefinitionExchange(db, ev), TeamDefinitionExchange.csvSpec),
         (ChurchExchange(db), ChurchExchange.csvSpec),
       ]) {
         final csv = buildCsvDelimited(spec.templateRows);
@@ -64,7 +68,7 @@ void main() {
       'Asistentes': ('asis', 'plantilla-asistentes.csv'),
       'Iglesias': ('ig', 'plantilla-iglesias.csv'),
       'Hospedajes': ('hosp', 'plantilla-hospedajes.csv'),
-      'Equipos': ('eq', 'plantilla-equipos-personas.csv'),
+      'Equipos': ('eq', 'plantilla-equipos.csv'),
     };
     for (final e in screens.entries) {
       final (p, file) = e.value;
