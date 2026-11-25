@@ -131,7 +131,12 @@ Future<void> goRegister(WidgetTester t) async {
   await leaveForm(t);
   await t.tap(find.text('Asistentes').first);
   await settle(t);
-  await tapKey(t, 'asis-registrar');
+  // Sin asistentes no hay botón flotante: la invitación del estado vacío hace lo mismo.
+  await tapKey(
+      t,
+      find.byKey(const Key('asis-registrar')).evaluate().isNotEmpty
+          ? 'asis-registrar'
+          : 'asis-vacio-registrar');
 }
 
 /// Si el formulario de registro/ficha está abierto encima de la navegación, vuelve a ella.

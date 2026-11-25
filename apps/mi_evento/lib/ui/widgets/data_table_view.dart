@@ -60,6 +60,8 @@ class _DataTableViewState<T> extends State<DataTableView<T>> {
               constraints: BoxConstraints(minWidth: c.maxWidth),
               child: DataTable(
                 showCheckboxColumn: false,
+                columnSpacing: 28,
+                horizontalMargin: 16,
                 sortColumnIndex: sortIndex,
                 sortAscending: ascending,
                 headingTextStyle: const TextStyle(

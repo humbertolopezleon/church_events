@@ -5,6 +5,7 @@ import 'package:mi_evento_core/mi_evento_core.dart';
 import 'auth/auth_service.dart';
 import 'data/attendee_exchange.dart';
 import 'data/database.dart';
+import 'data/list_filters.dart' show LodgingStatus;
 import 'backup/backup_service.dart';
 import 'backup/file_picker.dart';
 import 'data/meal_repo.dart';
@@ -29,6 +30,10 @@ final currentUserProvider = StateProvider<AppUser?>((ref) => null);
 
 /// Pantalla activa dentro de un evento (para poder navegar desde el panel).
 final currentPageProvider = StateProvider<String>((ref) => 'panel');
+
+/// Filtro de hospedaje que Asistentes aplica una sola vez al abrirse (p. ej. desde el aviso de Hospedajes).
+final attendeesPresetLodgingProvider =
+    StateProvider<LodgingStatus?>((ref) => null);
 
 final churchesProvider = StreamProvider<List<ChurchRow>>(
     (ref) => ref.watch(repositoryProvider).watchChurches());

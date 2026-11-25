@@ -3,7 +3,7 @@ import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:material_ui/material_ui.dart';
 
 import 'package:mi_evento_core/mi_evento_core.dart'
-    show normalizeText, parseCsv;
+    show attendeeCsvHeaders, normalizeText, parseCsv;
 
 import '../data/database.dart';
 import '../data/repos_b.dart';
@@ -18,6 +18,7 @@ import 'widgets/data_table_view.dart';
 import 'widgets/highlight_text.dart';
 import 'widgets/list_toolbar.dart';
 import 'csv_import.dart';
+import 'teams_screen.dart' show teamColor;
 import 'widgets/app_fab.dart';
 import 'widgets/app_header.dart';
 import 'widgets/filter_spec.dart';
@@ -36,6 +37,17 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
   LodgingStatus? lodgingStatus;
   TeamStatus? teamStatus;
   bool? preregistered;
+
+  @override
+  void initState() {
+    super.initState();
+    final preset = ref.read(attendeesPresetLodgingProvider);
+    if (preset != null) {
+      lodgingStatus = preset;
+      Future.microtask(
+          () => ref.read(attendeesPresetLodgingProvider.notifier).state = null);
+    }
+  }
 
   AttendeeFilter get _filter => AttendeeFilter(
       sex: sex,
@@ -164,6 +176,156 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
     );
   }
 
+  Future<void> _importFile() async {
+    final f = await ref.read(filePickProvider).pick();
+    if (f == null || !mounted) return;
+    await importAttendeesCsv(context, ref, f.bytes);
+  }
+
+  /// Tarjeta de una persona: nombre, «Nº · iglesia», «edad · hospedaje» (etiqueta ámbar si falta asignarlo),
+  /// chip de preinscrito, cuadrado del color del equipo y menú ⋮.
+  Widget _card(String eventId, AttendeeView v, bool offersLodging,
+      Map<String, String> lodgingName, Map<String, TeamRow> teamById) {
+    final team = v.a.teamId == null ? null : teamById[v.a.teamId];
+    final meta = bodyStyle(14, color: Brand.gris);
+    Widget lodging() {
+      if (v.a.lodgingId != null) {
+        return Text('· ${lodgingName[v.a.lodgingId] ?? 'Con hospedaje'}',
+            maxLines: 1, overflow: TextOverflow.ellipsis, style: meta);
+      }
+      if (v.a.needsLodging) {
+        return Container(
+          key: Key('sin-hospedaje-${v.a.regNumber}'),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+              color: Brand.avisoSuave, borderRadius: BorderRadius.circular(8)),
+          child: Text('Sin hospedaje',
+              style: bodyStyle(14,
+                  color: Brand.avisoTexto, weight: FontWeight.w700)),
+        );
+      }
+      return offersLodging
+          ? Text('· No necesita hospedaje',
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: meta)
+          : const SizedBox.shrink();
+    }
+
+    return Card(
+      child: InkWell(
+        key: Key('asistente-${v.a.regNumber}'),
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => _edit(v),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 4, 10),
+          child: Row(children: [
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HighlightText(v.fullName, query.text,
+                        style: bodyStyle(17, weight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(
+                        'Nº ${v.a.regNumber}${v.churchName == null ? '' : ' · ${v.churchName}'}',
+                        key: Key('asis-numero-${v.a.regNumber}'),
+                        style: meta),
+                    const SizedBox(height: 2),
+                    Row(children: [
+                      Text(plural(v.a.age, 'año', 'años'), style: meta),
+                      const SizedBox(width: 6),
+                      Flexible(child: lodging()),
+                    ]),
+                    if (v.isPreregistered)
+                      Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Chip(
+                              key: Key('preinscrito-${v.a.regNumber}'),
+                              label: const Text('Preinscrito'),
+                              visualDensity: VisualDensity.compact)),
+                  ]),
+            ),
+            if (team != null)
+              Semantics(
+                label: 'Equipo ${team.name}',
+                child: Container(
+                  key: Key('equipo-color-${v.a.regNumber}'),
+                  width: 14,
+                  height: 14,
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                  decoration: BoxDecoration(
+                      color: teamColor(team.color),
+                      borderRadius: BorderRadius.circular(3)),
+                ),
+              ),
+            _menu(eventId, v),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  /// Sin asistentes: se oculta buscador, filtros y botón flotante, y se invita a registrar o
+  /// traer una lista en CSV.
+  Widget _empty(String eventId) => Scaffold(
+        appBar: AppHeader(
+          title: 'Asistentes',
+          subtitle: 'Nadie inscrito todavía',
+          importKey: const Key('asis-importar'),
+          onImport: _importFile,
+          onExport: () {},
+          exportEnabled: false,
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  width: 96,
+                  height: 96,
+                  decoration: const BoxDecoration(
+                      color: Brand.azulSuave, shape: BoxShape.circle),
+                  child: const Icon(Icons.person_add_alt_1,
+                      size: 44, color: Brand.azul),
+                ),
+                const SizedBox(height: 20),
+                Text('Todavía no hay asistentes',
+                    key: const Key('asis-vacio'),
+                    textAlign: TextAlign.center,
+                    style: headStyle(24, color: Brand.tinta)),
+                const SizedBox(height: 8),
+                Text(
+                    'Registra a la primera persona o trae una lista que ya tengas en un archivo CSV.',
+                    textAlign: TextAlign.center,
+                    style: bodyStyle(18, color: Brand.gris)),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                      key: const Key('asis-vacio-registrar'),
+                      onPressed: () => openRegister(context),
+                      child: const Text('Registrar primera persona')),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                      key: const Key('asis-vacio-importar'),
+                      onPressed: _importFile,
+                      child: const Text('Importar lista desde CSV')),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                    key: const Key('asis-vacio-ayuda'),
+                    onPressed: () => showCsvColumnsHelp(context, ref),
+                    child: const Text('¿Qué columnas debe tener el CSV?')),
+              ]),
+            ),
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final eventId = ref.watch(currentEventIdProvider)!;
@@ -177,8 +339,22 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
     final lodgings =
         ref.watch(lodgingsProvider(eventId)).valueOrNull ?? const [];
     final teams = ref.watch(teamsProvider(eventId)).valueOrNull ?? const [];
-    final list = _filter.apply(Repository.search(all, query.text));
+    final offersLodging =
+        ref.watch(eventProvider(eventId)).valueOrNull?.offersLodging ?? true;
+    final lodgingName = {for (final l in lodgings) l.row.id: l.row.name};
+    final teamById = {for (final t in teams) t.id: t};
+    final list =
+        _filter.apply(Repository.search(all, query.text, includeChurch: false));
     final filtering = query.text.isNotEmpty || !_filter.isEmpty;
+    if (all.isEmpty) {
+      return CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
+              openRegister(context),
+        },
+        child: Focus(autofocus: true, child: _empty(eventId)),
+      );
+    }
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
@@ -213,13 +389,15 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: ListToolbar(
                 controller: query,
-                hint: 'Nombre, iglesia o número',
+                hint: 'Nombre o número',
                 onChanged: () => setState(() {}),
                 count: filtering
                     ? '${list.length} de ${all.length} · más recientes primero'
                     : 'Más recientes primero',
-                resultCount: () =>
-                    _filter.apply(Repository.search(all, query.text)).length,
+                resultCount: () => _filter
+                    .apply(Repository.search(all, query.text,
+                        includeChurch: false))
+                    .length,
                 resultLabel: (n) => n == 0
                     ? 'Nadie coincide con estos filtros'
                     : 'Ver ${plural(n, 'asistente', 'asistentes')}',
@@ -310,42 +488,8 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
                             final v = list[i];
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8),
-                              child: Card(
-                                child: ListTile(
-                                  key: Key('asistente-${v.a.regNumber}'),
-                                  minVerticalPadding: 10,
-                                  leading: CircleAvatar(
-                                      backgroundColor: Brand.naranjaSuave,
-                                      foregroundColor: const Color(0xFF8F4512),
-                                      child: Text(v.initials,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w700))),
-                                  title: HighlightText(v.fullName, query.text,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 17)),
-                                  subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                            'Nº ${v.a.regNumber} · ${v.isMale ? 'Hombre' : 'Mujer'} · ${v.a.age} años${v.churchName == null ? '' : ' · ${v.churchName}'}${v.a.needsLodging ? ' · necesita hospedaje' : ''}'),
-                                        if (v.isPreregistered)
-                                          Padding(
-                                              padding:
-                                                  const EdgeInsets.only(top: 4),
-                                              child: Chip(
-                                                  key: Key(
-                                                      'preinscrito-${v.a.regNumber}'),
-                                                  label:
-                                                      const Text('Preinscrito'),
-                                                  visualDensity:
-                                                      VisualDensity.compact)),
-                                      ]),
-                                  trailing: _menu(eventId, v),
-                                  onTap: () => _edit(v),
-                                ),
-                              ),
+                              child: _card(eventId, v, offersLodging,
+                                  lodgingName, teamById),
                             );
                           },
                         ),
@@ -360,3 +504,64 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
 /// Abre el formulario de registro de una persona nueva (botón «Registrar persona» y Ctrl+N).
 Future<void> openRegister(BuildContext context) => Navigator.of(context)
     .push(MaterialPageRoute<void>(builder: (_) => const AttendeeFormScreen()));
+
+/// Qué columnas espera el importador de asistentes (las reales de `attendeeCsvHeaders`).
+Future<void> showCsvColumnsHelp(BuildContext context, WidgetRef ref) {
+  const required = {
+    'nombre': 'nombre de la persona',
+    'apellido1': 'primer apellido',
+    'sexo': 'Hombre o Mujer (también M o F)',
+    'edad': 'edad en años (1 a 110)',
+    'iglesia': 'nombre de la iglesia (si no existe, se crea)',
+  };
+  const optional = {
+    'id': 'identificador interno (lo pone la app al exportar)',
+    'numero': 'número de inscripción',
+    'apellido2': 'segundo apellido',
+    'provincia': 'provincia de la iglesia',
+    'municipio': 'municipio de la iglesia',
+    'telefono': 'teléfono',
+    'necesita_hospedaje': 'Sí o No',
+    'hospedaje': 'nombre del hospedaje',
+    'equipo': 'nombre del equipo',
+    'pareja_numero': 'número de inscripción del cónyuge',
+    'grupos': 'grupos separados por |',
+    'observaciones': 'notas',
+    'estado': 'Preinscrito o Confirmado',
+  };
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      key: const Key('asis-ayuda-csv'),
+      title: const Text('Columnas del CSV'),
+      content: SingleChildScrollView(
+        child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Obligatorias',
+                  style: bodyStyle(16, weight: FontWeight.w700)),
+              for (final e in required.entries) Text('• ${e.key}: ${e.value}'),
+              const SizedBox(height: 12),
+              Text('Opcionales', style: bodyStyle(16, weight: FontWeight.w700)),
+              for (final e in optional.entries) Text('• ${e.key}: ${e.value}'),
+              const SizedBox(height: 12),
+              Text(
+                  'Separador «;» (o coma), con encabezados en la primera fila. Excel lo guarda bien.',
+                  style: bodyStyle(15, color: Brand.gris)),
+            ]),
+      ),
+      actions: [
+        TextButton(
+            key: const Key('asis-ayuda-plantilla'),
+            onPressed: () => saveCsv(ctx, ref,
+                name: 'plantilla-asistentes.csv',
+                rows: [List<String>.of(attendeeCsvHeaders)]),
+            child: const Text('Guardar plantilla vacía')),
+        FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendido')),
+      ],
+    ),
+  );
+}
