@@ -9,6 +9,7 @@ import '../export/meal_report.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'teams_screen.dart' show teamColor;
+import 'notifications.dart';
 
 /// Resumen de una sesión de control (al cerrarla o al consultarla después) con la exportación
 /// a Excel, CSV e imagen para WhatsApp.
@@ -69,14 +70,13 @@ class _MealSummaryScreenState extends ConsumerState<MealSummaryScreen> {
               mimeType: 'image/png');
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-                ok ? 'Listo. Archivo exportado.' : 'Exportación cancelada.')));
+        ScaffoldMessenger.of(context).notice(
+            ok ? 'Listo. Archivo exportado.' : 'Exportación cancelada.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('No se pudo exportar. Detalle técnico: $e')));
+        ScaffoldMessenger.of(context)
+            .notice('No se pudo exportar. Detalle técnico: $e', error: true);
       }
     } finally {
       if (mounted) setState(() => busy = false);

@@ -9,6 +9,7 @@ import '../data/repository.dart' show DataException;
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'auth_screens.dart' show ErrorBox;
+import 'notifications.dart';
 
 String _d(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -84,9 +85,8 @@ class _DuplicateEventDialogState extends ConsumerState<DuplicateEventDialog> {
       Navigator.pop(context);
       ref.read(currentEventIdProvider.notifier).state = id;
       if (copier.lastUnassignedForCompatibility > 0) {
-        messenger.showSnackBar(SnackBar(
-            content: Text(
-                '${copier.lastUnassignedForCompatibility} ${copier.lastUnassignedForCompatibility == 1 ? 'persona quedó' : 'personas quedaron'} sin hospedaje en la copia porque no encajaban con el hospedaje (sexo o matrimonio).')));
+        messenger.notice(
+            '${copier.lastUnassignedForCompatibility} ${copier.lastUnassignedForCompatibility == 1 ? 'persona quedó' : 'personas quedaron'} sin hospedaje en la copia porque no encajaban con el hospedaje (sexo o matrimonio).');
       }
     } on DataException catch (e) {
       if (mounted) setState(() => error = e.message);
@@ -213,10 +213,9 @@ class _CopyPeopleDialogState extends ConsumerState<CopyPeopleDialog> {
           .copyPeople(widget.event.id, target!, preregister: preregister);
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-              '${rep.copied} ${rep.copied == 1 ? 'persona pasada' : 'personas pasadas'}'
-              '${rep.skipped > 0 ? ' · ${rep.skipped} ya estaban' : ''}.')));
+      ScaffoldMessenger.of(context).notice(
+          '${rep.copied} ${rep.copied == 1 ? 'persona pasada' : 'personas pasadas'}'
+          '${rep.skipped > 0 ? ' · ${rep.skipped} ya estaban' : ''}.');
     } on DataException catch (e) {
       if (mounted) setState(() => error = e.message);
     } catch (e) {

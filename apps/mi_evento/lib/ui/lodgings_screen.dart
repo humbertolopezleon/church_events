@@ -28,6 +28,7 @@ import 'widgets/app_fab.dart';
 import 'widgets/app_header.dart';
 import 'widgets/filter_spec.dart';
 import 'widgets/plural.dart';
+import 'notifications.dart';
 
 String kindLabel(String kind) =>
     kind == 'shelter' ? 'Albergue' : 'Casa particular';
@@ -1089,8 +1090,7 @@ class LodgingDetailScreen extends ConsumerWidget {
           .assign(lv.row.id, chosen.map((p) => p.a.id));
     } on DataException catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(context).notice(e.message, error: true);
       }
     }
   }

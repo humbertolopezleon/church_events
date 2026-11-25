@@ -20,6 +20,7 @@ import 'lodgings_screen.dart';
 import 'meals_screen.dart';
 import 'panel_screen.dart';
 import 'teams_screen.dart';
+import 'notifications.dart';
 import 'shortcuts.dart';
 import 'users_screen.dart';
 
@@ -99,6 +100,7 @@ class _AppRootState extends ConsumerState<AppRoot> {
 }
 
 void signOut(WidgetRef ref) {
+  NotificationCenter.instance.clear();
   ref.read(currentPageProvider.notifier).state = 'panel';
   ref.read(currentEventIdProvider.notifier).state = null;
   ref.read(currentUserProvider.notifier).state = null;
@@ -197,11 +199,16 @@ class _AppShellState extends ConsumerState<AppShell> {
                   ),
                   const Divider(),
                   Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    child: Text('${me.displayName}\n${me.roleLabel}',
-                        style:
-                            const TextStyle(fontSize: 14, color: Brand.gris)),
+                    padding: const EdgeInsets.only(left: 12, top: 4, bottom: 4),
+                    child: Row(children: [
+                      Expanded(
+                        child: Text('${me.displayName}\n${me.roleLabel}',
+                            style: const TextStyle(
+                                fontSize: 14, color: Brand.gris)),
+                      ),
+                      // Centro de notificaciones: aquí quedan los avisos de escritorio.
+                      const NotificationBell(),
+                    ]),
                   ),
                   _SideItem('Cambiar contraseña', Icons.key_outlined,
                       selected: false,
@@ -319,6 +326,7 @@ class _SideItem extends StatelessWidget {
   final IconData icon;
   final bool selected;
   final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 4),

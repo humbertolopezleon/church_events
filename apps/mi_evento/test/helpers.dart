@@ -9,6 +9,7 @@ import 'package:mi_evento/backup/backup_service.dart';
 import 'package:mi_evento/data/database.dart';
 import 'package:mi_evento/data/repository.dart';
 import 'package:mi_evento/main.dart';
+import 'package:mi_evento/ui/notifications.dart';
 import 'package:mi_evento/ui/attendee_form.dart';
 import 'package:mi_evento/providers.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
@@ -40,6 +41,8 @@ Future<Ctx> pumpApp(WidgetTester t, Size size,
     {bool operator = false,
     bool defaultAdmin = false,
     List<Override> overrides = const []}) async {
+  NotificationCenter.instance
+      .clear(); // los avisos no pasan de una prueba a otra
   t.view.physicalSize = size;
   t.view.devicePixelRatio = 1;
   addTearDown(t.view.reset);

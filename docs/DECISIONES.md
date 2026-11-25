@@ -157,3 +157,11 @@ Implementa la tabla aprobada (§9). Solo escritorio; en móvil no estorban.
 - **Atrás:** Esc y Alt+← vuelven atrás en pantallas completas; **Retroceso** solo **fuera de un campo de texto** (dentro borra letras). Las teclas sin Ctrl («/», Retroceso) también se desactivan mientras se escribe.
 - **Detalle técnico:** las acciones deshabilitadas **tapan** a las de más arriba (mismo problema que con Esc, §9), así que cada intent propio solo se habilita cuando de verdad hay algo que hacer; así la tecla no se «come» y llega al campo de texto.
 - **No hecho (decisión pendiente):** ↑ ↓ Enter para moverse por las listas (el foco por tabulador sigue funcionando) y la confirmación «¿descartar cambios?» al salir de un formulario con cambios.
+
+## 16. Centro de notificaciones de escritorio (rama `feat/centro-de-notificaciones`)
+
+- **Qué:** en **escritorio** (ancho ≥ 900 px) los avisos que salían abajo («CSV guardado», «Contraseña cambiada», errores…) van a un **centro de notificaciones**: campana con contador de no leídas (en la barra lateral y en «Mis eventos», que no tiene barra lateral) y un panel con los avisos (más recientes primero, hora, error en rojo) donde se marcan **como leídos** uno a uno o todos, y se borran los leídos. En **móvil** no cambia nada: salen abajo como siempre.
+- **Cómo:** todos los avisos pasan por `ScaffoldMessengerState.notice(...)` (`lib/ui/notifications.dart`), que decide por el ancho; `NotificationCenter` es un `ChangeNotifier` global (hasta 100 avisos; se vacía al cerrar sesión). Se sustituyeron los ~28 `showSnackBar` de la app.
+- **Excepción deliberada:** un aviso **con acción** («Deshacer» al confirmar asistencia, al generar equipos…) **sigue saliendo abajo también en escritorio** (se perdería a tiempo si solo estuviera en la campana) y además queda anotado en el centro.
+- **Riesgo asumido:** en escritorio un **error** ya no salta a la vista: aumenta el contador de la campana. Los errores de formulario que se muestran dentro de la propia pantalla (`ErrorBox`) no cambian. Si en el evento se pasan por alto errores, valorar que los de tipo error también salgan abajo.
+- **Pruebas:** `pr11_notificaciones_test.dart`; `pumpApp` vacía el centro en cada prueba.

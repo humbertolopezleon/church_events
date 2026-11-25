@@ -25,6 +25,7 @@ import 'widgets/app_fab.dart';
 import 'widgets/app_header.dart';
 import 'widgets/filter_spec.dart';
 import 'widgets/plural.dart';
+import 'notifications.dart';
 
 /// Lista de asistentes: búsqueda (nombre en cualquier orden, iglesia o número), filtros y exportación a CSV.
 class AttendeesScreen extends ConsumerStatefulWidget {
@@ -77,12 +78,11 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
       ref.read(autoBackupProvider).noteChange(eventId);
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-            content: Text(confirm
-                ? 'Asistencia de ${v.fullName} confirmada.'
-                : 'Asistencia de ${v.fullName} desconfirmada.')));
+        ..notice(confirm
+            ? 'Asistencia de ${v.fullName} confirmada.'
+            : 'Asistencia de ${v.fullName} desconfirmada.');
     } on DataException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.notice(e.message, error: true);
     }
   }
 

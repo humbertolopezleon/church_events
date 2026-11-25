@@ -8,6 +8,7 @@ import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'auth_screens.dart' show ErrorBox;
 import 'proposal_card.dart';
+import 'notifications.dart';
 
 /// Un tramo editable de la propuesta (el usuario puede cambiar el hospedaje).
 class _Leg {
@@ -226,9 +227,8 @@ class _LodgingSuggestScreenState extends ConsumerState<LodgingSuggestScreen> {
         dismissed.add(i);
         busy = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Asignado. Puedes ver o cambiar cada hospedaje en su ficha.')));
+      ScaffoldMessenger.of(context)
+          .notice('Asignado. Puedes ver o cambiar cada hospedaje en su ficha.');
     } catch (e) {
       if (mounted) {
         setState(() {

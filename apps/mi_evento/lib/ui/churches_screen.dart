@@ -18,6 +18,7 @@ import 'widgets/app_fab.dart';
 import 'widgets/app_header.dart';
 import 'widgets/filter_spec.dart';
 import 'widgets/plural.dart';
+import 'notifications.dart';
 
 /// Gestión de las iglesias registradas en el sistema (solo administrador): buscar, filtrar,
 /// crear, editar, eliminar (si no tienen asistentes), exportar e importar CSV.
@@ -117,8 +118,7 @@ class _ChurchesScreenState extends ConsumerState<ChurchesScreen> {
       await ref.read(repositoryProvider).deleteChurch(c.id);
     } on DataException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(context).notice(e.message, error: true);
       }
     }
   }

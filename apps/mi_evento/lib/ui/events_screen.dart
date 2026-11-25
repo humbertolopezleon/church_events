@@ -22,6 +22,7 @@ import 'table_import_flow.dart';
 import 'widgets/app_fab.dart';
 import 'widgets/app_header.dart';
 import 'widgets/plural.dart';
+import 'notifications.dart';
 
 /// Texto de búsqueda de «Mis eventos».
 final eventQueryProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -126,6 +127,9 @@ class EventsScreen extends ConsumerWidget {
         onExport: () => _exportEvents(context, ref, eventsShown),
         exportEnabled: eventsShown.isNotEmpty,
         actions: [
+          // En escritorio, el centro de notificaciones (aquí no hay barra lateral).
+          if (!narrow && isDesktopWidth(context))
+            const NotificationBell(color: Colors.white),
           // En pantallas estrechas (360 px) los botones son solo icono, con su ayuda al mantener.
           if (admin && narrow)
             IconButton(
@@ -360,9 +364,8 @@ class _DeleteEventDialogState extends ConsumerState<_DeleteEventDialog> {
                                   false);
                       if (!context.mounted) return;
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(
-                              'Evento eliminado ($n ${n == 1 ? 'persona borrada' : 'personas borradas'}).')));
+                      ScaffoldMessenger.of(context).notice(
+                          'Evento eliminado ($n ${n == 1 ? 'persona borrada' : 'personas borradas'}).');
                     } on DataException catch (e) {
                       setState(() => error = e.message);
                     }
