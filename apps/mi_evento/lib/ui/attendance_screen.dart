@@ -413,7 +413,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                 )
               : useTables(context)
                   ? Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 72),
                       child: _table(eventId, shown))
                   : _cards(eventId, shown),
         ),

@@ -27,12 +27,22 @@ import 'package:mi_evento/providers.dart';
 import 'package:mi_evento/ui/lodging_pdf.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
+import 'package:mi_evento/ui/widgets/highlight_text.dart';
 import '../test/helpers.dart';
 import '../test/qa/qa_support.dart';
 import '../test/qa/qa_ui_support.dart';
 
 const exportDir = '/home/user/my_event/qa-windows-export';
 final fast = Platform.environment['QA_FAST'] == '1';
+
+/// Texto de una celda de tabla (la tabla envuelve cada celda en un ConstrainedBox y el nombre
+/// puede ir resaltado).
+String? _cellText(Widget w) {
+  if (w is ConstrainedBox && w.child != null) return _cellText(w.child!);
+  if (w is Text) return w.data;
+  if (w is HighlightText) return w.text;
+  return null;
+}
 
 class Ch {
   const Ch(this.name, this.prov, this.muni, this.community);
@@ -173,6 +183,11 @@ void main() {
 
     Future<void> tk(String key) async {
       final f = find.byKey(Key(key));
+      if (key.startsWith('ca-fila-') || key.startsWith('ca-confirmar-')) {
+        // el aviso «Asistencia confirmada» (4 s) puede quedar sobre la fila: se espera a que se vaya
+        await t.pump(const Duration(seconds: 6));
+        await t.pump(const Duration(milliseconds: 400));
+      }
       await t.ensureVisible(f);
       await t.pump();
       await clearSnack(f);
@@ -1204,7 +1219,7 @@ void main() {
           .toList(); // la lista va del nº más alto al más bajo
       // uno por uno
       final first = pend.first.regNumber;
-      await tk('ca-confirmar-$first');
+      await tkS('ca-confirmar-$first');
       ck(pendingCount(txt('ca-conteo')) == p0 - 1,
           'confirmar a la nº $first: queda «${txt('ca-conteo')}»');
       await t.tap(find.text('Deshacer').last);
@@ -1217,7 +1232,7 @@ void main() {
       // subconjunto marcado
       final visible = pend.skip(1).take(4).map((r) => r.regNumber).toList();
       for (final n in visible) {
-        await tk('ca-fila-$n');
+        await tkS('ca-fila-$n');
       }
       ck(
           find
@@ -2204,13 +2219,12 @@ void main() {
       ck(txt('lista-conteo') == '${rows.length} inscritos',
           'conteo «${txt('lista-conteo')}»');
       // ordenar por Edad
-      int firstAge() => int.parse(((t
-              .widget<DataTable>(find.byType(DataTable))
-              .rows
-              .first
-              .cells[3]
-              .child) as Text)
-          .data!);
+      int firstAge() => int.parse(_cellText(t
+          .widget<DataTable>(find.byType(DataTable))
+          .rows
+          .first
+          .cells[3]
+          .child)!);
       await t.tap(find.descendant(
           of: find.byType(DataTable), matching: find.text('Edad')));
       await settle(t);
@@ -2356,13 +2370,12 @@ void main() {
       await t.tap(find.descendant(
           of: find.byType(DataTable), matching: find.text('Capacidad')));
       await settle(t);
-      final capFirst = ((t
-              .widget<DataTable>(find.byType(DataTable))
-              .rows
-              .first
-              .cells[3]
-              .child) as Text)
-          .data;
+      final capFirst = _cellText(t
+          .widget<DataTable>(find.byType(DataTable))
+          .rows
+          .first
+          .cells[3]
+          .child);
       ck(
           capFirst ==
               '${lods.map((l) => l.capacity).reduce((a, b) => a < b ? a : b)}',
@@ -2430,13 +2443,12 @@ void main() {
       await t.tap(find.descendant(
           of: find.byType(DataTable), matching: find.text('Nombre')));
       await settle(t);
-      final first = ((t
-              .widget<DataTable>(find.byType(DataTable))
-              .rows
-              .first
-              .cells[0]
-              .child) as Text)
-          .data;
+      final first = _cellText(t
+          .widget<DataTable>(find.byType(DataTable))
+          .rows
+          .first
+          .cells[0]
+          .child);
       final maxName = evs.map((e) => e.name).reduce(
           (a, b) => normalizeText(a).compareTo(normalizeText(b)) > 0 ? a : b);
       ck(first == maxName,

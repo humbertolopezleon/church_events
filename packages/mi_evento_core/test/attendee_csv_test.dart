@@ -170,6 +170,19 @@ void main() {
         ['1', '2']
       ]);
     });
+    test(
+        'la línea sep puede volver rellena de separadores o entre comillas (otras hojas de cálculo)',
+        () {
+      for (final first in ['sep=;;;;', '"sep=;"', '"sep=;";;;', 'SEP=;']) {
+        expect(
+            parseCsv('$first\n"a";"b"\n1;2\n'),
+            [
+              ['a', 'b'],
+              ['1', '2']
+            ],
+            reason: first);
+      }
+    });
     test('un archivo guardado por Excel (sin la línea sep) sigue leyéndose',
         () {
       expect(parseCsv('a;b\r\n1;2\r\n'), [
