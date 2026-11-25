@@ -42,6 +42,64 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
       teamId: teamId,
       preregistered: preregistered);
 
+  void _edit(AttendeeView v) =>
+      Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => AttendeeFormScreen(attendeeId: v.a.id)));
+
+  Future<void> _setAttendance(
+      String eventId, AttendeeView v, bool confirm) async {
+    final repo = ref.read(repositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      if (confirm) {
+        await repo.confirmAttendance([v.a.id]);
+      } else {
+        await repo.unconfirmAttendance([v.a.id]);
+      }
+      ref.read(autoBackupProvider).noteChange(eventId);
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+            content: Text(confirm
+                ? 'Asistencia de ${v.fullName} confirmada.'
+                : 'Asistencia de ${v.fullName} desconfirmada.')));
+    } on DataException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  /// Menú ⋮ de cada persona: ver/editar y confirmar o desconfirmar su asistencia.
+  Widget _menu(String eventId, AttendeeView v) => PopupMenuButton<String>(
+        key: Key('asis-menu-${v.a.regNumber}'),
+        tooltip: 'Acciones',
+        onSelected: (a) {
+          switch (a) {
+            case 'editar':
+              _edit(v);
+            case 'confirmar':
+              _setAttendance(eventId, v, true);
+            case 'desconfirmar':
+              _setAttendance(eventId, v, false);
+          }
+        },
+        itemBuilder: (_) => [
+          const PopupMenuItem(
+              key: Key('asis-editar'),
+              value: 'editar',
+              child: Text('Ver / editar')),
+          if (v.isPreregistered)
+            const PopupMenuItem(
+                key: Key('asis-confirmar'),
+                value: 'confirmar',
+                child: Text('Confirmar asistencia'))
+          else
+            const PopupMenuItem(
+                key: Key('asis-desconfirmar'),
+                value: 'desconfirmar',
+                child: Text('Desconfirmar asistencia')),
+        ],
+      );
+
   Future<void> _export(String eventId, List<AttendeeView> shown) async {
     final ev = ref.read(eventProvider(eventId)).valueOrNull;
     final text = await ref
@@ -53,8 +111,8 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
   }
 
   /// Vista de escritorio: tabla con columnas ordenables (el móvil sigue con tarjetas).
-  Widget _table(List<AttendeeView> list, List<LodgingView> lodgings,
-      List<TeamRow> teams) {
+  Widget _table(String eventId, List<AttendeeView> list,
+      List<LodgingView> lodgings, List<TeamRow> teams) {
     final lodgingName = {for (final l in lodgings) l.row.id: l.row.name};
     final teamName = {for (final t in teams) t.id: t.name};
     Widget txt(String s) => Text(s, overflow: TextOverflow.ellipsis);
@@ -97,6 +155,7 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
                     visualDensity: VisualDensity.compact)
                 : const Text('Confirmada'),
             sortValue: (v) => v.isPreregistered ? 0 : 1),
+        TableCol('', (v) => _menu(eventId, v)),
       ],
     );
   }
@@ -232,10 +291,10 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
                     )
                   : useTables(context)
                       ? Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: _table(list, lodgings, teams))
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+                          child: _table(eventId, list, lodgings, teams))
                       : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                           itemCount: list.length,
                           itemBuilder: (_, i) {
                             final v = list[i];
@@ -255,28 +314,26 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
                                       style: const TextStyle(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 17)),
-                                  subtitle: Text(
-                                      'Nº ${v.a.regNumber} · ${v.isMale ? 'Hombre' : 'Mujer'} · ${v.a.age} años${v.churchName == null ? '' : ' · ${v.churchName}'}'),
-                                  trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
+                                  subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
+                                        Text(
+                                            'Nº ${v.a.regNumber} · ${v.isMale ? 'Hombre' : 'Mujer'} · ${v.a.age} años${v.churchName == null ? '' : ' · ${v.churchName}'}${v.a.needsLodging ? ' · necesita hospedaje' : ''}'),
                                         if (v.isPreregistered)
-                                          Chip(
-                                              key: Key(
-                                                  'preinscrito-${v.a.regNumber}'),
-                                              label: const Text('Preinscrito'),
-                                              visualDensity:
-                                                  VisualDensity.compact),
-                                        if (v.a.needsLodging)
-                                          const Padding(
-                                              padding: EdgeInsets.only(left: 6),
-                                              child: Icon(Icons.house_outlined,
-                                                  color: Brand.azul)),
+                                          Padding(
+                                              padding:
+                                                  const EdgeInsets.only(top: 4),
+                                              child: Chip(
+                                                  key: Key(
+                                                      'preinscrito-${v.a.regNumber}'),
+                                                  label:
+                                                      const Text('Preinscrito'),
+                                                  visualDensity:
+                                                      VisualDensity.compact)),
                                       ]),
-                                  onTap: () => Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                          builder: (_) => AttendeeFormScreen(
-                                              attendeeId: v.a.id))),
+                                  trailing: _menu(eventId, v),
+                                  onTap: () => _edit(v),
                                 ),
                               ),
                             );
