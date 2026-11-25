@@ -183,6 +183,11 @@ void main() {
 
     Future<void> tk(String key) async {
       final f = find.byKey(Key(key));
+      if (key.startsWith('ca-fila-') || key.startsWith('ca-confirmar-')) {
+        // el aviso «Asistencia confirmada» (4 s) puede quedar sobre la fila: se espera a que se vaya
+        await t.pump(const Duration(seconds: 6));
+        await t.pump(const Duration(milliseconds: 400));
+      }
       await t.ensureVisible(f);
       await t.pump();
       await clearSnack(f);
