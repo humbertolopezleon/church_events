@@ -7240,6 +7240,13 @@ class $AppMetaTable extends AppMeta with TableInfo<$AppMetaTable, AppMetaData> {
   late final GeneratedColumn<DateTime> lastBackupAt = GeneratedColumn<DateTime>(
       'last_backup_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _passwordReminderHiddenAtMeta =
+      const VerificationMeta('passwordReminderHiddenAt');
+  @override
+  late final GeneratedColumn<DateTime> passwordReminderHiddenAt =
+      GeneratedColumn<DateTime>(
+          'password_reminder_hidden_at', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _recoveryHashMeta =
       const VerificationMeta('recoveryHash');
   @override
@@ -7247,8 +7254,15 @@ class $AppMetaTable extends AppMeta with TableInfo<$AppMetaTable, AppMetaData> {
       'recovery_hash', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
   @override
-  List<GeneratedColumn> get $columns =>
-      [key, deviceId, deviceLabel, schemaVersion, lastBackupAt, recoveryHash];
+  List<GeneratedColumn> get $columns => [
+        key,
+        deviceId,
+        deviceLabel,
+        schemaVersion,
+        lastBackupAt,
+        passwordReminderHiddenAt,
+        recoveryHash
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -7289,6 +7303,13 @@ class $AppMetaTable extends AppMeta with TableInfo<$AppMetaTable, AppMetaData> {
           lastBackupAt.isAcceptableOrUnknown(
               data['last_backup_at']!, _lastBackupAtMeta));
     }
+    if (data.containsKey('password_reminder_hidden_at')) {
+      context.handle(
+          _passwordReminderHiddenAtMeta,
+          passwordReminderHiddenAt.isAcceptableOrUnknown(
+              data['password_reminder_hidden_at']!,
+              _passwordReminderHiddenAtMeta));
+    }
     if (data.containsKey('recovery_hash')) {
       context.handle(
           _recoveryHashMeta,
@@ -7314,6 +7335,9 @@ class $AppMetaTable extends AppMeta with TableInfo<$AppMetaTable, AppMetaData> {
           .read(DriftSqlType.int, data['${effectivePrefix}schema_version'])!,
       lastBackupAt: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}last_backup_at']),
+      passwordReminderHiddenAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime,
+          data['${effectivePrefix}password_reminder_hidden_at']),
       recoveryHash: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}recovery_hash']),
     );
@@ -7332,6 +7356,9 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
   final int schemaVersion;
   final DateTime? lastBackupAt;
 
+  /// Cuándo se pulsó «Recordar más tarde» en el aviso de contraseña inicial (se oculta ese día).
+  final DateTime? passwordReminderHiddenAt;
+
   /// Hash del código de recuperación del administrador (un solo uso).
   final String? recoveryHash;
   const AppMetaData(
@@ -7340,6 +7367,7 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
       required this.deviceLabel,
       required this.schemaVersion,
       this.lastBackupAt,
+      this.passwordReminderHiddenAt,
       this.recoveryHash});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7350,6 +7378,10 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
     map['schema_version'] = Variable<int>(schemaVersion);
     if (!nullToAbsent || lastBackupAt != null) {
       map['last_backup_at'] = Variable<DateTime>(lastBackupAt);
+    }
+    if (!nullToAbsent || passwordReminderHiddenAt != null) {
+      map['password_reminder_hidden_at'] =
+          Variable<DateTime>(passwordReminderHiddenAt);
     }
     if (!nullToAbsent || recoveryHash != null) {
       map['recovery_hash'] = Variable<String>(recoveryHash);
@@ -7366,6 +7398,9 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
       lastBackupAt: lastBackupAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastBackupAt),
+      passwordReminderHiddenAt: passwordReminderHiddenAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(passwordReminderHiddenAt),
       recoveryHash: recoveryHash == null && nullToAbsent
           ? const Value.absent()
           : Value(recoveryHash),
@@ -7381,6 +7416,8 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
       deviceLabel: serializer.fromJson<String>(json['deviceLabel']),
       schemaVersion: serializer.fromJson<int>(json['schemaVersion']),
       lastBackupAt: serializer.fromJson<DateTime?>(json['lastBackupAt']),
+      passwordReminderHiddenAt:
+          serializer.fromJson<DateTime?>(json['passwordReminderHiddenAt']),
       recoveryHash: serializer.fromJson<String?>(json['recoveryHash']),
     );
   }
@@ -7393,6 +7430,8 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
       'deviceLabel': serializer.toJson<String>(deviceLabel),
       'schemaVersion': serializer.toJson<int>(schemaVersion),
       'lastBackupAt': serializer.toJson<DateTime?>(lastBackupAt),
+      'passwordReminderHiddenAt':
+          serializer.toJson<DateTime?>(passwordReminderHiddenAt),
       'recoveryHash': serializer.toJson<String?>(recoveryHash),
     };
   }
@@ -7403,6 +7442,7 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
           String? deviceLabel,
           int? schemaVersion,
           Value<DateTime?> lastBackupAt = const Value.absent(),
+          Value<DateTime?> passwordReminderHiddenAt = const Value.absent(),
           Value<String?> recoveryHash = const Value.absent()}) =>
       AppMetaData(
         key: key ?? this.key,
@@ -7411,6 +7451,9 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
         schemaVersion: schemaVersion ?? this.schemaVersion,
         lastBackupAt:
             lastBackupAt.present ? lastBackupAt.value : this.lastBackupAt,
+        passwordReminderHiddenAt: passwordReminderHiddenAt.present
+            ? passwordReminderHiddenAt.value
+            : this.passwordReminderHiddenAt,
         recoveryHash:
             recoveryHash.present ? recoveryHash.value : this.recoveryHash,
       );
@@ -7426,6 +7469,9 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
       lastBackupAt: data.lastBackupAt.present
           ? data.lastBackupAt.value
           : this.lastBackupAt,
+      passwordReminderHiddenAt: data.passwordReminderHiddenAt.present
+          ? data.passwordReminderHiddenAt.value
+          : this.passwordReminderHiddenAt,
       recoveryHash: data.recoveryHash.present
           ? data.recoveryHash.value
           : this.recoveryHash,
@@ -7440,14 +7486,15 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
           ..write('deviceLabel: $deviceLabel, ')
           ..write('schemaVersion: $schemaVersion, ')
           ..write('lastBackupAt: $lastBackupAt, ')
+          ..write('passwordReminderHiddenAt: $passwordReminderHiddenAt, ')
           ..write('recoveryHash: $recoveryHash')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      key, deviceId, deviceLabel, schemaVersion, lastBackupAt, recoveryHash);
+  int get hashCode => Object.hash(key, deviceId, deviceLabel, schemaVersion,
+      lastBackupAt, passwordReminderHiddenAt, recoveryHash);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -7457,6 +7504,7 @@ class AppMetaData extends DataClass implements Insertable<AppMetaData> {
           other.deviceLabel == this.deviceLabel &&
           other.schemaVersion == this.schemaVersion &&
           other.lastBackupAt == this.lastBackupAt &&
+          other.passwordReminderHiddenAt == this.passwordReminderHiddenAt &&
           other.recoveryHash == this.recoveryHash);
 }
 
@@ -7466,6 +7514,7 @@ class AppMetaCompanion extends UpdateCompanion<AppMetaData> {
   final Value<String> deviceLabel;
   final Value<int> schemaVersion;
   final Value<DateTime?> lastBackupAt;
+  final Value<DateTime?> passwordReminderHiddenAt;
   final Value<String?> recoveryHash;
   const AppMetaCompanion({
     this.key = const Value.absent(),
@@ -7473,6 +7522,7 @@ class AppMetaCompanion extends UpdateCompanion<AppMetaData> {
     this.deviceLabel = const Value.absent(),
     this.schemaVersion = const Value.absent(),
     this.lastBackupAt = const Value.absent(),
+    this.passwordReminderHiddenAt = const Value.absent(),
     this.recoveryHash = const Value.absent(),
   });
   AppMetaCompanion.insert({
@@ -7481,6 +7531,7 @@ class AppMetaCompanion extends UpdateCompanion<AppMetaData> {
     this.deviceLabel = const Value.absent(),
     required int schemaVersion,
     this.lastBackupAt = const Value.absent(),
+    this.passwordReminderHiddenAt = const Value.absent(),
     this.recoveryHash = const Value.absent(),
   })  : deviceId = Value(deviceId),
         schemaVersion = Value(schemaVersion);
@@ -7490,6 +7541,7 @@ class AppMetaCompanion extends UpdateCompanion<AppMetaData> {
     Expression<String>? deviceLabel,
     Expression<int>? schemaVersion,
     Expression<DateTime>? lastBackupAt,
+    Expression<DateTime>? passwordReminderHiddenAt,
     Expression<String>? recoveryHash,
   }) {
     return RawValuesInsertable({
@@ -7498,6 +7550,8 @@ class AppMetaCompanion extends UpdateCompanion<AppMetaData> {
       if (deviceLabel != null) 'device_label': deviceLabel,
       if (schemaVersion != null) 'schema_version': schemaVersion,
       if (lastBackupAt != null) 'last_backup_at': lastBackupAt,
+      if (passwordReminderHiddenAt != null)
+        'password_reminder_hidden_at': passwordReminderHiddenAt,
       if (recoveryHash != null) 'recovery_hash': recoveryHash,
     });
   }
@@ -7508,6 +7562,7 @@ class AppMetaCompanion extends UpdateCompanion<AppMetaData> {
       Value<String>? deviceLabel,
       Value<int>? schemaVersion,
       Value<DateTime?>? lastBackupAt,
+      Value<DateTime?>? passwordReminderHiddenAt,
       Value<String?>? recoveryHash}) {
     return AppMetaCompanion(
       key: key ?? this.key,
@@ -7515,6 +7570,8 @@ class AppMetaCompanion extends UpdateCompanion<AppMetaData> {
       deviceLabel: deviceLabel ?? this.deviceLabel,
       schemaVersion: schemaVersion ?? this.schemaVersion,
       lastBackupAt: lastBackupAt ?? this.lastBackupAt,
+      passwordReminderHiddenAt:
+          passwordReminderHiddenAt ?? this.passwordReminderHiddenAt,
       recoveryHash: recoveryHash ?? this.recoveryHash,
     );
   }
@@ -7537,6 +7594,10 @@ class AppMetaCompanion extends UpdateCompanion<AppMetaData> {
     if (lastBackupAt.present) {
       map['last_backup_at'] = Variable<DateTime>(lastBackupAt.value);
     }
+    if (passwordReminderHiddenAt.present) {
+      map['password_reminder_hidden_at'] =
+          Variable<DateTime>(passwordReminderHiddenAt.value);
+    }
     if (recoveryHash.present) {
       map['recovery_hash'] = Variable<String>(recoveryHash.value);
     }
@@ -7551,6 +7612,7 @@ class AppMetaCompanion extends UpdateCompanion<AppMetaData> {
           ..write('deviceLabel: $deviceLabel, ')
           ..write('schemaVersion: $schemaVersion, ')
           ..write('lastBackupAt: $lastBackupAt, ')
+          ..write('passwordReminderHiddenAt: $passwordReminderHiddenAt, ')
           ..write('recoveryHash: $recoveryHash')
           ..write(')'))
         .toString();
@@ -14171,6 +14233,7 @@ typedef $$AppMetaTableCreateCompanionBuilder = AppMetaCompanion Function({
   Value<String> deviceLabel,
   required int schemaVersion,
   Value<DateTime?> lastBackupAt,
+  Value<DateTime?> passwordReminderHiddenAt,
   Value<String?> recoveryHash,
 });
 typedef $$AppMetaTableUpdateCompanionBuilder = AppMetaCompanion Function({
@@ -14179,6 +14242,7 @@ typedef $$AppMetaTableUpdateCompanionBuilder = AppMetaCompanion Function({
   Value<String> deviceLabel,
   Value<int> schemaVersion,
   Value<DateTime?> lastBackupAt,
+  Value<DateTime?> passwordReminderHiddenAt,
   Value<String?> recoveryHash,
 });
 
@@ -14205,6 +14269,10 @@ class $$AppMetaTableFilterComposer
 
   ColumnFilters<DateTime> get lastBackupAt => $composableBuilder(
       column: $table.lastBackupAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get passwordReminderHiddenAt => $composableBuilder(
+      column: $table.passwordReminderHiddenAt,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get recoveryHash => $composableBuilder(
       column: $table.recoveryHash, builder: (column) => ColumnFilters(column));
@@ -14236,6 +14304,10 @@ class $$AppMetaTableOrderingComposer
       column: $table.lastBackupAt,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<DateTime> get passwordReminderHiddenAt => $composableBuilder(
+      column: $table.passwordReminderHiddenAt,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get recoveryHash => $composableBuilder(
       column: $table.recoveryHash,
       builder: (column) => ColumnOrderings(column));
@@ -14264,6 +14336,9 @@ class $$AppMetaTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastBackupAt => $composableBuilder(
       column: $table.lastBackupAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get passwordReminderHiddenAt => $composableBuilder(
+      column: $table.passwordReminderHiddenAt, builder: (column) => column);
 
   GeneratedColumn<String> get recoveryHash => $composableBuilder(
       column: $table.recoveryHash, builder: (column) => column);
@@ -14297,6 +14372,7 @@ class $$AppMetaTableTableManager extends RootTableManager<
             Value<String> deviceLabel = const Value.absent(),
             Value<int> schemaVersion = const Value.absent(),
             Value<DateTime?> lastBackupAt = const Value.absent(),
+            Value<DateTime?> passwordReminderHiddenAt = const Value.absent(),
             Value<String?> recoveryHash = const Value.absent(),
           }) =>
               AppMetaCompanion(
@@ -14305,6 +14381,7 @@ class $$AppMetaTableTableManager extends RootTableManager<
             deviceLabel: deviceLabel,
             schemaVersion: schemaVersion,
             lastBackupAt: lastBackupAt,
+            passwordReminderHiddenAt: passwordReminderHiddenAt,
             recoveryHash: recoveryHash,
           ),
           createCompanionCallback: ({
@@ -14313,6 +14390,7 @@ class $$AppMetaTableTableManager extends RootTableManager<
             Value<String> deviceLabel = const Value.absent(),
             required int schemaVersion,
             Value<DateTime?> lastBackupAt = const Value.absent(),
+            Value<DateTime?> passwordReminderHiddenAt = const Value.absent(),
             Value<String?> recoveryHash = const Value.absent(),
           }) =>
               AppMetaCompanion.insert(
@@ -14321,6 +14399,7 @@ class $$AppMetaTableTableManager extends RootTableManager<
             deviceLabel: deviceLabel,
             schemaVersion: schemaVersion,
             lastBackupAt: lastBackupAt,
+            passwordReminderHiddenAt: passwordReminderHiddenAt,
             recoveryHash: recoveryHash,
           ),
           withReferenceMapper: (p0) => p0

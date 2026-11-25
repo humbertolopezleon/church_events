@@ -41,9 +41,9 @@ void main() {
       expect(find.byKey(Key('asistente-$n')), findsOneWidget);
       expect(t.getRect(find.byKey(Key('asistente-$n'))).bottom, lessThan(890));
     }
-    // El botón flotante no tapa los botones de la barra.
+    // El botón flotante no tapa el buscador ni «Filtros» (importar/exportar van en el menú ⋮).
     final fab = t.getRect(find.byKey(const Key('asis-registrar')));
-    for (final k in ['asis-importar', 'exportar-csv']) {
+    for (final k in ['buscar', 'filtros-toggle', 'menu-csv']) {
       expect(t.getRect(find.byKey(Key(k))).overlaps(fab), isFalse, reason: k);
     }
 

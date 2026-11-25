@@ -48,8 +48,12 @@ void main() {
     });
     await login(t, 'admin', 'secreto1');
     // Antes de abrir un evento: Mis eventos.
+    await t.tap(find.byKey(const Key('menu-csv')));
+    await settle(t);
     expect(find.byKey(const Key('ev-exportar')), findsOneWidget);
     expect(find.byKey(const Key('ev-importar')), findsOneWidget);
+    await t.tapAt(const Offset(5, 500)); // cierra el menú
+    await settle(t);
     await t.tap(find.text('Retiro'));
     await settle(t);
     final pairs = {
@@ -63,10 +67,14 @@ void main() {
     for (final e in pairs.entries) {
       await t.tap(find.text(e.key).first);
       await settle(t);
+      await t.tap(find.byKey(const Key('menu-csv')));
+      await settle(t);
       expect(find.byKey(Key(e.value.$1)), findsOneWidget,
           reason: '${e.key} exporta');
       expect(find.byKey(Key(e.value.$2)), findsOneWidget,
           reason: '${e.key} debe poder importar');
+      await t.tapAt(const Offset(5, 500)); // cierra el menú
+      await settle(t);
     }
   });
 

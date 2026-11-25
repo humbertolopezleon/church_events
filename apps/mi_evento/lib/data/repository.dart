@@ -184,6 +184,12 @@ class Repository {
     return [for (final r in rows) AgeRange(r.label, r.minAge, r.maxAge)];
   }
 
+  /// «Recordar más tarde» del aviso de contraseña inicial: lo oculta hasta el día siguiente.
+  Future<void> snoozePasswordReminder([DateTime? now]) => (db.update(db.appMeta)
+        ..where((m) => m.key.equals(1)))
+      .write(AppMetaCompanion(
+          passwordReminderHiddenAt: Value((now ?? DateTime.now()).toUtc())));
+
   // ───────────────────────── Iglesias (catálogo) ─────────────────────────
 
   Stream<List<ChurchRow>> watchChurches() => (db.select(db.churches)

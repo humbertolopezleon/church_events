@@ -19,6 +19,8 @@ import 'team_generate_screen.dart';
 import 'widgets/input_formats.dart';
 import '../data/team_exchange.dart';
 import 'table_import_flow.dart';
+import 'widgets/app_header.dart';
+import 'widgets/plural.dart';
 
 Color teamColor(String? hex) {
   if (hex == null || hex.length != 7) return Brand.gris;
@@ -67,18 +69,42 @@ AttendeeRow _withTeam(AttendeeRow p, String? teamId) =>
 /// Texto de búsqueda de la pantalla de equipos (nombre del equipo o de un miembro).
 final teamQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 
+/// CSV de los equipos: una fila por persona («Sin equipo» incluido). Con búsqueda solo salen los
+/// equipos mostrados.
+Future<void> _exportTeams(BuildContext context, WidgetRef ref,
+    {required List<TeamRow> teams,
+    required List<AttendeeView> people,
+    required String eventName,
+    required String query}) {
+  final names = {for (final t in teams) t.id: t.name};
+  final q = query.trim();
+  final rows = <List<String>>[];
+  for (final v in people) {
+    final team = v.a.teamId == null ? null : names[v.a.teamId];
+    if (v.a.teamId != null && team == null) continue;
+    if (v.a.teamId == null && q.isNotEmpty) continue;
+    rows.add([
+      team ?? 'Sin equipo',
+      '${v.a.regNumber}',
+      v.fullName,
+      v.isMale ? 'Hombre' : 'Mujer',
+      '${v.a.age}',
+      v.churchName ?? '',
+    ]);
+  }
+  rows.sort((a, b) => a[0] == b[0]
+      ? int.parse(a[1]).compareTo(int.parse(b[1]))
+      : a[0].compareTo(b[0]));
+  return saveCsv(context, ref, name: csvFileName('equipos', eventName), rows: [
+    ['equipo', 'numero', 'nombre', 'sexo', 'edad', 'iglesia'],
+    ...rows
+  ]);
+}
+
 /// Búsqueda y exportación a CSV de los equipos (una fila por persona; «Sin equipo» incluido).
 class _TeamsToolbar extends ConsumerStatefulWidget {
-  const _TeamsToolbar(
-      {required this.eventId,
-      required this.eventName,
-      required this.teams,
-      required this.people,
-      required this.total});
-  final String eventId;
-  final String eventName;
+  const _TeamsToolbar({required this.teams, required this.total});
   final List<TeamRow> teams; // los que deja el filtro
-  final List<AttendeeView> people;
   final int total;
   @override
   ConsumerState<_TeamsToolbar> createState() => _TeamsToolbarState();
@@ -93,50 +119,16 @@ class _TeamsToolbarState extends ConsumerState<_TeamsToolbar> {
     super.dispose();
   }
 
-  Future<void> _export() {
-    final names = {for (final t in widget.teams) t.id: t.name};
-    final q = c.text.trim();
-    final rows = <List<String>>[];
-    for (final v in widget.people) {
-      final team = v.a.teamId == null ? null : names[v.a.teamId];
-      // con búsqueda solo salen los equipos mostrados; sin ella, todos (y «Sin equipo»)
-      if (v.a.teamId != null && team == null) continue;
-      if (v.a.teamId == null && q.isNotEmpty) continue;
-      rows.add([
-        team ?? 'Sin equipo',
-        '${v.a.regNumber}',
-        v.fullName,
-        v.isMale ? 'Hombre' : 'Mujer',
-        '${v.a.age}',
-        v.churchName ?? '',
-      ]);
-    }
-    rows.sort((a, b) => a[0] == b[0]
-        ? int.parse(a[1]).compareTo(int.parse(b[1]))
-        : a[0].compareTo(b[0]));
-    return saveCsv(context, ref,
-        name: csvFileName('equipos', widget.eventName),
-        rows: [
-          ['equipo', 'numero', 'nombre', 'sexo', 'edad', 'iglesia'],
-          ...rows
-        ]);
-  }
-
   @override
   Widget build(BuildContext context) => ListToolbar(
         controller: c,
-        hint: 'Buscar un equipo o una persona…',
+        hint: 'Equipo o persona',
         searchKey: const Key('eq-buscar'),
-        exportKey: const Key('eq-exportar'),
         countKey: const Key('eq-conteo'),
         onChanged: () => ref.read(teamQueryProvider.notifier).state = c.text,
         count: widget.teams.length == widget.total
-            ? '${widget.total} equipos'
+            ? ''
             : '${widget.teams.length} de ${widget.total}',
-        onExport: widget.teams.isEmpty ? null : _export,
-        importKey: const Key('eq-importar'),
-        onImport: () => runTableImport(context, ref,
-            TeamExchange(ref.read(databaseProvider), widget.eventId)),
       );
 }
 
@@ -215,7 +207,21 @@ class TeamsScreen extends ConsumerWidget {
     final shownTeams = filterTeams(teams, views, ref.watch(teamQueryProvider));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Equipos')),
+      appBar: AppHeader(
+        title: 'Equipos',
+        subtitle:
+            plural(teams.length, 'equipo', 'equipos', zero: 'Sin equipos'),
+        importKey: const Key('eq-importar'),
+        exportKey: const Key('eq-exportar'),
+        onImport: () => runTableImport(
+            context, ref, TeamExchange(ref.read(databaseProvider), eventId)),
+        onExport: () => _exportTeams(context, ref,
+            teams: shownTeams,
+            people: views,
+            eventName: event?.name ?? '',
+            query: ref.read(teamQueryProvider)),
+        exportEnabled: shownTeams.isNotEmpty,
+      ),
       body: event != null && !event.offersTeams && teams.isEmpty
           ? const Center(
               child: Padding(
@@ -292,12 +298,7 @@ class TeamsScreen extends ConsumerWidget {
                         label: const Text('Criterios de balance')),
                   ]),
                   const SizedBox(height: 12),
-                  _TeamsToolbar(
-                      eventId: eventId,
-                      eventName: event?.name ?? '',
-                      teams: shownTeams,
-                      people: views,
-                      total: teams.length),
+                  _TeamsToolbar(teams: shownTeams, total: teams.length),
                   const SizedBox(height: 12),
                   _BalanceBanner(
                       issues: issues,

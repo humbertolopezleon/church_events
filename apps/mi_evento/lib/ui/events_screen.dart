@@ -17,9 +17,41 @@ import 'widgets/data_table_view.dart';
 import 'widgets/list_toolbar.dart';
 import '../data/event_exchange.dart';
 import 'table_import_flow.dart';
+import 'widgets/app_fab.dart';
+import 'widgets/app_header.dart';
+import 'widgets/plural.dart';
 
 /// Texto de búsqueda de «Mis eventos».
 final eventQueryProvider = StateProvider.autoDispose<String>((ref) => '');
+
+/// Lista de eventos en vivo (para el menú de exportar de la cabecera).
+final eventsListProvider = StreamProvider<List<Event>>(
+    (ref) => ref.watch(repositoryProvider).watchEvents());
+
+/// CSV de los eventos mostrados.
+Future<void> _exportEvents(
+        BuildContext context, WidgetRef ref, List<Event> shown) =>
+    saveCsv(context, ref, name: 'eventos.csv', rows: [
+      [
+        'nombre',
+        'inicio',
+        'fin',
+        'lugar',
+        'organizador',
+        'hospedaje',
+        'equipos'
+      ],
+      for (final e in shown)
+        [
+          e.name,
+          e.startDate,
+          e.endDate,
+          e.venue,
+          e.organizer,
+          e.offersLodging ? 'Sí' : 'No',
+          e.offersTeams ? 'Sí' : 'No',
+        ],
+    ]);
 
 List<Event> filterEvents(List<Event> all, String query) {
   final q = normalizeText(query);
@@ -52,40 +84,13 @@ class _EventsToolbarState extends ConsumerState<_EventsToolbar> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: ListToolbar(
           controller: c,
-          hint: 'Buscar un evento por nombre, lugar u organizador…',
+          hint: 'Nombre, lugar u organizador',
           searchKey: const Key('ev-buscar'),
-          exportKey: const Key('ev-exportar'),
           countKey: const Key('ev-conteo'),
           onChanged: () => ref.read(eventQueryProvider.notifier).state = c.text,
           count: widget.shown.length == widget.total
-              ? '${widget.total} eventos'
+              ? ''
               : '${widget.shown.length} de ${widget.total}',
-          importKey: const Key('ev-importar'),
-          onImport: () => runTableImport(
-              context, ref, EventExchange(ref.read(databaseProvider))),
-          onExport: widget.shown.isEmpty
-              ? null
-              : () => saveCsv(context, ref, name: 'eventos.csv', rows: [
-                    [
-                      'nombre',
-                      'inicio',
-                      'fin',
-                      'lugar',
-                      'organizador',
-                      'hospedaje',
-                      'equipos'
-                    ],
-                    for (final e in widget.shown)
-                      [
-                        e.name,
-                        e.startDate,
-                        e.endDate,
-                        e.venue,
-                        e.organizer,
-                        e.offersLodging ? 'Sí' : 'No',
-                        e.offersTeams ? 'Sí' : 'No',
-                      ],
-                  ]),
         ),
       );
 }
@@ -104,9 +109,20 @@ class EventsScreen extends ConsumerWidget {
     final repo = ref.watch(repositoryProvider);
     final admin = ref.watch(currentUserProvider)?.isAdmin ?? false;
     final narrow = MediaQuery.sizeOf(context).width < 480;
+    final eventsAll =
+        ref.watch(eventsListProvider).valueOrNull ?? const <Event>[];
+    final eventsShown = filterEvents(eventsAll, ref.watch(eventQueryProvider));
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis eventos'),
+      appBar: AppHeader(
+        title: 'Mis eventos',
+        subtitle:
+            plural(eventsAll.length, 'evento', 'eventos', zero: 'Sin eventos'),
+        importKey: const Key('ev-importar'),
+        exportKey: const Key('ev-exportar'),
+        onImport: () => runTableImport(
+            context, ref, EventExchange(ref.read(databaseProvider))),
+        onExport: () => _exportEvents(context, ref, eventsShown),
+        exportEnabled: eventsShown.isNotEmpty,
         actions: [
           // En pantallas estrechas (360 px) los botones son solo icono, con su ayuda al mantener.
           if (admin && narrow)
@@ -141,12 +157,12 @@ class EventsScreen extends ConsumerWidget {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AppFab(
         key: const Key('ev-crear-fab'),
         onPressed: () => showDialog<void>(
             context: context, builder: (_) => const _NewEventDialog()),
-        icon: const Icon(Icons.add),
-        label: const Text('Crear evento'),
+        icon: Icons.add,
+        label: 'Crear evento',
       ),
       body: Column(children: [
         const DefaultPasswordBanner(),

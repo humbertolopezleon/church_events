@@ -18,6 +18,10 @@ import 'widgets/data_table_view.dart';
 import 'widgets/highlight_text.dart';
 import 'widgets/list_toolbar.dart';
 import 'csv_import.dart';
+import 'widgets/app_fab.dart';
+import 'widgets/app_header.dart';
+import 'widgets/filter_spec.dart';
+import 'widgets/plural.dart';
 
 /// Lista de asistentes: búsqueda (nombre en cualquier orden, iglesia o número), filtros y exportación a CSV.
 class AttendeesScreen extends ConsumerStatefulWidget {
@@ -183,68 +187,59 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
       child: Focus(
         autofocus: true,
         child: Scaffold(
-          appBar: AppBar(title: const Text('Asistentes')),
-          floatingActionButton: FloatingActionButton.extended(
+          appBar: AppHeader(
+            title: 'Asistentes',
+            subtitle: plural(all.length, 'inscrito', 'inscritos',
+                zero: 'Nadie inscrito todavía'),
+            importKey: const Key('asis-importar'),
+            onImport: () async {
+              final f = await ref.read(filePickProvider).pick();
+              if (f == null || !context.mounted) return;
+              await importAttendeesCsv(context, ref, f.bytes);
+            },
+            onExport: () => _export(eventId, list),
+            exportEnabled: list.isNotEmpty,
+          ),
+          floatingActionButton: AppFab(
             key: const Key('asis-registrar'),
             tooltip: 'Registrar persona (Ctrl+N)',
+            accent: true,
             onPressed: () => openRegister(context),
-            icon: const Icon(Icons.person_add_alt_outlined),
-            label: const Text('Registrar persona'),
+            icon: Icons.add,
+            label: 'Registrar',
           ),
           body: Column(children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: ListToolbar(
                 controller: query,
-                hint: 'Buscar por nombre, iglesia o número…',
+                hint: 'Nombre, iglesia o número',
                 onChanged: () => setState(() {}),
-                activeFilters: [
-                  sex,
-                  churchId,
-                  lodgingId,
-                  teamId,
-                  lodgingStatus,
-                  teamStatus,
-                  preregistered
-                ].where((f) => f != null).length,
                 count: filtering
-                    ? '${list.length} de ${all.length}'
-                    : '${all.length} inscritos',
-                onExport: list.isEmpty ? null : () => _export(eventId, list),
-                importKey: const Key('asis-importar'),
-                onImport: () async {
-                  final f = await ref.read(filePickProvider).pick();
-                  if (f == null || !context.mounted) return;
-                  await importAttendeesCsv(context, ref, f.bytes);
-                },
-                filters: [
-                  FilterDropdown<bool>(
+                    ? '${list.length} de ${all.length} · más recientes primero'
+                    : 'Más recientes primero',
+                resultCount: () =>
+                    _filter.apply(Repository.search(all, query.text)).length,
+                resultLabel: (n) => n == 0
+                    ? 'Nadie coincide con estos filtros'
+                    : 'Ver ${plural(n, 'asistente', 'asistentes')}',
+                filters: () => [
+                  ChoiceFilter<bool>(
                       key: const Key('filtro-asistencia'),
                       label: 'Asistencia',
                       value: preregistered,
                       options: const {
                         false: 'Confirmados',
-                        true: 'Preinscritos'
+                        true: 'Por confirmar'
                       },
                       onChanged: (v) => setState(() => preregistered = v)),
-                  FilterDropdown<String>(
+                  ChoiceFilter<String>(
                       key: const Key('filtro-sexo'),
                       label: 'Sexo',
                       value: sex,
                       options: const {'M': 'Hombres', 'F': 'Mujeres'},
                       onChanged: (v) => setState(() => sex = v)),
-                  FilterDropdown<String>(
-                      key: const Key('filtro-iglesia'),
-                      label: 'Iglesia',
-                      value: churchId,
-                      options: {
-                        for (final e
-                            in churches.entries.toList()
-                              ..sort((a, b) => a.value.compareTo(b.value)))
-                          e.key: e.value
-                      },
-                      onChanged: (v) => setState(() => churchId = v)),
-                  FilterDropdown<LodgingStatus>(
+                  ChoiceFilter<LodgingStatus>(
                       key: const Key('filtro-hospedaje-estado'),
                       label: 'Hospedaje',
                       value: lodgingStatus,
@@ -254,19 +249,34 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
                         LodgingStatus.notNeeded: 'No necesita',
                       },
                       onChanged: (v) => setState(() => lodgingStatus = v)),
+                  ChoiceFilter<String>(
+                      key: const Key('filtro-iglesia'),
+                      label: 'Iglesia',
+                      allLabel: 'Todas',
+                      wide: true,
+                      value: churchId,
+                      options: {
+                        for (final e
+                            in churches.entries.toList()
+                              ..sort((a, b) => a.value.compareTo(b.value)))
+                          e.key: e.value
+                      },
+                      onChanged: (v) => setState(() => churchId = v)),
                   if (lodgings.isNotEmpty)
-                    FilterDropdown<String>(
+                    ChoiceFilter<String>(
                         key: const Key('filtro-hospedaje'),
                         label: 'En el hospedaje',
+                        wide: true,
                         value: lodgingId,
                         options: {
                           for (final l in lodgings) l.row.id: l.row.name
                         },
                         onChanged: (v) => setState(() => lodgingId = v)),
                   if (teams.isNotEmpty)
-                    FilterDropdown<String>(
+                    ChoiceFilter<String>(
                         key: const Key('filtro-equipo'),
                         label: 'Equipo',
+                        wide: true,
                         value: teamId,
                         options: {for (final t in teams) t.id: t.name},
                         onChanged: (v) => setState(() => teamId = v)),

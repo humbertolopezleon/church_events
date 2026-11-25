@@ -223,7 +223,7 @@ void main() {
     await settle(t);
     expect(find.byKey(const Key('asistente-2')), findsOneWidget);
     expect(find.byKey(const Key('asistente-1')), findsNothing);
-    expect(find.text('1 de 3'), findsOneWidget);
+    expect(find.text('1 de 3 · más recientes primero'), findsOneWidget);
 
     await t.enterText(find.byKey(const Key('buscar')), '3');
     await settle(t);

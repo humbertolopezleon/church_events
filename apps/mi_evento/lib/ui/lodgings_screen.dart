@@ -21,6 +21,10 @@ import 'widgets/list_toolbar.dart';
 import 'widgets/input_formats.dart';
 import '../data/lodging_exchange.dart';
 import 'table_import_flow.dart';
+import 'widgets/app_fab.dart';
+import 'widgets/app_header.dart';
+import 'widgets/filter_spec.dart';
+import 'widgets/plural.dart';
 
 String kindLabel(String kind) =>
     kind == 'shelter' ? 'Albergue' : 'Casa particular';
@@ -153,15 +157,25 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
         accepts: accepts, onlyFree: onlyFree);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hospedajes')),
+      appBar: AppHeader(
+        title: 'Hospedajes',
+        subtitle:
+            '${plural(lodgings.length, 'hospedaje', 'hospedajes', zero: 'Sin hospedajes')} · ${plural(places, 'plaza', 'plazas', zero: 'sin plazas')}',
+        importKey: const Key('hosp-importar'),
+        exportKey: const Key('hosp-exportar'),
+        onImport: () => runTableImport(
+            context, ref, LodgingExchange(ref.read(databaseProvider), eventId)),
+        onExport: () => _export(event?.name ?? '', shown),
+        exportEnabled: shown.isNotEmpty,
+      ),
       floatingActionButton: (event?.offersLodging ?? true)
-          ? FloatingActionButton.extended(
+          ? AppFab(
               key: const Key('hosp-nuevo'),
               onPressed: () => showDialog<void>(
                   context: context,
                   builder: (_) => LodgingFormDialog(eventId: eventId)),
-              icon: const Icon(Icons.add),
-              label: const Text('Nuevo hospedaje'),
+              icon: Icons.add,
+              label: 'Nuevo hospedaje',
             )
           : null,
       body: event != null && !event.offersLodging
@@ -185,27 +199,21 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: ListToolbar(
                         controller: query,
-                        hint: 'Buscar por nombre, anfitrión o zona…',
+                        hint: 'Nombre, anfitrión o zona',
                         searchKey: const Key('hosp-buscar'),
-                        exportKey: const Key('hosp-exportar'),
                         countKey: const Key('hosp-conteo'),
                         onChanged: () => setState(() {}),
-                        activeFilters:
-                            (accepts != null ? 1 : 0) + (onlyFree ? 1 : 0),
+                        inline: true,
                         count: shown.length == lodgings.length
-                            ? '${lodgings.length} hospedajes'
+                            ? ''
                             : '${shown.length} de ${lodgings.length}',
-                        onExport: shown.isEmpty
-                            ? null
-                            : () => _export(event?.name ?? '', shown),
-                        importKey: const Key('hosp-importar'),
-                        onImport: () => runTableImport(
-                            context,
-                            ref,
-                            LodgingExchange(
-                                ref.read(databaseProvider), eventId)),
-                        filters: [
-                          FilterDropdown<LodgingAccepts>(
+                        filters: () => [
+                          ToggleFilter(
+                              key: const Key('hosp-filtro-libres'),
+                              label: 'Con plazas libres',
+                              value: onlyFree,
+                              onChanged: (v) => setState(() => onlyFree = v)),
+                          ChoiceFilter<LodgingAccepts>(
                               key: const Key('hosp-filtro-acepta'),
                               label: 'Acepta',
                               value: accepts,
@@ -214,11 +222,6 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
                                   a: lodgingAcceptsLabel(a)
                               },
                               onChanged: (v) => setState(() => accepts = v)),
-                          FilterChip(
-                              key: const Key('hosp-filtro-libres'),
-                              label: const Text('Solo con plazas libres'),
-                              selected: onlyFree,
-                              onSelected: (v) => setState(() => onlyFree = v)),
                         ],
                       ),
                     ),

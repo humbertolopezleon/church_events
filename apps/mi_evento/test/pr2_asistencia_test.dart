@@ -103,18 +103,18 @@ void main() {
         findsNothing); // por defecto solo por confirmar
 
     // Mostrar confirmados y desconfirmar a Rosa (nº 3).
-    await tapKey(t, 'ca-filtro-estado');
+    await openFilters(t);
     await t.tap(find.text('Confirmados').last);
     await settle(t);
+    await closeFilters(t);
     expect(find.text('Rosa Prueba'), findsOneWidget);
     await tapKey(t, 'ca-desconfirmar-3');
     await tapKey(t, 'ca-desconfirmar-ok');
     expect(find.text('3 por confirmar · 0 ya confirmados'), findsOneWidget);
 
     // Vuelve a «por confirmar» (opción «Todos» del desplegable).
-    await tapKey(t, 'ca-filtro-estado');
-    await t.tap(find.text('Todos').last);
-    await settle(t);
+    await tapKey(
+        t, 'filtros-limpiar'); // quita el filtro activo «Mostrar: Confirmados»
 
     // Búsqueda: resalta la coincidencia (texto con rango resaltado).
     await t.enterText(find.byKey(const Key('ca-buscar')), 'lid');

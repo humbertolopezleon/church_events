@@ -13,6 +13,10 @@ import 'table_import_flow.dart';
 import 'widgets/data_table_view.dart';
 import 'widgets/highlight_text.dart';
 import 'widgets/list_toolbar.dart';
+import 'widgets/app_fab.dart';
+import 'widgets/app_header.dart';
+import 'widgets/filter_spec.dart';
+import 'widgets/plural.dart';
 
 /// Gestión de las iglesias registradas en el sistema (solo administrador): buscar, filtrar,
 /// crear, editar, eliminar (si no tienen asistentes), exportar e importar CSV.
@@ -51,9 +55,7 @@ class _ChurchesScreenState extends ConsumerState<ChurchesScreen> {
       for (final c in all)
         if ((province == null || c.province == province) &&
             (municipality == null || c.municipality == municipality) &&
-            words.every(normalizeText(
-                    '${c.name} ${c.province} ${c.municipality} ${c.community}')
-                .contains))
+            words.every(normalizeText(c.name).contains))
           c
     ];
   }
@@ -143,55 +145,65 @@ class _ChurchesScreenState extends ConsumerState<ChurchesScreen> {
         if (c.province.isNotEmpty) c.province
     }.toList()
       ..sort();
-    final munis = {
-      for (final c in all)
-        if (c.municipality.isNotEmpty &&
-            (province == null || c.province == province))
-          c.municipality
-    }.toList()
-      ..sort();
+    List<String> munisFor() => {
+          for (final c in all)
+            if (c.municipality.isNotEmpty &&
+                (province == null || c.province == province))
+              c.municipality
+        }.toList()
+          ..sort();
     final q = query.text;
     return Scaffold(
-      appBar: AppBar(title: const Text('Iglesias')),
-      floatingActionButton: FloatingActionButton.extended(
+      appBar: AppHeader(
+        title: 'Iglesias',
+        subtitle:
+            plural(all.length, 'iglesia', 'iglesias', zero: 'Sin iglesias'),
+        importKey: const Key('ig-importar'),
+        exportKey: const Key('ig-exportar'),
+        onImport: _import,
+        onExport: () => _export(shown),
+        exportEnabled: shown.isNotEmpty,
+      ),
+      floatingActionButton: AppFab(
         key: const Key('ig-nueva'),
         onPressed: () => _edit(),
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva iglesia'),
+        icon: Icons.add,
+        label: 'Nueva iglesia',
       ),
       body: Column(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: ListToolbar(
             controller: query,
-            hint: 'Buscar por nombre, provincia, municipio o comunidad…',
+            hint: 'Nombre de la iglesia',
             searchKey: const Key('ig-buscar'),
-            exportKey: const Key('ig-exportar'),
-            importKey: const Key('ig-importar'),
             countKey: const Key('ig-conteo'),
             onChanged: () => setState(() {}),
-            activeFilters:
-                (province != null ? 1 : 0) + (municipality != null ? 1 : 0),
             count: shown.length == all.length
-                ? '${all.length} iglesias'
-                : '${shown.length} de ${all.length}',
-            onExport: shown.isEmpty ? null : () => _export(shown),
-            onImport: _import,
-            filters: [
-              FilterDropdown<String>(
+                ? 'Orden alfabético'
+                : '${shown.length} de ${all.length} · orden alfabético',
+            resultCount: () => _filter(all).length,
+            resultLabel: (n) => n == 0
+                ? 'Ninguna iglesia coincide'
+                : 'Ver ${plural(n, 'iglesia', 'iglesias')}',
+            filters: () => [
+              ChoiceFilter<String>(
                   key: const Key('ig-filtro-provincia'),
                   label: 'Provincia',
+                  allLabel: 'Todas',
+                  wide: true,
                   value: province,
                   options: {for (final p in provinces) p: p},
                   onChanged: (v) => setState(() {
                         province = v;
                         municipality = null;
                       })),
-              FilterDropdown<String>(
+              ChoiceFilter<String>(
                   key: ValueKey('ig-filtro-municipio-$province'),
                   label: 'Municipio',
+                  wide: true,
                   value: municipality,
-                  options: {for (final m in munis) m: m},
+                  options: {for (final m in munisFor()) m: m},
                   onChanged: (v) => setState(() => municipality = v)),
             ],
           ),

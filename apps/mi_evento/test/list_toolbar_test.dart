@@ -143,13 +143,16 @@ void main() {
       (t) async {
     final (_, saver, _) = await _open(t);
     await _goTo(t, 'Asistentes');
-    expect(find.text('3 inscritos'), findsOneWidget);
+    expect(
+        find.text('3 inscritos'), findsOneWidget); // subtítulo de la cabecera
     await t.enterText(find.byKey(const Key('buscar')), 'perez');
     await settle(t);
-    await tapKey(t, 'filtro-sexo');
+    await openFilters(t);
     await t.tap(find.text('Mujeres').last);
     await settle(t);
-    expect(find.text('1 de 3'), findsOneWidget);
+    await closeFilters(t);
+    expect(find.text('1 de 3 · más recientes primero'), findsOneWidget);
+    expect(find.byKey(const Key('filtros-contador')), findsOneWidget);
     await tapKey(t, 'exportar-csv');
     final rows = _csv(saver, 'asistentes-retiro-jovenes');
     expect(rows.length, 2); // títulos + María
@@ -160,7 +163,7 @@ void main() {
       (t) async {
     final (_, saver, _) = await _open(t);
     await _goTo(t, 'Hospedajes');
-    expect(find.text('2 hospedajes'), findsOneWidget);
+    expect(find.text('2 hospedajes · 11 plazas'), findsOneWidget);
     await t.enterText(find.byKey(const Key('hosp-buscar')), 'teresa');
     await settle(t);
     expect(find.text('1 de 2'), findsOneWidget);
@@ -198,7 +201,7 @@ void main() {
           name: 'Congreso', startDate: '2027-01-01', endDate: '2027-01-03');
     });
     await login(t, 'admin', 'secreto1');
-    expect(find.text('2 eventos'), findsOneWidget);
+    expect(find.text('2 eventos'), findsOneWidget); // subtítulo
     await t.enterText(find.byKey(const Key('ev-buscar')), 'congre');
     await settle(t);
     expect(find.text('1 de 2'), findsOneWidget);

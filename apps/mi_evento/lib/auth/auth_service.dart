@@ -66,6 +66,12 @@ class AuthService {
       (await (db.select(db.appUsers)..where((u) => u.deletedAt.isNull())).get())
           .isNotEmpty;
 
+  /// Usuarios activos de la lista (consulta puntual, para exportar).
+  Future<List<AppUser>> listUsers() => (db.select(db.appUsers)
+        ..where((u) => u.deletedAt.isNull())
+        ..orderBy([(u) => OrderingTerm.asc(u.displayName)]))
+      .get();
+
   Stream<List<AppUser>> watchUsers() => (db.select(db.appUsers)
         ..where((u) => u.deletedAt.isNull())
         ..orderBy([(u) => OrderingTerm.asc(u.displayName)]))
