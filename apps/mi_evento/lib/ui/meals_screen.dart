@@ -11,6 +11,7 @@ import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'auth_screens.dart' show ErrorBox;
 import 'meal_summary_screen.dart';
+import 'quick_register_dialog.dart';
 
 /// Control de comidas y otros registros por persona. Pensado para usarse de pie, con prisa:
 /// escribir un nombre o número, Enter (o tocar «Marcar»), y el contador sube en vivo.
@@ -65,6 +66,34 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
             ));
         query.clear();
       }
+    } on DataException catch (e) {
+      if (mounted) setState(() => error = e.message);
+    }
+    if (mounted) focus.requestFocus();
+  }
+
+  /// Registra a una persona que no estaba inscrita y la marca en esta sesión de una vez.
+  Future<void> _register(SessionView s) async {
+    final row = await showDialog<AttendeeRow>(
+        context: context,
+        builder: (_) =>
+            QuickRegisterDialog(eventId: eventId, initialText: query.text));
+    if (row == null || !mounted) return;
+    try {
+      final r = await ref
+          .read(mealRepoProvider)
+          .mark(s.row.id, row.id, operatorName: _operator);
+      if (!mounted) return;
+      setState(() {
+        lastOk = (
+          name: [row.firstName, row.lastName1, row.lastName2]
+              .where((e) => e.isNotEmpty)
+              .join(' '),
+          text: 'Registrado y marcado (n.º ${row.regNumber})',
+          recordId: r.record.id
+        );
+        query.clear();
+      });
     } on DataException catch (e) {
       if (mounted) setState(() => error = e.message);
     }
@@ -416,6 +445,14 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
                     onPressed: () => setState(query.clear)),
           ),
         ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+              key: const Key('cm-registrar'),
+              onPressed: () => _register(s),
+              icon: const Icon(Icons.person_add_alt_1_outlined),
+              label: const Text('Registrar persona nueva')),
+        ),
         if (error != null) ...[const SizedBox(height: 8), ErrorBox(error!)],
         if (query.text.trim().isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -431,11 +468,23 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
                         'confirma primero su asistencia en «Confirmar asistencia».',
                         style: const TextStyle(fontSize: 16))))
           else if (results.isEmpty)
-            const Card(
+            Card(
                 child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('Nadie con ese nombre. ¿Falta registrarlo?',
-                        style: TextStyle(color: Brand.gris, fontSize: 16))))
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                              'Nadie con ese nombre. ¿Falta registrarlo?',
+                              style:
+                                  TextStyle(color: Brand.gris, fontSize: 16)),
+                          const SizedBox(height: 8),
+                          FilledButton.icon(
+                              key: const Key('cm-registrar-vacio'),
+                              onPressed: () => _register(s),
+                              icon: const Icon(Icons.person_add_alt_1_outlined),
+                              label: const Text('Registrar a esta persona')),
+                        ])))
           else
             Card(
               child: Column(children: [
@@ -481,7 +530,7 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
               title: Text(byId[r.attendeeId]!.fullName,
                   style: const TextStyle(fontWeight: FontWeight.w700)),
               subtitle: Text(
-                  '${hhmm(r.markedAt.toLocal())}${r.operatorName.isEmpty ? '' : ' · ${r.operatorName}'}${r.repeatOverride ? ' · repetido' : ''}'),
+                  '${hhmm(r.markedAt.toLocal())}${r.operatorName.isEmpty ? '' : ' · ${r.operatorName}'}${r.repeatOverride ? ' · repetido' : ''}${byId[r.attendeeId]!.a.registeredAtControl ? ' · registrado en el control' : ''}'),
               trailing: s.closed
                   ? null
                   : TextButton(

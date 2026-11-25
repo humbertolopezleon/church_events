@@ -352,6 +352,7 @@ class Repository {
     String? createdBy,
     int? preferredRegNumber,
     bool preregistered = false,
+    bool registeredAtControl = false,
   }) async {
     _validate(firstName, lastName1, age);
     final now = DateTime.now().toUtc();
@@ -395,6 +396,7 @@ class Repository {
             notes: Value(notes.trim()),
             dedupeKey: dedupeKey(firstName, lastName1),
             createdBy: Value(createdBy),
+            registeredAtControl: Value(registeredAtControl),
             status: Value(preregistered ? 'preregistered' : 'confirmed'),
             confirmedAt: Value(preregistered ? null : now),
           ));

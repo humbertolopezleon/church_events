@@ -8,7 +8,7 @@ import 'package:mi_evento_core/mi_evento_core.dart';
 
 void main() {
   test(
-      'migración v1 → v9 conserva los datos, habilita el inicio de sesión, los topes de equipos y el control de comidas y la opción de equipos y la fase del evento y la preinscripción',
+      'migración v1 → v10 conserva los datos, habilita el inicio de sesión, los topes de equipos y el control de comidas y la opción de equipos y la fase del evento y la preinscripción',
       () async {
     final dir = await Directory.systemTemp.createTemp('mievento_mig');
     final file = File('${dir.path}/db.sqlite');
@@ -30,6 +30,8 @@ void main() {
     await db.customStatement(
         'ALTER TABLE app_meta DROP COLUMN password_reminder_hidden_at');
     await db.customStatement('ALTER TABLE attendees DROP COLUMN created_by');
+    await db.customStatement(
+        'ALTER TABLE attendees DROP COLUMN registered_at_control');
     for (final c in ['max_size_diff', 'max_sex_diff', 'max_age_diff']) {
       await db.customStatement('ALTER TABLE events DROP COLUMN $c');
     }
@@ -51,7 +53,7 @@ void main() {
     expect(people, hasLength(1));
     expect(people.single.firstName, 'Juan');
     expect(people.single.createdBy, isNull);
-    expect((await db.select(db.appMeta).getSingle()).schemaVersion, 9);
+    expect((await db.select(db.appMeta).getSingle()).schemaVersion, 10);
     expect(await db.select(db.controlSessions).get(),
         isEmpty); // la tabla nueva columna existe y se puede consultar
     final e = await db.select(db.events).getSingle();
@@ -63,10 +65,12 @@ void main() {
     // v7: lo anterior cuenta como asistencia confirmada.
     expect(people.single.status, 'confirmed');
     expect(people.single.confirmedAt, isNull);
+    // v10: nadie estaba registrado desde el control de comidas.
+    expect(people.single.registeredAtControl, isFalse);
   });
 
   test(
-      'migración v7 → v9 conserva a los usuarios y añade «contraseña temporal» en falso',
+      'migración v7 → v10 conserva a los usuarios y añade «contraseña temporal» en falso',
       () async {
     final dir = await Directory.systemTemp.createTemp('mievento_mig8');
     final file = File('${dir.path}/db.sqlite');
@@ -85,6 +89,8 @@ void main() {
         'ALTER TABLE app_users DROP COLUMN must_change_password');
     await db.customStatement(
         'ALTER TABLE app_meta DROP COLUMN password_reminder_hidden_at');
+    await db.customStatement(
+        'ALTER TABLE attendees DROP COLUMN registered_at_control');
     await db.customStatement('UPDATE app_meta SET schema_version = 7');
     await db.customStatement('PRAGMA user_version = 7');
     await db.close();
@@ -94,6 +100,6 @@ void main() {
     final u = await db.select(db.appUsers).getSingle();
     expect(u.username, 'ana');
     expect(u.mustChangePassword, isFalse);
-    expect((await db.select(db.appMeta).getSingle()).schemaVersion, 9);
+    expect((await db.select(db.appMeta).getSingle()).schemaVersion, 10);
   });
 }

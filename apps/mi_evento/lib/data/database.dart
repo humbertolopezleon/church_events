@@ -40,14 +40,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await into(appMeta).insert(AppMetaCompanion.insert(
-              key: const Value(1), deviceId: newUuidV7(), schemaVersion: 9));
+              key: const Value(1), deviceId: newUuidV7(), schemaVersion: 10));
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
@@ -88,6 +88,10 @@ class AppDatabase extends _$AppDatabase {
           if (from < 9) {
             // v9: «Recordar más tarde» del aviso de contraseña inicial.
             await m.addColumn(appMeta, appMeta.passwordReminderHiddenAt);
+          }
+          if (from < 10) {
+            // v10: asistentes registrados desde el control de comidas (con marca visible).
+            await m.addColumn(attendees, attendees.registeredAtControl);
           }
           await (update(appMeta)..where((t) => t.key.equals(1)))
               .write(AppMetaCompanion(schemaVersion: Value(to)));

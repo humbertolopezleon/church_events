@@ -29,6 +29,7 @@ void main() {
           notes: '',
           dedupeKey: name,
           status: 'confirmed',
+          registeredAtControl: false,
         ),
         church);
 
