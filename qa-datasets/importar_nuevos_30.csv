@@ -1,4 +1,5 @@
-﻿id;numero;nombre;apellido1;apellido2;sexo;edad;iglesia;provincia;municipio;telefono;necesita_hospedaje;hospedaje;equipo;pareja_numero;grupos;observaciones
+﻿sep=;
+id;numero;nombre;apellido1;apellido2;sexo;edad;iglesia;provincia;municipio;telefono;necesita_hospedaje;hospedaje;equipo;pareja_numero;grupos;observaciones;estado
 ;;Ángela;Echevarría;Acosta;Mujer;21;Iglesia Evangélica Luz del Mundo;Villa Clara;Santa Clara;5 764 2101;Sí;;;;;
 ;;Orestes;García;Peña;Hombre;16;Bautista Ebenezer;Matanzas;Cárdenas;;No;;;;;
 ;;Raúl;Pérez;Pérez;Hombre;26;Metodista de Colón;Matanzas;Colón;;No;;;;;

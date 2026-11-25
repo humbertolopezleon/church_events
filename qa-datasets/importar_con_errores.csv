@@ -1,4 +1,5 @@
-﻿id;numero;nombre;apellido1;apellido2;sexo;edad;iglesia;provincia;municipio;telefono;necesita_hospedaje;hospedaje;equipo;pareja_numero;grupos;observaciones
+﻿sep=;
+id;numero;nombre;apellido1;apellido2;sexo;edad;iglesia;provincia;municipio;telefono;necesita_hospedaje;hospedaje;equipo;pareja_numero;grupos;observaciones;estado
 ;;Lucía;Prueba;Uno;Mujer;28;Bautista Ebenezer;;;;;;;;;
 ;;Óscar;Prueba;Dos;Hombre;35;Bautista Ebenezer;;;;;;;;;
 ;;;SinNombre;;Mujer;30;Bautista Ebenezer;;;;;;;;;
