@@ -29,33 +29,100 @@ import 'widgets/plural.dart';
 String kindLabel(String kind) =>
     kind == 'shelter' ? 'Albergue' : 'Casa particular';
 
+/// Barra de ocupación de 10 dp con «N plazas libres» a la izquierda y «X de Y ocupadas» a la derecha.
 class _Occupancy extends StatelessWidget {
   const _Occupancy(this.occupied, this.capacity);
   final int occupied, capacity;
   @override
   Widget build(BuildContext context) {
     final over = occupied > capacity;
+    final free = capacity - occupied;
+    final meta = bodyStyle(14, color: Brand.gris);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       ClipRRect(
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(5),
         child: LinearProgressIndicator(
-          minHeight: 12,
+          minHeight: 10,
           value:
               capacity == 0 ? 0 : (occupied / capacity).clamp(0, 1).toDouble(),
           backgroundColor: Brand.azulSuave,
           color: over ? Brand.error : Brand.azul,
         ),
       ),
-      const SizedBox(height: 4),
-      Text(
-          over
-              ? '$occupied de $capacity ocupadas · sobrecupo de ${occupied - capacity}'
-              : '$occupied de $capacity ocupadas',
-          style: TextStyle(
-              fontSize: 14,
-              color: over ? Brand.error : Brand.gris,
-              fontWeight: over ? FontWeight.w700 : FontWeight.w400)),
+      const SizedBox(height: 6),
+      Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          spacing: 12,
+          runSpacing: 2,
+          children: [
+            Text(
+                over
+                    ? 'Sin plazas libres'
+                    : free == 0
+                        ? 'Completo'
+                        : plural(free, 'plaza libre', 'plazas libres'),
+                key: const Key('hosp-libres'),
+                style: bodyStyle(14,
+                    weight: FontWeight.w700,
+                    color: over
+                        ? Brand.error
+                        : free == 0
+                            ? Brand.gris
+                            : Brand.exito)),
+            Text(
+                over
+                    ? '$occupied de $capacity ocupadas · sobrecupo de ${occupied - capacity}'
+                    : '$occupied de $capacity ocupadas',
+                style: over
+                    ? bodyStyle(14, color: Brand.error, weight: FontWeight.w700)
+                    : meta),
+          ]),
     ]);
+  }
+}
+
+/// Franja de estado: ámbar con «N personas sin hospedaje» (abre Asistentes filtrados) o verde si todos tienen.
+class _LodgingStatusBanner extends ConsumerWidget {
+  const _LodgingStatusBanner(this.pending);
+  final int pending;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ok = pending == 0;
+    final fg = ok ? Brand.exito : Brand.avisoTexto;
+    final text = ok
+        ? 'Todos los asistentes tienen hospedaje'
+        : '${plural(pending, 'persona', 'personas')} sin hospedaje';
+    void open() {
+      ref.read(attendeesPresetLodgingProvider.notifier).state =
+          LodgingStatus.pending;
+      ref.read(currentPageProvider.notifier).state = 'asistentes';
+    }
+
+    return Material(
+      color: ok ? Brand.exitoSuave : Brand.avisoSuave,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        key: const Key('hosp-resumen'),
+        borderRadius: BorderRadius.circular(12),
+        onTap: ok ? null : open,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(children: [
+            Icon(ok ? Icons.check_circle_outline : Icons.warning_amber_rounded,
+                color: fg),
+            const SizedBox(width: 10),
+            Expanded(
+                child: Text(text,
+                    style: bodyStyle(16, color: fg, weight: FontWeight.w700))),
+            if (!ok) ...[
+              Text('Ver',
+                  style: bodyStyle(16, color: fg, weight: FontWeight.w700)),
+              Icon(Icons.chevron_right, color: fg),
+            ],
+          ]),
+        ),
+      ),
+    );
   }
 }
 
@@ -189,11 +256,10 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
               children: [
-                  Text(
-                      '${lodgings.length} ${lodgings.length == 1 ? 'hospedaje' : 'hospedajes'} · $places plazas · $pending ${pending == 1 ? 'persona' : 'personas'} sin hospedaje',
-                      key: const Key('hosp-resumen'),
-                      style: const TextStyle(color: Brand.gris)),
-                  const SizedBox(height: 12),
+                  if (lodgings.isNotEmpty || pending > 0) ...[
+                    _LodgingStatusBanner(pending),
+                    const SizedBox(height: 12),
+                  ],
                   if (lodgings.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
@@ -279,35 +345,35 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
                                       builder: (_) => LodgingDetailScreen(
                                           lodgingId: l.row.id))),
                               child: Padding(
-                                padding: const EdgeInsets.all(16),
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 8, 4, 14),
                                 child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
                                       Row(children: [
                                         Expanded(
-                                            flex: 3,
                                             child: Text(l.row.name,
-                                                style: const TextStyle(
-                                                    fontSize: 19,
-                                                    fontWeight:
-                                                        FontWeight.w800))),
-                                        const SizedBox(width: 8),
-                                        Flexible(
-                                            flex: 2,
-                                            child: Text(kindLabel(l.row.kind),
-                                                textAlign: TextAlign.end,
-                                                style: const TextStyle(
-                                                    color: Brand.gris))),
+                                                style: bodyStyle(18,
+                                                    weight: FontWeight.w800))),
                                         _LodgingMenu(l),
                                       ]),
-                                      const SizedBox(height: 4),
                                       Text(
-                                          '${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.row.accepts))}${l.row.distanceNote.isEmpty ? '' : ' · ${l.row.distanceNote}'}',
-                                          style: const TextStyle(
-                                              color: Brand.gris)),
+                                          '${kindLabel(l.row.kind)} · ${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.row.accepts))}',
+                                          style:
+                                              bodyStyle(14, color: Brand.gris)),
+                                      if (l.row.distanceNote.isNotEmpty)
+                                        Text(l.row.distanceNote,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: bodyStyle(14,
+                                                color: Brand.gris)),
                                       const SizedBox(height: 10),
-                                      _Occupancy(l.occupied, l.row.capacity),
+                                      Padding(
+                                          padding:
+                                              const EdgeInsets.only(right: 12),
+                                          child: _Occupancy(
+                                              l.occupied, l.row.capacity)),
                                     ]),
                               ),
                             ),
@@ -545,7 +611,7 @@ class _LodgingMenu extends ConsumerWidget {
     final isAdmin = ref.watch(currentUserProvider)?.isAdmin ?? false;
     return PopupMenuButton<String>(
       key: Key('hosp-menu-${lv.row.name}'),
-      tooltip: 'Acciones',
+      tooltip: 'Opciones de ${lv.row.name}',
       onSelected: (v) async {
         switch (v) {
           case 'ver':

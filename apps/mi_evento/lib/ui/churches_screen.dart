@@ -256,16 +256,39 @@ class _ChurchesScreenState extends ConsumerState<ChurchesScreen> {
                       itemCount: shown.length,
                       itemBuilder: (_, i) {
                         final c = shown[i];
+                        final n = counts[c.id] ?? 0;
                         return Card(
-                          child: ListTile(
+                          child: InkWell(
                             key: Key('ig-${c.name}'),
+                            borderRadius: BorderRadius.circular(16),
                             onTap: () => _edit(c),
-                            title: HighlightText(c.name, q,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700)),
-                            subtitle: Text(
-                                '${c.municipality}, ${c.province}${c.community.isEmpty ? '' : ' · ${c.community}'} · ${counts[c.id] ?? 0} asistentes'),
-                            trailing: _menu(c),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 10, 4, 10),
+                              child: Row(children: [
+                                Expanded(
+                                  child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        HighlightText(c.name, q,
+                                            style: bodyStyle(17,
+                                                weight: FontWeight.w700)),
+                                        const SizedBox(height: 2),
+                                        Text('${c.municipality}, ${c.province}',
+                                            style: bodyStyle(14,
+                                                color: Brand.gris)),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                            plural(
+                                                n, 'asistente', 'asistentes'),
+                                            key: Key('ig-asistentes-${c.name}'),
+                                            style: bodyStyle(14,
+                                                color: Brand.gris)),
+                                      ]),
+                                ),
+                                _menu(c),
+                              ]),
+                            ),
                           ),
                         );
                       },

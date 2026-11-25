@@ -156,4 +156,42 @@ void main() {
       await shot(t, 'asistentes-escritorio');
     });
   });
+
+  group('Fase 3 · Iglesias y Hospedajes', () {
+    cap('móvil Iglesias', (t) async {
+      await _abrir(t, _movil);
+      await _ir(t, 'Iglesias');
+      await shot(t, 'iglesias-movil-datos');
+      await openFilters(t);
+      await shot(t, 'iglesias-movil-filtros');
+    });
+    cap('móvil Hospedajes con datos y letra al 130 %', (t) async {
+      await _abrir(t, _movil);
+      await _ir(t, 'Hospedajes');
+      await shot(t, 'hospedajes-movil-datos');
+    });
+    cap('móvil Hospedajes al 130 %', (t) async {
+      await _abrir(t, _movil, escala: 1.3);
+      await _ir(t, 'Hospedajes');
+      await shot(t, 'hospedajes-movil-letra130');
+    });
+    cap('móvil Hospedajes vacía', (t) async {
+      await _abrir(t, _movil, datos: false);
+      await _ir(t, 'Hospedajes');
+      await shot(t, 'hospedajes-movil-vacia');
+    });
+    cap('móvil Hospedajes aviso → Asistentes filtrados', (t) async {
+      await _abrir(t, _movil);
+      await _ir(t, 'Hospedajes');
+      await tapKey(t, 'hosp-resumen');
+      await shot(t, 'hospedajes-aviso-asistentes-filtrados');
+    });
+    cap('escritorio Iglesias y Hospedajes', (t) async {
+      await _abrir(t, _pc);
+      await _ir(t, 'Iglesias');
+      await shot(t, 'iglesias-escritorio');
+      await _ir(t, 'Hospedajes');
+      await shot(t, 'hospedajes-escritorio');
+    });
+  });
 }

@@ -38,6 +38,17 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
   TeamStatus? teamStatus;
   bool? preregistered;
 
+  @override
+  void initState() {
+    super.initState();
+    final preset = ref.read(attendeesPresetLodgingProvider);
+    if (preset != null) {
+      lodgingStatus = preset;
+      Future.microtask(
+          () => ref.read(attendeesPresetLodgingProvider.notifier).state = null);
+    }
+  }
+
   AttendeeFilter get _filter => AttendeeFilter(
       sex: sex,
       churchId: churchId,
