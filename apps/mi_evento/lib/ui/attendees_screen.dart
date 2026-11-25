@@ -17,6 +17,7 @@ import 'attendee_form.dart';
 import 'widgets/data_table_view.dart';
 import 'widgets/highlight_text.dart';
 import 'widgets/list_toolbar.dart';
+import 'csv_import.dart';
 
 /// Lista de asistentes: búsqueda (nombre en cualquier orden, iglesia o número), filtros y exportación a CSV.
 class AttendeesScreen extends ConsumerStatefulWidget {
@@ -151,6 +152,12 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
                     ? '${list.length} de ${all.length}'
                     : '${all.length} inscritos',
                 onExport: list.isEmpty ? null : () => _export(eventId, list),
+                importKey: const Key('asis-importar'),
+                onImport: () async {
+                  final f = await ref.read(filePickProvider).pick();
+                  if (f == null || !context.mounted) return;
+                  await importAttendeesCsv(context, ref, f.bytes);
+                },
                 filters: [
                   FilterDropdown<bool>(
                       key: const Key('filtro-asistencia'),

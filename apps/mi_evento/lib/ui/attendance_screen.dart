@@ -10,6 +10,8 @@ import '../theme/app_theme.dart';
 import 'widgets/data_table_view.dart';
 import 'widgets/highlight_text.dart';
 import 'widgets/list_toolbar.dart';
+import '../data/attendance_exchange.dart';
+import 'table_import_flow.dart';
 
 /// Asistencia el día del evento: confirmar a los preinscritos (uno, un subconjunto o todos los que
 /// se ven) y desconfirmar a quien se confirmó por error. En escritorio es una tabla con filtros.
@@ -277,6 +279,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             searchKey: const Key('ca-buscar'),
             countKey: const Key('ca-conteo'),
             exportKey: const Key('ca-exportar'),
+            importKey: const Key('ca-importar'),
+            onImport: () => runTableImport(context, ref,
+                AttendanceExchange(ref.read(databaseProvider), eventId)),
             onExport: shown.isEmpty ? null : () => _export(eventId, shown),
             onChanged: () => setState(() {}),
             activeFilters: [

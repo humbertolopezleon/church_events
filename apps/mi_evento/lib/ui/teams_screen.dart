@@ -17,6 +17,8 @@ import 'widgets/list_toolbar.dart';
 import 'people_pickers.dart';
 import 'team_generate_screen.dart';
 import 'widgets/input_formats.dart';
+import '../data/team_exchange.dart';
+import 'table_import_flow.dart';
 
 Color teamColor(String? hex) {
   if (hex == null || hex.length != 7) return Brand.gris;
@@ -68,10 +70,12 @@ final teamQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 /// Búsqueda y exportación a CSV de los equipos (una fila por persona; «Sin equipo» incluido).
 class _TeamsToolbar extends ConsumerStatefulWidget {
   const _TeamsToolbar(
-      {required this.eventName,
+      {required this.eventId,
+      required this.eventName,
       required this.teams,
       required this.people,
       required this.total});
+  final String eventId;
   final String eventName;
   final List<TeamRow> teams; // los que deja el filtro
   final List<AttendeeView> people;
@@ -130,6 +134,9 @@ class _TeamsToolbarState extends ConsumerState<_TeamsToolbar> {
             ? '${widget.total} equipos'
             : '${widget.teams.length} de ${widget.total}',
         onExport: widget.teams.isEmpty ? null : _export,
+        importKey: const Key('eq-importar'),
+        onImport: () => runTableImport(context, ref,
+            TeamExchange(ref.read(databaseProvider), widget.eventId)),
       );
 }
 
@@ -236,6 +243,16 @@ class TeamsScreen extends ConsumerWidget {
                           onPressed: () => _createDialog(context, ref, eventId),
                           icon: const Icon(Icons.add),
                           label: const Text('Crear equipos')),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                          key: const Key('eq-importar-vacio'),
+                          onPressed: () => runTableImport(
+                              context,
+                              ref,
+                              TeamExchange(
+                                  ref.read(databaseProvider), eventId)),
+                          icon: const Icon(Icons.upload_file_outlined),
+                          label: const Text('Importar equipos (CSV)')),
                     ]),
                   ),
                 )
@@ -276,6 +293,7 @@ class TeamsScreen extends ConsumerWidget {
                   ]),
                   const SizedBox(height: 12),
                   _TeamsToolbar(
+                      eventId: eventId,
                       eventName: event?.name ?? '',
                       teams: shownTeams,
                       people: views,

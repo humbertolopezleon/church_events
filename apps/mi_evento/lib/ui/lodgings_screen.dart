@@ -19,6 +19,8 @@ import 'lodging_suggest_screen.dart';
 import 'widgets/data_table_view.dart';
 import 'widgets/list_toolbar.dart';
 import 'widgets/input_formats.dart';
+import '../data/lodging_exchange.dart';
+import 'table_import_flow.dart';
 
 String kindLabel(String kind) =>
     kind == 'shelter' ? 'Albergue' : 'Casa particular';
@@ -196,6 +198,12 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
                         onExport: shown.isEmpty
                             ? null
                             : () => _export(event?.name ?? '', shown),
+                        importKey: const Key('hosp-importar'),
+                        onImport: () => runTableImport(
+                            context,
+                            ref,
+                            LodgingExchange(
+                                ref.read(databaseProvider), eventId)),
                         filters: [
                           FilterDropdown<LodgingAccepts>(
                               key: const Key('hosp-filtro-acepta'),
@@ -229,6 +237,21 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
                             label: const Text('Sugerir hospedaje')),
                       ),
                     ),
+                  if (lodgings.isEmpty)
+                    Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: OutlinedButton.icon(
+                                key: const Key('hosp-importar-vacio'),
+                                onPressed: () => runTableImport(
+                                    context,
+                                    ref,
+                                    LodgingExchange(
+                                        ref.read(databaseProvider), eventId)),
+                                icon: const Icon(Icons.upload_file_outlined),
+                                label:
+                                    const Text('Importar hospedajes (CSV)')))),
                   if (lodgings.isEmpty)
                     const Card(
                         child: Padding(

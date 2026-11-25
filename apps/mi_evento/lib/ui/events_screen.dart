@@ -15,6 +15,8 @@ import 'event_copy_dialogs.dart';
 import 'import_flow.dart';
 import 'widgets/data_table_view.dart';
 import 'widgets/list_toolbar.dart';
+import '../data/event_exchange.dart';
+import 'table_import_flow.dart';
 
 /// Texto de búsqueda de «Mis eventos».
 final eventQueryProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -58,6 +60,9 @@ class _EventsToolbarState extends ConsumerState<_EventsToolbar> {
           count: widget.shown.length == widget.total
               ? '${widget.total} eventos'
               : '${widget.shown.length} de ${widget.total}',
+          importKey: const Key('ev-importar'),
+          onImport: () => runTableImport(
+              context, ref, EventExchange(ref.read(databaseProvider))),
           onExport: widget.shown.isEmpty
               ? null
               : () => saveCsv(context, ref, name: 'eventos.csv', rows: [
@@ -159,6 +164,14 @@ class EventsScreen extends ConsumerWidget {
                       'Todavía no hay eventos.\nToca «Crear evento» para empezar.',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 18, color: Brand.gris)),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    key: const Key('ev-importar-vacio'),
+                    onPressed: () => runTableImport(context, ref,
+                        EventExchange(ref.read(databaseProvider))),
+                    icon: const Icon(Icons.upload_file_outlined),
+                    label: const Text('Importar eventos (CSV)'),
+                  ),
                   if (admin) ...[
                     const SizedBox(height: 16),
                     const Text('¿Ya tienes una copia de otro dispositivo?',

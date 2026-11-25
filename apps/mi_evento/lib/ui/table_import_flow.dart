@@ -91,7 +91,7 @@ Future<void> _message(
       builder: (ctx) => AlertDialog(
         key: key,
         title: Text(title),
-        content: SingleChildScrollView(child: Text(body)),
+        content: SingleChildScrollView(child: SelectableText(body)),
         actions: [
           FilledButton(
               onPressed: () => Navigator.pop(ctx), child: const Text('Aceptar'))

@@ -14,6 +14,7 @@ import 'brand_logo.dart';
 import 'churches_screen.dart';
 import 'default_password_banner.dart';
 import 'event_setup.dart';
+import 'forced_password_screen.dart';
 import 'events_screen.dart';
 import 'lodgings_screen.dart';
 import 'meals_screen.dart';
@@ -86,6 +87,7 @@ class _AppRootState extends ConsumerState<AppRoot> {
     final user = ref.watch(currentUserProvider);
     final eventId = ref.watch(currentEventIdProvider);
     if (user != null) {
+      if (user.mustChangePassword) return const ForcedPasswordScreen();
       return eventId == null ? const EventsScreen() : const AppShell();
     }
     if (hasUsers == null) {

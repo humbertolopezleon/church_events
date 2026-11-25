@@ -168,6 +168,9 @@ class AppUsers extends Table with BaseColumns {
   IntColumn get failedAttempts => integer().withDefault(const Constant(0))();
   DateTimeColumn get lockedUntil => dateTime().nullable()();
   DateTimeColumn get lastLoginAt => dateTime().nullable()();
+  // Contraseña temporal (p. ej. usuario importado): debe cambiarla al entrar.
+  BoolColumn get mustChangePassword =>
+      boolean().withDefault(const Constant(false))();
 }
 
 /// Metadatos de la instalación (una sola fila).
