@@ -5,13 +5,18 @@ import 'widgets/labeled_field.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
 import '../data/database.dart';
+import '../data/meal_exchange.dart';
 import '../data/meal_repo.dart';
+import '../export/csv_export.dart';
 import '../data/repository.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'auth_screens.dart' show ErrorBox;
 import 'meal_summary_screen.dart';
+import 'csv_spec_ui.dart';
 import 'quick_register_dialog.dart';
+import 'table_import_flow.dart';
+import 'widgets/app_header.dart';
 import 'shortcuts.dart';
 
 /// Control de comidas y otros registros por persona. Pensado para usarse de pie, con prisa:
@@ -247,7 +252,78 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
               },
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Control de comidas')),
+        appBar: AppHeader(
+          title: 'Control de comidas',
+          importKey: const Key('cm-importar'),
+          exportKey: const Key('cm-exportar'),
+          importLabel: 'Importar quién pasó',
+          exportLabel: 'Exportar quién pasó',
+          exportEnabled: sessions.isNotEmpty,
+          onImport: () => runTableImport(context, ref,
+              MealRecordsExchange(ref.read(databaseProvider), eventId)),
+          onExport: () async {
+            final rows =
+                await MealRecordsExchange(ref.read(databaseProvider), eventId)
+                    .export();
+            if (!context.mounted) return;
+            await saveCsv(context, ref,
+                name: csvFileName('quien-paso',
+                    ref.read(eventProvider(eventId)).valueOrNull?.name ?? ''),
+                rows: rows);
+          },
+          extraItems: [
+            HeaderMenuItem(
+                key: const Key('cm-ses-importar'),
+                label: 'Importar sesiones de comidas',
+                icon: Icons.upload_file_outlined,
+                onTap: () => runTableImport(context, ref,
+                    MealSessionsExchange(ref.read(databaseProvider), eventId))),
+            HeaderMenuItem(
+                key: const Key('cm-ses-exportar'),
+                label: 'Exportar sesiones de comidas',
+                icon: Icons.table_view_outlined,
+                onTap: () async {
+                  final rows = await MealSessionsExchange(
+                          ref.read(databaseProvider), eventId)
+                      .export();
+                  if (!context.mounted) return;
+                  await saveCsv(context, ref,
+                      name: csvFileName(
+                          'sesiones-comidas',
+                          ref.read(eventProvider(eventId)).valueOrNull?.name ??
+                              ''),
+                      rows: rows);
+                }),
+            HeaderMenuItem(
+                key: const Key('cm-plantilla-sesiones'),
+                label: 'Plantilla vacía: sesiones',
+                icon: Icons.download_outlined,
+                onTap: () => saveCsvTemplate(
+                    context, ref, MealSessionsExchange.csvSpec)),
+            HeaderMenuItem(
+                key: const Key('cm-plantilla-registros'),
+                label: 'Plantilla vacía: quién pasó',
+                icon: Icons.download_outlined,
+                onTap: () =>
+                    saveCsvTemplate(context, ref, MealRecordsExchange.csvSpec)),
+            HeaderMenuItem(
+                key: const Key('cm-columnas'),
+                label: 'Ver columnas de los CSV',
+                icon: Icons.help_outline,
+                onTap: () async {
+                  await showCsvSpecDialog(
+                      context, ref, MealSessionsExchange.csvSpec,
+                      dialogKey: const Key('cm-columnas-sesiones'),
+                      templateKey: const Key('cm-columnas-sesiones-plantilla'));
+                  if (!context.mounted) return;
+                  await showCsvSpecDialog(
+                      context, ref, MealRecordsExchange.csvSpec,
+                      dialogKey: const Key('cm-columnas-registros'),
+                      templateKey:
+                          const Key('cm-columnas-registros-plantilla'));
+                }),
+          ],
+        ),
         body: s == null ? _empty() : _body(s, sessions, views),
       ),
     );
