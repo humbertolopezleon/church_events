@@ -35,29 +35,17 @@ void main() {
     expect(find.byKey(const Key('lf-anfitrion')), findsOneWidget);
     expect(
         find.textContaining('Cómo llegar', findRichText: true), findsOneWidget);
-    // Capacidad: «+» arranca en 1, «−» no baja de 1.
+    // Capacidad: el sistema propone 1; «+» sube, «−» no baja de 1.
+    String cap() => t
+        .widget<TextField>(find.byKey(const Key('lf-capacidad')))
+        .controller!
+        .text;
+    expect(cap(), '1');
     await tapKey(t, 'lf-mas');
-    expect(
-        t
-            .widget<TextField>(find.byKey(const Key('lf-capacidad')))
-            .controller!
-            .text,
-        '1');
-    await tapKey(t, 'lf-mas');
-    expect(
-        t
-            .widget<TextField>(find.byKey(const Key('lf-capacidad')))
-            .controller!
-            .text,
-        '2');
+    expect(cap(), '2');
     await tapKey(t, 'lf-menos');
     await tapKey(t, 'lf-menos');
-    expect(
-        t
-            .widget<TextField>(find.byKey(const Key('lf-capacidad')))
-            .controller!
-            .text,
-        '1');
+    expect(cap(), '1');
     // «Acepta» en cuadrícula, con áreas de 56 dp.
     expect(t.getSize(find.byKey(const Key('lf-acepta-women'))).height, 56);
     await tapKey(t, 'lf-acepta-women');

@@ -406,4 +406,38 @@ void main() {
       await shot(t, 'equipos-importar-decision-letra130');
     });
   });
+
+  group('Imprescindibles · fechas del evento', () {
+    cap('móvil: diálogo de fechas con Hoy', (t) async {
+      t.platformDispatcher.textScaleFactorTestValue = 1.0;
+      addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+      await pumpApp(t, _movil, defaultAdmin: true);
+      await login(t, 'admin', 'admin');
+      await t.tap(find.text('Crear evento'));
+      await settle(t);
+      await tapKey(t, 'ev-fechas');
+      await shot(t, 'fechas-movil-inicio');
+      await t.tap(find.byKey(const Key('fechas-fin')));
+      await settle(t);
+      await shot(t, 'fechas-movil-fin');
+    });
+    cap('móvil al 130 %: diálogo de fechas', (t) async {
+      t.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+      await pumpApp(t, _movil, defaultAdmin: true);
+      await login(t, 'admin', 'admin');
+      await t.tap(find.text('Crear evento'));
+      await settle(t);
+      await tapKey(t, 'ev-fechas');
+      await shot(t, 'fechas-movil-letra130');
+    });
+    cap('escritorio: diálogo de fechas', (t) async {
+      await pumpApp(t, _pc, defaultAdmin: true);
+      await login(t, 'admin', 'admin');
+      await t.tap(find.text('Crear evento'));
+      await settle(t);
+      await tapKey(t, 'ev-fechas');
+      await shot(t, 'fechas-escritorio');
+    });
+  });
 }

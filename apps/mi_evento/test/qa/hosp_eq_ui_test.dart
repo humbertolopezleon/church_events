@@ -71,7 +71,7 @@ void main() {
     expect(
         (await qaRows(t, a.q.people)).where((p) => p.teamId != null), isEmpty);
     // Se vuelve a calcular y se acepta.
-    await t.pageBack();
+    await pageBack(t);
     await settle(t);
     await tapKey(t, 'eq-generar');
     await tapKey(t, 'gen-calcular');

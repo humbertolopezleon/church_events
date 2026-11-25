@@ -109,7 +109,9 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
                 _kv('Marcado por',
                     rec.operatorName.isEmpty ? '—' : rec.operatorName),
                 _kv('Iglesia', v.churchName ?? '—'),
-                _kv('Equipo', team?.name ?? 'Sin equipo'),
+                if (ref.read(eventProvider(eventId)).valueOrNull?.offersTeams ??
+                    true)
+                  _kv('Equipo', team?.name ?? 'Sin equipo'),
               ]),
             ),
           ]),

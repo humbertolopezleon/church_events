@@ -167,6 +167,8 @@ void main() {
     await _goTo(t, 'Hospedajes');
     expect(find.textContaining('Todavía no hay hospedajes'), findsOneWidget);
     await tapKey(t, 'hosp-nuevo');
+    await enter(
+        t, 'lf-capacidad', ''); // el sistema propone 1; vaciada, se exige
     await tapKey(t, 'lf-guardar');
     expect(find.textContaining('Falta la capacidad'), findsOneWidget);
     await enter(t, 'lf-capacidad', '3');
@@ -453,7 +455,7 @@ void main() {
     await tapKey(t, 'hosp-Albergue');
     expect(find.byKey(const Key('hd-eliminar')), findsNothing);
     expect(find.byKey(const Key('hd-asignar')), findsOneWidget);
-    await t.pageBack();
+    await pageBack(t);
     await settle(t);
     await _goTo(t, 'Equipos');
     await tapKey(t, 'equipo-Rojo-menu');

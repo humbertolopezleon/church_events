@@ -416,7 +416,7 @@ class LodgingFormScreen extends ConsumerStatefulWidget {
 class _LodgingFormScreenState extends ConsumerState<LodgingFormScreen> {
   late final name = TextEditingController(text: widget.lodging?.name);
   late final capacity =
-      TextEditingController(text: widget.lodging?.capacity.toString());
+      TextEditingController(text: '${widget.lodging?.capacity ?? 1}');
   late final host = TextEditingController(text: widget.lodging?.hostName);
   late final phone = TextEditingController(text: widget.lodging?.contactPhone);
   late final directions =

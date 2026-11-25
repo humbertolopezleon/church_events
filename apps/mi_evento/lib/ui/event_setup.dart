@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'event_dates.dart';
 import 'widgets/labeled_field.dart';
 
 import '../auth/auth_service.dart';
@@ -69,14 +70,8 @@ class _EventConfigScreenState extends ConsumerState<EventConfigScreen> {
       : '${_d(start)}  →  ${_d(end)}';
 
   Future<void> _pickRange() async {
-    final r = await showDateRangePicker(
-      context: context,
-      initialDateRange: DateTimeRange(start: start, end: end),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      helpText: 'Fechas del evento',
-      saveText: 'Aceptar',
-    );
+    final r = await pickEventDates(context,
+        start: start, end: end, earliest: earliestEventDate(current: start));
     if (r != null) {
       setState(() {
         start = r.start;

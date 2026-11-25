@@ -103,13 +103,20 @@ Principio: primero lo que **sin eso el evento no funciona**; lo demás, después
 
 ## 9. Teclado y notificaciones (escritorio)
 
-- **Esc** cierra diálogos y cancela; en un formulario con cambios pregunta antes de descartar. Los diálogos de Material ya lo hacen; hay que añadirlo a las pantallas completas.
+- **Esc** cierra diálogos y cancela; en un formulario con cambios pregunta antes de descartar (pendiente). Los diálogos de Material ya lo hacen; las pantallas completas lo hacen desde el bloque A con `lib/ui/escape_key.dart`. *Detalle técnico importante:* cada ruta de página deja `DismissIntent` **deshabilitado** y eso tapa a cualquier manejador de más arriba, por eso se usa un intent propio (`GoBackIntent`) que solo se habilita si la ruta superior es una pantalla (`TopRouteObserver`); con un diálogo arriba no interviene.
 - **«Back»** se interpreta como **Retroceso (fuera de campos de texto) y Alt+←** = volver atrás. *Recomendación aplicada.*
-- Atajos propuestos: F1 / Ctrl+/ ayuda de atajos; Ctrl+1…6 secciones; Ctrl+N nuevo; Ctrl+F o «/» buscar; Ctrl+Shift+F filtros; Ctrl+S guardar; Ctrl+Enter guardar y cerrar; Ctrl+I / Ctrl+E importar/exportar; ↑↓ Enter en listas; en comidas Enter marca y Ctrl+Z deshace. **⏳ El usuario aún no aprobó esta tabla**; no implementar hasta que lo haga. Debe incluir una ayuda dentro de la app para aprenderlos.
+- Atajos propuestos: F1 / Ctrl+/ ayuda de atajos; Ctrl+1…6 secciones; Ctrl+N nuevo; Ctrl+F o «/» buscar; Ctrl+Shift+F filtros; Ctrl+S guardar; Ctrl+Enter guardar y cerrar; Ctrl+I / Ctrl+E importar/exportar; ↑↓ Enter en listas; en comidas Enter marca y Ctrl+Z deshace. **✅ Tabla aprobada por el usuario (2026-11-25).** Se implementa después de los imprescindibles y debe incluir una ayuda dentro de la app para aprenderlos.
 - **Notificaciones:** los avisos de la parte inferior pasan a un **centro de notificaciones solo en escritorio** (campana con contador, «marcar como leída»). El móvil mantiene el aviso temporal. *Recomendación aplicada.*
 
 ## 10. Pendiente de decidir
 
 - ⏳ **Gestión de equipos:** crear, editar, eliminar y ver ya existen. El usuario pidió «el sistema debe permitir la gestión de equipos»; falta saber **qué echa en falta** (¿acciones en la tabla de escritorio?, ¿pantalla de detalle?, ¿no encontrarlo?).
-- ⏳ **Aprobación de la tabla de atajos** (§9).
 - ⏳ Decisión heredada de `PLAN.md`: ¿el equipo automático debe reubicar solo o proponer un ajuste cuando no cumple los topes? (hoy solo avisa).
+
+## 11. Bloque A de imprescindibles (hecho en la rama `feat/imprescindibles-a`)
+
+- **Ficha del asistente:** sin filtro «Con plazas libres»; la lista **siempre** excluye los hospedajes llenos (se conserva el elegido aunque esté lleno). Queda el filtro de cantidad de plazas («2 o más» para un matrimonio).
+- **Capacidad inicial = 1** en «Nuevo hospedaje».
+- **Fechas del evento** (`lib/ui/event_dates.dart`): un diálogo propio con pestañas «Inicio» y «Fin» sobre un calendario, botón **Hoy**, y sin días anteriores a hoy. *Por qué propio:* `showDateRangePicker` de Flutter no tiene botón «Hoy» y no se puede añadir sin trucos. Al **editar** un evento que ya empezó se respeta su fecha de inicio (`earliestEventDate`); al **copiar** un evento ya pasado se propone hoy conservando su duración. La validación «no antes de hoy» está **solo en la interfaz** (el repositorio acepta cualquier fecha: las importaciones y pruebas usan fechas arbitrarias).
+- **Equipos oculto** si el evento no los usa (menú lateral e inferior, columna de la tabla de Asistentes y ficha de la sesión de comidas). Los filtros por equipo ya dependían de que existan equipos. *No* se ocultó Hospedajes cuando el evento no los ofrece (no se pidió).
+- **Esc** en escritorio vuelve atrás en pantallas completas (ver §9).

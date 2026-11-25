@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'event_dates.dart';
 import 'widgets/labeled_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -394,14 +395,7 @@ class _NewEventDialogState extends ConsumerState<_NewEventDialog> {
   /// Un solo calendario: se toca el primer día y luego el último. Para un evento de un solo
   /// día basta tocar el mismo día dos veces.
   Future<void> _pickRange() async {
-    final r = await showDateRangePicker(
-      context: context,
-      initialDateRange: DateTimeRange(start: start, end: end),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      helpText: 'Fechas del evento',
-      saveText: 'Aceptar',
-    );
+    final r = await pickEventDates(context, start: start, end: end);
     if (r != null) {
       setState(() {
         start = r.start;
@@ -417,6 +411,10 @@ class _NewEventDialogState extends ConsumerState<_NewEventDialog> {
   Future<void> _save() async {
     if (name.text.trim().isEmpty) {
       setState(() => error = 'Falta el nombre. Escríbelo para poder guardar.');
+      return;
+    }
+    if (dateOnly(start).isBefore(dateOnly(DateTime.now()))) {
+      setState(() => error = 'La fecha de inicio no puede ser anterior a hoy.');
       return;
     }
     if (end.isBefore(start)) {

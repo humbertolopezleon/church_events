@@ -72,7 +72,7 @@ void main() {
     await t.tap(find.byKey(const Key('asistente-1')));
     await settle(t);
     expect(find.text('Ficha del asistente'), findsOneWidget);
-    await t.pageBack();
+    await pageBack(t);
     await settle(t);
 
     await t.tap(find.text('Hospedajes').first);
