@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:mi_evento_core/mi_evento_core.dart';
 import 'package:test/test.dart';
 
@@ -189,6 +191,52 @@ void main() {
         ['a', 'b'],
         ['1', '2']
       ]);
+    });
+  });
+
+  group('decodeCsvBytes (Excel en Windows)', () {
+    test('UTF-8 con BOM y sin BOM', () {
+      final utf = utf8.encode('Ñandú;Álvarez');
+      expect(decodeCsvBytes(utf), 'Ñandú;Álvarez');
+      expect(parseCsv(decodeCsvBytes([0xEF, 0xBB, 0xBF, ...utf])).first,
+          ['Ñandú', 'Álvarez']);
+    });
+
+    test('ANSI (Windows-1252): tildes, eñes y diéresis', () {
+      // «Ñandú;Álvarez;Güell;¿ok?» en Windows-1252.
+      final ansi = [
+        0xD1, 0x61, 0x6E, 0x64, 0xFA, 0x3B, //
+        0xC1, 0x6C, 0x76, 0x61, 0x72, 0x65, 0x7A, 0x3B,
+        0x47, 0xFC, 0x65, 0x6C, 0x6C, 0x3B, 0xBF, 0x6F, 0x6B, 0x3F
+      ];
+      expect(decodeCsvBytes(ansi), 'Ñandú;Álvarez;Güell;¿ok?');
+    });
+
+    test('ANSI: comillas tipográficas, rayas, «€» y «…» (0x80–0x9F)', () {
+      // “Iglesia” – 5€ … ‘a’ — ™
+      final ansi = [
+        0x93, ...'Iglesia'.codeUnits, 0x94, 0x20, 0x96, 0x20, 0x35, 0x80, 0x20,
+        0x85, 0x20, 0x91, 0x61, 0x92, 0x20, 0x97, 0x20, 0x99
+      ];
+      expect(decodeCsvBytes(ansi), '“Iglesia” – 5€ … ‘a’ — ™');
+    });
+
+    test('UTF-16 («Texto Unicode» de Excel, tabulador)', () {
+      final units = 'nombre\tedad\r\nÑandú\t30\r\n'.codeUnits;
+      final le = [
+        0xFF, 0xFE,
+        for (final u in units) ...[u & 0xFF, u >> 8]
+      ];
+      final be = [
+        0xFE, 0xFF,
+        for (final u in units) ...[u >> 8, u & 0xFF]
+      ];
+      for (final b in [le, be]) {
+        expect(parseCsv(decodeCsvBytes(b)), [
+          ['nombre', 'edad'],
+          ['Ñandú', '30']
+        ]);
+      }
     });
   });
 }

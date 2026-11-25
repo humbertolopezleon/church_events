@@ -31,7 +31,7 @@ const attendeeCsvHeaders = <String>[
 const csvListSeparator = '|';
 
 /// Lee los bytes de un CSV como UTF-16 (Excel «Texto Unicode», con marca FF FE / FE FF), UTF-8 y,
-/// si no lo es (Excel «CSV» antiguo guarda en ANSI), como Windows-1252 (aprox. latin1).
+/// si no lo es (Excel «CSV» antiguo guarda en ANSI), como Windows-1252 (ver [decodeWindows1252]).
 String decodeCsvBytes(List<int> bytes) {
   if (bytes.length >= 2 &&
       ((bytes[0] == 0xFF && bytes[1] == 0xFE) ||
@@ -46,9 +46,25 @@ String decodeCsvBytes(List<int> bytes) {
   try {
     return utf8.decode(bytes);
   } on FormatException {
-    return latin1.decode(bytes);
+    return decodeWindows1252(bytes);
   }
 }
+
+/// Caracteres de Windows-1252 en 0x80–0x9F (latin1 los toma por controles). Los huecos sin
+/// asignar (81, 8D, 8F, 90, 9D) quedan como el carácter de control del mismo código.
+const _cp1252High = <int, int>{
+  0x80: 0x20AC, 0x82: 0x201A, 0x83: 0x0192, 0x84: 0x201E, 0x85: 0x2026,
+  0x86: 0x2020, 0x87: 0x2021, 0x88: 0x02C6, 0x89: 0x2030, 0x8A: 0x0160,
+  0x8B: 0x2039, 0x8C: 0x0152, 0x8E: 0x017D, 0x91: 0x2018, 0x92: 0x2019,
+  0x93: 0x201C, 0x94: 0x201D, 0x95: 0x2022, 0x96: 0x2013, 0x97: 0x2014,
+  0x98: 0x02DC, 0x99: 0x2122, 0x9A: 0x0161, 0x9B: 0x203A, 0x9C: 0x0153,
+  0x9E: 0x017E, 0x9F: 0x0178,
+};
+
+/// Windows-1252 (el «ANSI» de Excel en español): como latin1, pero con comillas tipográficas,
+/// rayas, «€», «…», etc. en 0x80–0x9F.
+String decodeWindows1252(List<int> bytes) =>
+    String.fromCharCodes([for (final b in bytes) _cp1252High[b] ?? b]);
 
 /// Neutraliza una celda que Excel tomaría por fórmula (empieza con `=`, `+`, `-` o `@`, o con
 /// tabulador): le antepone un apóstrofe. Los números sueltos («-5», «+53») no se tocan.
