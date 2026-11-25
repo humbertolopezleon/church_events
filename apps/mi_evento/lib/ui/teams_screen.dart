@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'widgets/labeled_field.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
 import '../auth/auth_service.dart';
@@ -366,15 +367,16 @@ Future<void> showCreateTeamsDialog(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                      key: const Key('eq-cantidad'),
-                      controller: c,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: digitsOnly(),
-                      decoration: const InputDecoration(
-                          labelText: 'Cuántos equipos',
-                          helperText:
-                              'Se crean con nombre y color; luego puedes cambiarlos')),
+                  LabeledField(
+                      label: 'Cuántos equipos',
+                      child: TextField(
+                          key: const Key('eq-cantidad'),
+                          controller: c,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: digitsOnly(),
+                          decoration: const InputDecoration(
+                              helperText:
+                                  'Se crean con nombre y color; luego puedes cambiarlos'))),
                   if (askCriteria) ...[
                     const SizedBox(height: 16),
                     const Text('Criterios de balance',
@@ -385,33 +387,34 @@ Future<void> showCreateTeamsDialog(
                         'Esta es la propuesta del sistema para que los equipos queden parejos. Confírmala tal cual o cámbiala. Si se superan, solo se avisa; nunca se bloquea.',
                         style: TextStyle(color: Brand.gris)),
                     const SizedBox(height: 10),
-                    TextField(
-                        key: const Key('eq-tope-tamano'),
-                        controller: size,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: digitsOnly(),
-                        decoration: const InputDecoration(
-                            labelText:
-                                'Tamaño: diferencia máxima de personas')),
+                    LabeledField(
+                        label: 'Tamaño: diferencia máxima de personas',
+                        child: TextField(
+                            key: const Key('eq-tope-tamano'),
+                            controller: size,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: digitsOnly(),
+                            decoration: const InputDecoration())),
                     const SizedBox(height: 10),
-                    TextField(
-                        key: const Key('eq-tope-sexo'),
-                        controller: sex,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: digitsOnly(),
-                        decoration: const InputDecoration(
-                            labelText:
-                                'Sexo: diferencia máxima hombres–mujeres por equipo')),
+                    LabeledField(
+                        label:
+                            'Sexo: diferencia máxima hombres–mujeres por equipo',
+                        child: TextField(
+                            key: const Key('eq-tope-sexo'),
+                            controller: sex,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: digitsOnly(),
+                            decoration: const InputDecoration())),
                     const SizedBox(height: 10),
-                    TextField(
-                        key: const Key('eq-tope-edad'),
-                        controller: age,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        inputFormatters: decimalOnly(),
-                        decoration: const InputDecoration(
-                            labelText:
-                                'Edad: diferencia máxima de edad media (años)')),
+                    LabeledField(
+                        label: 'Edad: diferencia máxima de edad media (años)',
+                        child: TextField(
+                            key: const Key('eq-tope-edad'),
+                            controller: age,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            inputFormatters: decimalOnly(),
+                            decoration: const InputDecoration())),
                   ],
                   if (error != null) ...[
                     const SizedBox(height: 12),
@@ -1024,11 +1027,13 @@ class _TeamEditDialogState extends ConsumerState<_TeamEditDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                      key: const Key('te-nombre'),
-                      controller: name,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(labelText: 'Nombre')),
+                  LabeledField(
+                      label: 'Nombre',
+                      child: TextField(
+                          key: const Key('te-nombre'),
+                          controller: name,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration())),
                   const SizedBox(height: 12),
                   const Text('Color (opcional)',
                       style: TextStyle(fontWeight: FontWeight.w700)),
@@ -1059,20 +1064,22 @@ class _TeamEditDialogState extends ConsumerState<_TeamEditDialog> {
                         child: const Text('Sin color')),
                   ]),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String?>(
-                    key: const Key('te-capitan'),
-                    initialValue: captain,
-                    isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Capitán'),
-                    items: [
-                      const DropdownMenuItem<String?>(
-                          value: null, child: Text('Sin capitán')),
-                      for (final m in widget.members)
-                        DropdownMenuItem<String?>(
-                            value: m.a.id, child: Text(m.fullName)),
-                    ],
-                    onChanged: (v) => setState(() => captain = v),
-                  ),
+                  LabeledField(
+                      label: 'Capitán',
+                      child: DropdownButtonFormField<String?>(
+                        key: const Key('te-capitan'),
+                        initialValue: captain,
+                        isExpanded: true,
+                        decoration: const InputDecoration(),
+                        items: [
+                          const DropdownMenuItem<String?>(
+                              value: null, child: Text('Sin capitán')),
+                          for (final m in widget.members)
+                            DropdownMenuItem<String?>(
+                                value: m.a.id, child: Text(m.fullName)),
+                        ],
+                        onChanged: (v) => setState(() => captain = v),
+                      )),
                   if (error != null) ...[
                     const SizedBox(height: 12),
                     ErrorBox(error!)
@@ -1137,32 +1144,34 @@ class LimitsDialogState extends ConsumerState<LimitsDialog> {
                       'Diferencias máximas entre equipos. Si se superan, se avisa (nunca se bloquea).',
                       style: TextStyle(color: Brand.gris)),
                   const SizedBox(height: 12),
-                  TextField(
-                      key: const Key('lim-tamano'),
-                      controller: size,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: digitsOnly(),
-                      decoration: const InputDecoration(
-                          labelText: 'Tamaño: diferencia máxima de personas')),
+                  LabeledField(
+                      label: 'Tamaño: diferencia máxima de personas',
+                      child: TextField(
+                          key: const Key('lim-tamano'),
+                          controller: size,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: digitsOnly(),
+                          decoration: const InputDecoration())),
                   const SizedBox(height: 12),
-                  TextField(
-                      key: const Key('lim-sexo'),
-                      controller: sex,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: digitsOnly(),
-                      decoration: const InputDecoration(
-                          labelText:
-                              'Sexo: diferencia máxima hombres–mujeres por equipo')),
+                  LabeledField(
+                      label:
+                          'Sexo: diferencia máxima hombres–mujeres por equipo',
+                      child: TextField(
+                          key: const Key('lim-sexo'),
+                          controller: sex,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: digitsOnly(),
+                          decoration: const InputDecoration())),
                   const SizedBox(height: 12),
-                  TextField(
-                      key: const Key('lim-edad'),
-                      controller: ageC,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: decimalOnly(),
-                      decoration: const InputDecoration(
-                          labelText:
-                              'Edad: diferencia máxima de edad media (años)')),
+                  LabeledField(
+                      label: 'Edad: diferencia máxima de edad media (años)',
+                      child: TextField(
+                          key: const Key('lim-edad'),
+                          controller: ageC,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          inputFormatters: decimalOnly(),
+                          decoration: const InputDecoration())),
                   if (error != null) ...[
                     const SizedBox(height: 12),
                     ErrorBox(error!)

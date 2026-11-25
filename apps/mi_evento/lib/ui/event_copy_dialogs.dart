@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'widgets/labeled_field.dart';
 
 import '../data/database.dart';
 import '../data/event_copy.dart';
@@ -112,10 +113,12 @@ class _DuplicateEventDialogState extends ConsumerState<DuplicateEventDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                      key: const Key('dup-nombre'),
-                      controller: name,
-                      decoration: const InputDecoration(labelText: 'Nombre')),
+                  LabeledField(
+                      label: 'Nombre',
+                      child: TextField(
+                          key: const Key('dup-nombre'),
+                          controller: name,
+                          decoration: const InputDecoration())),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     key: const Key('dup-fechas'),
@@ -236,18 +239,21 @@ class _CopyPeopleDialogState extends ConsumerState<CopyPeopleDialog> {
                   'Desde «${widget.event.name}». Los que ya están en el destino (mismo nombre, apellido y edad) se omiten; los matrimonios se conservan.',
                   style: const TextStyle(color: Brand.gris)),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                key: const Key('pasar-destino'),
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Evento destino'),
-                items: [
-                  for (final e in others)
-                    DropdownMenuItem(
-                        value: e.id,
-                        child: Text(e.name, overflow: TextOverflow.ellipsis))
-                ],
-                onChanged: busy ? null : (v) => setState(() => target = v),
-              ),
+              LabeledField(
+                  label: 'Evento destino',
+                  child: DropdownButtonFormField<String>(
+                    key: const Key('pasar-destino'),
+                    isExpanded: true,
+                    decoration: const InputDecoration(),
+                    items: [
+                      for (final e in others)
+                        DropdownMenuItem(
+                            value: e.id,
+                            child:
+                                Text(e.name, overflow: TextOverflow.ellipsis))
+                    ],
+                    onChanged: busy ? null : (v) => setState(() => target = v),
+                  )),
               CheckboxListTile(
                   key: const Key('pasar-preinscribir'),
                   contentPadding: EdgeInsets.zero,

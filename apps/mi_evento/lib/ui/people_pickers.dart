@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'widgets/labeled_field.dart';
 
 import '../data/repos_b.dart';
 import '../data/repository.dart';
@@ -159,12 +160,13 @@ class _GroupPickerState extends ConsumerState<_GroupPicker> {
                         '${g.memberCount} ${g.memberCount == 1 ? 'integrante' : 'integrantes'}'),
                   ),
                 const Divider(),
-                TextField(
-                    key: const Key('gp-nuevo-nombre'),
-                    controller: name,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                        labelText: 'Nombre del grupo nuevo')),
+                LabeledField(
+                    label: 'Nombre del grupo nuevo',
+                    child: TextField(
+                        key: const Key('gp-nuevo-nombre'),
+                        controller: name,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: const InputDecoration())),
                 const SizedBox(height: 8),
                 SegmentedButton<String>(
                   segments: const [

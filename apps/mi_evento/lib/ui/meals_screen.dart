@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'widgets/labeled_field.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
 import '../data/database.dart';
@@ -268,24 +269,26 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
           children: [
             SizedBox(
               width: 320,
-              child: DropdownButtonFormField<String>(
-                key: ValueKey('ses-${s.row.id}'),
-                initialValue: s.row.id,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Sesión'),
-                items: [
-                  for (final x in sessions)
-                    DropdownMenuItem(
-                        value: x.row.id,
-                        child: Text(
-                            '${x.row.name}${x.closed ? ' (cerrada)' : ''}',
-                            overflow: TextOverflow.ellipsis))
-                ],
-                onChanged: (v) => setState(() {
-                  ref.read(currentSessionIdProvider.notifier).state = v;
-                  lastOk = null;
-                }),
-              ),
+              child: LabeledField(
+                  label: 'Sesión',
+                  child: DropdownButtonFormField<String>(
+                    key: ValueKey('ses-${s.row.id}'),
+                    initialValue: s.row.id,
+                    isExpanded: true,
+                    decoration: const InputDecoration(),
+                    items: [
+                      for (final x in sessions)
+                        DropdownMenuItem(
+                            value: x.row.id,
+                            child: Text(
+                                '${x.row.name}${x.closed ? ' (cerrada)' : ''}',
+                                overflow: TextOverflow.ellipsis))
+                    ],
+                    onChanged: (v) => setState(() {
+                      ref.read(currentSessionIdProvider.notifier).state = v;
+                      lastOk = null;
+                    }),
+                  )),
             ),
             OutlinedButton.icon(
                 key: const Key('cm-nueva'),
@@ -624,26 +627,29 @@ class _NewSessionDialogState extends ConsumerState<NewSessionDialog> {
         child: SizedBox(
           width: 420,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            DropdownButtonFormField<String>(
-              key: const Key('ns-tipo'),
-              initialValue: typeId,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Tipo de control'),
-              items: [
-                for (final t in types)
-                  DropdownMenuItem(value: t.id, child: Text(t.name))
-              ],
-              onChanged: (v) =>
-                  setState(() => _pickType(types.firstWhere((t) => t.id == v))),
-            ),
+            LabeledField(
+                label: 'Tipo de control',
+                child: DropdownButtonFormField<String>(
+                  key: const Key('ns-tipo'),
+                  initialValue: typeId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(),
+                  items: [
+                    for (final t in types)
+                      DropdownMenuItem(value: t.id, child: Text(t.name))
+                  ],
+                  onChanged: (v) => setState(
+                      () => _pickType(types.firstWhere((t) => t.id == v))),
+                )),
             const SizedBox(height: 12),
-            TextField(
-                key: const Key('ns-nombre'),
-                controller: name,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                    labelText: 'Nombre de la sesión',
-                    helperText: 'Ej.: Almuerzo del sábado')),
+            LabeledField(
+                label: 'Nombre de la sesión',
+                child: TextField(
+                    key: const Key('ns-nombre'),
+                    controller: name,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                        helperText: 'Ej.: Almuerzo del sábado'))),
             if (error != null) ...[
               const SizedBox(height: 12),
               ErrorBox(error!)
@@ -725,14 +731,15 @@ class _TypesDialogState extends ConsumerState<TypesDialog> {
                     ),
                   ),
                 const Divider(),
-                TextField(
-                    key: const Key('tp-nombre'),
-                    controller: name,
-                    textCapitalization: TextCapitalization.sentences,
-                    onSubmitted: (_) => _add(),
-                    decoration: const InputDecoration(
-                        labelText: 'Tipo nuevo',
-                        helperText: 'Ej.: Entrega de materiales')),
+                LabeledField(
+                    label: 'Tipo nuevo',
+                    child: TextField(
+                        key: const Key('tp-nombre'),
+                        controller: name,
+                        textCapitalization: TextCapitalization.sentences,
+                        onSubmitted: (_) => _add(),
+                        decoration: const InputDecoration(
+                            helperText: 'Ej.: Entrega de materiales'))),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
                     key: const Key('tp-agregar'),

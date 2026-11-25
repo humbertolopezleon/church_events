@@ -274,4 +274,34 @@ void main() {
       }
     });
   });
+
+  group('Fase 6 · etiquetas encima del campo', () {
+    cap('inicio de sesión', (t) async {
+      await pumpApp(t, _movil, defaultAdmin: true);
+      await shot(t, 'etiquetas-login');
+    });
+    cap('formulario de asistente', (t) async {
+      await _abrir(t, _movil);
+      await _ir(t, 'Asistentes');
+      await tapKey(t, 'asis-registrar');
+      await shot(t, 'etiquetas-asistente-1');
+      await t.drag(
+          find.byType(SingleChildScrollView).last, const Offset(0, -600));
+      await t.pump();
+      await shot(t, 'etiquetas-asistente-2');
+    });
+    cap('formulario de asistente al 130 %', (t) async {
+      await _abrir(t, _movil, escala: 1.3);
+      await _ir(t, 'Asistentes');
+      await tapKey(t, 'asis-registrar');
+      await shot(t, 'etiquetas-asistente-letra130');
+    });
+    cap('nuevo usuario y generar equipos', (t) async {
+      await _abrir(t, _movil);
+      await _ir(t, 'Usuarios');
+      await t.tap(find.text('Nuevo usuario').first);
+      await settle(t);
+      await shot(t, 'etiquetas-usuario');
+    });
+  });
 }

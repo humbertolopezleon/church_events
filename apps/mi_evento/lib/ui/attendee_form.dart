@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'widgets/labeled_field.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
 import '../auth/auth_service.dart';
@@ -555,45 +556,53 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                     ],
                     _tabOrder(
                         1,
-                        TextField(
-                          key: const Key('f-nombre'),
-                          controller: first,
-                          focusNode: firstFocus,
-                          autofocus: !editing,
-                          textCapitalization: TextCapitalization.words,
-                          textInputAction: TextInputAction.next,
-                          onChanged: (_) => _checkDup(),
-                          decoration:
-                              const InputDecoration(labelText: 'Nombre *'),
-                        )),
+                        LabeledField(
+                            label: 'Nombre *',
+                            child: TextField(
+                              key: const Key('f-nombre'),
+                              controller: first,
+                              focusNode: firstFocus,
+                              autofocus: !editing,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              onChanged: (_) => _checkDup(),
+                              decoration: const InputDecoration(),
+                            ))),
                     const SizedBox(height: 12),
                     LayoutBuilder(builder: (context, c) {
                       final apellidos = [
                         _tabOrder(
                             2,
-                            TextField(
-                                key: const Key('f-apellido1'),
-                                controller: last1,
-                                textCapitalization: TextCapitalization.words,
-                                textInputAction: TextInputAction.next,
-                                onChanged: (_) => _checkDup(),
-                                decoration: const InputDecoration(
-                                    labelText: 'Primer apellido *'))),
+                            LabeledField(
+                                label: 'Primer apellido *',
+                                child: TextField(
+                                    key: const Key('f-apellido1'),
+                                    controller: last1,
+                                    textCapitalization:
+                                        TextCapitalization.words,
+                                    textInputAction: TextInputAction.next,
+                                    onChanged: (_) => _checkDup(),
+                                    decoration: const InputDecoration()))),
                         _tabOrder(
                             3,
-                            TextField(
-                                key: const Key('f-apellido2'),
-                                controller: last2,
-                                textCapitalization: TextCapitalization.words,
-                                textInputAction: TextInputAction.next,
-                                decoration: const InputDecoration(
-                                    labelText: 'Segundo apellido (opcional)'))),
+                            LabeledField(
+                                label: 'Segundo apellido',
+                                optional: true,
+                                child: TextField(
+                                    key: const Key('f-apellido2'),
+                                    controller: last2,
+                                    textCapitalization:
+                                        TextCapitalization.words,
+                                    textInputAction: TextInputAction.next,
+                                    decoration: const InputDecoration()))),
                       ];
-                      return Row(children: [
-                        Expanded(child: apellidos[0]),
-                        const SizedBox(width: 10),
-                        Expanded(child: apellidos[1])
-                      ]);
+                      return Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(child: apellidos[0]),
+                            const SizedBox(width: 10),
+                            Expanded(child: apellidos[1])
+                          ]);
                     }),
                     if (showDup) ...[
                       const SizedBox(height: 12),
@@ -602,29 +611,31 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                     const SizedBox(height: 16),
                     _tabOrder(
                         4,
-                        DropdownButtonFormField<Sex>(
-                          key: const Key('f-sexo'),
-                          initialValue: sex,
-                          isExpanded: true,
-                          decoration:
-                              const InputDecoration(labelText: 'Sexo *'),
-                          items: const [
-                            DropdownMenuItem(
-                                value: Sex.male, child: Text('M (Hombre)')),
-                            DropdownMenuItem(
-                                value: Sex.female, child: Text('F (Mujer)')),
-                          ],
-                          onChanged: (v) => setState(() => sex = v),
-                        )),
+                        LabeledField(
+                            label: 'Sexo *',
+                            child: DropdownButtonFormField<Sex>(
+                              key: const Key('f-sexo'),
+                              initialValue: sex,
+                              isExpanded: true,
+                              decoration: const InputDecoration(),
+                              items: const [
+                                DropdownMenuItem(
+                                    value: Sex.male, child: Text('M (Hombre)')),
+                                DropdownMenuItem(
+                                    value: Sex.female,
+                                    child: Text('F (Mujer)')),
+                              ],
+                              onChanged: (v) => setState(() => sex = v),
+                            ))),
                     const SizedBox(height: 16),
-                    Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 110,
-                            child: _tabOrder(
-                                5,
-                                TextField(
+                    Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                      SizedBox(
+                        width: 110,
+                        child: _tabOrder(
+                            5,
+                            LabeledField(
+                                label: 'Edad *',
+                                child: TextField(
                                     key: const Key('f-edad'),
                                     controller: age,
                                     keyboardType: TextInputType.number,
@@ -634,21 +645,22 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                                       _checkDup();
                                       setState(() {});
                                     },
-                                    decoration: const InputDecoration(
-                                        labelText: 'Edad *'))),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                              child: _tabOrder(
-                                  6,
-                                  TextField(
+                                    decoration: const InputDecoration()))),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                          child: _tabOrder(
+                              6,
+                              LabeledField(
+                                  label: 'Teléfono',
+                                  optional: true,
+                                  child: TextField(
                                       key: const Key('f-telefono'),
                                       controller: phone,
                                       keyboardType: TextInputType.phone,
                                       inputFormatters: phoneChars(),
-                                      decoration: const InputDecoration(
-                                          labelText: 'Teléfono (opcional)')))),
-                        ]),
+                                      decoration: const InputDecoration())))),
+                    ]),
                     const SizedBox(height: 16),
                     _tabOrder(
                       7,
@@ -660,24 +672,25 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                         onFocusChange: (has) {
                           if (!has) _autoPickChurch(churches);
                         },
-                        child: TextField(
-                          key: const Key('f-iglesia'),
-                          controller: churchText,
-                          textInputAction: TextInputAction.next,
-                          onSubmitted: (_) => _autoPickChurch(churches),
-                          onChanged: (_) => setState(() {
-                            church =
-                                null; // al escribir se deshace la selección anterior
-                            churchPickerOpen = true;
-                          }),
-                          decoration: InputDecoration(
-                            labelText: 'Iglesia *',
-                            suffixIcon: church != null
-                                ? const Icon(Icons.check_circle,
-                                    color: Brand.exito)
-                                : null,
-                          ),
-                        ),
+                        child: LabeledField(
+                            label: 'Iglesia *',
+                            child: TextField(
+                              key: const Key('f-iglesia'),
+                              controller: churchText,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) => _autoPickChurch(churches),
+                              onChanged: (_) => setState(() {
+                                church =
+                                    null; // al escribir se deshace la selección anterior
+                                churchPickerOpen = true;
+                              }),
+                              decoration: InputDecoration(
+                                suffixIcon: church != null
+                                    ? const Icon(Icons.check_circle,
+                                        color: Brand.exito)
+                                    : null,
+                              ),
+                            )),
                       ),
                     ),
                     if (suggestions.isNotEmpty ||
@@ -731,31 +744,34 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                     // Provincia y municipio son los de la iglesia: no se escriben aquí.
                     ExcludeFocus(
                       child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Expanded(
-                                child: InputDecorator(
-                                    key: const Key('f-provincia'),
-                                    decoration: const InputDecoration(
-                                        labelText: 'Provincia (de la iglesia)'),
-                                    child: Text(
-                                        church?.province.isNotEmpty == true
-                                            ? church!.province
-                                            : '—',
-                                        style: const TextStyle(
-                                            color: Brand.gris)))),
+                                child: LabeledField(
+                                    label: 'Provincia (de la iglesia)',
+                                    child: InputDecorator(
+                                        key: const Key('f-provincia'),
+                                        decoration: const InputDecoration(),
+                                        child: Text(
+                                            church?.province.isNotEmpty == true
+                                                ? church!.province
+                                                : '—',
+                                            style: const TextStyle(
+                                                color: Brand.gris))))),
                             const SizedBox(width: 10),
                             Expanded(
-                                child: InputDecorator(
-                                    key: const Key('f-municipio'),
-                                    decoration: const InputDecoration(
-                                        labelText: 'Municipio (de la iglesia)'),
-                                    child: Text(
-                                        church?.municipality.isNotEmpty == true
-                                            ? church!.municipality
-                                            : '—',
-                                        style: const TextStyle(
-                                            color: Brand.gris)))),
+                                child: LabeledField(
+                                    label: 'Municipio (de la iglesia)',
+                                    child: InputDecorator(
+                                        key: const Key('f-municipio'),
+                                        decoration: const InputDecoration(),
+                                        child: Text(
+                                            church?.municipality.isNotEmpty ==
+                                                    true
+                                                ? church!.municipality
+                                                : '—',
+                                            style: const TextStyle(
+                                                color: Brand.gris))))),
                           ]),
                     ),
                     const Padding(
@@ -878,13 +894,16 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                       onGroups: (g) => setState(() => groupIds = g),
                     ),
                     const SizedBox(height: 16),
-                    TextField(
-                        key: const Key('f-observaciones'),
-                        controller: notes,
-                        maxLines: 3,
-                        decoration: const InputDecoration(
-                            labelText: 'Observaciones (opcional)',
-                            helperText: 'Evita datos médicos innecesarios.')),
+                    LabeledField(
+                        label: 'Observaciones',
+                        optional: true,
+                        child: TextField(
+                            key: const Key('f-observaciones'),
+                            controller: notes,
+                            maxLines: 3,
+                            decoration: const InputDecoration(
+                                helperText:
+                                    'Evita datos médicos innecesarios.'))),
                     if (error != null) ...[
                       const SizedBox(height: 12),
                       ErrorBox(error!)
@@ -1196,22 +1215,23 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
           ),
         const SizedBox(height: 8),
         // Buscar y filtrar la lista de hospedajes (por nombre/anfitrión/zona, plazas y sexo).
-        TextField(
-          key: const Key('f-hosp-buscar'),
-          controller: hospSearch,
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            labelText: 'Buscar hospedaje',
-            hintText: 'Nombre, anfitrión o zona…',
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: hospSearch.text.isEmpty
-                ? null
-                : IconButton(
-                    tooltip: 'Limpiar',
-                    icon: const Icon(Icons.close),
-                    onPressed: () => setState(hospSearch.clear)),
-          ),
-        ),
+        LabeledField(
+            label: 'Buscar hospedaje',
+            child: TextField(
+              key: const Key('f-hosp-buscar'),
+              controller: hospSearch,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'Nombre, anfitrión o zona…',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: hospSearch.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Limpiar',
+                        icon: const Icon(Icons.close),
+                        onPressed: () => setState(hospSearch.clear)),
+              ),
+            )),
         const SizedBox(height: 6),
         Wrap(spacing: 8, runSpacing: 4, children: [
           FilterChip(
@@ -1258,31 +1278,33 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
               children: [
                 KeyedSubtree(
                     key: ValueKey('hs-$lodgingId-${options.length}'),
-                    child: DropdownButtonFormField<String?>(
-                      key: const Key('f-hosp-sel'),
-                      initialValue: chosen?.row.id,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                          labelText: 'Hospedaje',
-                          helperText: options.length == lodgings.length
-                              ? null
-                              : '${options.length} de ${lodgings.length} hospedajes'),
-                      items: [
-                        const DropdownMenuItem<String?>(
-                            value: null, child: Text('Sin asignar por ahora')),
-                        for (final l in options)
-                          DropdownMenuItem<String?>(
-                              value: l.row.id,
-                              // Incompatible = no se puede elegir (salvo que ya sea el elegido).
-                              enabled: !ready ||
-                                  l.row.id == lodgingId ||
-                                  _blockersFor(l).isEmpty,
-                              child: Text(
-                                  '${l.row.name} · ${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.row.accepts))} · ${cand(l).free} libres${ready && l.row.id != lodgingId && _blockersFor(l).isNotEmpty ? ' · no compatible' : ''}',
-                                  overflow: TextOverflow.ellipsis)),
-                      ],
-                      onChanged: (v) => setState(() => lodgingId = v),
-                    )),
+                    child: LabeledField(
+                        label: 'Hospedaje',
+                        child: DropdownButtonFormField<String?>(
+                          key: const Key('f-hosp-sel'),
+                          initialValue: chosen?.row.id,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                              helperText: options.length == lodgings.length
+                                  ? null
+                                  : '${options.length} de ${lodgings.length} hospedajes'),
+                          items: [
+                            const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('Sin asignar por ahora')),
+                            for (final l in options)
+                              DropdownMenuItem<String?>(
+                                  value: l.row.id,
+                                  // Incompatible = no se puede elegir (salvo que ya sea el elegido).
+                                  enabled: !ready ||
+                                      l.row.id == lodgingId ||
+                                      _blockersFor(l).isEmpty,
+                                  child: Text(
+                                      '${l.row.name} · ${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.row.accepts))} · ${cand(l).free} libres${ready && l.row.id != lodgingId && _blockersFor(l).isNotEmpty ? ' · no compatible' : ''}',
+                                      overflow: TextOverflow.ellipsis)),
+                          ],
+                          onChanged: (v) => setState(() => lodgingId = v),
+                        ))),
                 if (options.isEmpty)
                   const Padding(
                       padding: EdgeInsets.only(top: 6),
@@ -1544,50 +1566,55 @@ class _ChurchDialogState extends ConsumerState<ChurchDialog> {
           width: 420,
           child: FocusTraversalGroup(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(
-                  key: const Key('ni-nombre'),
-                  controller: name,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                      labelText: 'Nombre de la iglesia *')),
+              LabeledField(
+                  label: 'Nombre de la iglesia *',
+                  child: TextField(
+                      key: const Key('ni-nombre'),
+                      controller: name,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration())),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                key: const Key('ni-provincia'),
-                initialValue: province,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Provincia *'),
-                items: [
-                  for (final p in cubaProvinces)
-                    DropdownMenuItem(value: p, child: Text(p))
-                ],
-                onChanged: (v) => setState(() {
-                  province = v;
-                  municipality =
-                      null; // los municipios dependen de la provincia
-                  community.clear();
-                }),
-              ),
+              LabeledField(
+                  label: 'Provincia *',
+                  child: DropdownButtonFormField<String>(
+                    key: const Key('ni-provincia'),
+                    initialValue: province,
+                    isExpanded: true,
+                    decoration: const InputDecoration(),
+                    items: [
+                      for (final p in cubaProvinces)
+                        DropdownMenuItem(value: p, child: Text(p))
+                    ],
+                    onChanged: (v) => setState(() {
+                      province = v;
+                      municipality =
+                          null; // los municipios dependen de la provincia
+                      community.clear();
+                    }),
+                  )),
               const SizedBox(height: 12),
               // La clave cambia con la provincia para reconstruir la lista y vaciar la selección.
-              DropdownButtonFormField<String>(
-                key: ValueKey('ni-municipio-$province'),
-                initialValue: municipality,
-                isExpanded: true,
-                decoration: InputDecoration(
-                    labelText: 'Municipio *',
-                    helperText:
-                        province == null ? 'Elige primero la provincia' : null),
-                items: [
-                  for (final m in munis)
-                    DropdownMenuItem(value: m, child: Text(m))
-                ],
-                onChanged: province == null
-                    ? null
-                    : (v) => setState(() {
-                          municipality = v;
-                          community.clear();
-                        }),
-              ),
+              LabeledField(
+                  label: 'Municipio *',
+                  child: DropdownButtonFormField<String>(
+                    key: ValueKey('ni-municipio-$province'),
+                    initialValue: municipality,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                        helperText: province == null
+                            ? 'Elige primero la provincia'
+                            : null),
+                    items: [
+                      for (final m in munis)
+                        DropdownMenuItem(value: m, child: Text(m))
+                    ],
+                    onChanged: province == null
+                        ? null
+                        : (v) => setState(() {
+                              municipality = v;
+                              community.clear();
+                            }),
+                  )),
               const SizedBox(height: 12),
               // Comunidad: sugiere las del municipio; si no está, se escribe y queda añadida.
               RawAutocomplete<String>(
@@ -1600,21 +1627,23 @@ class _ChurchDialogState extends ConsumerState<ChurchDialog> {
                       .where((c) => q.isEmpty || normalizeText(c).contains(q));
                 },
                 onSelected: (v) => setState(() {}),
-                fieldViewBuilder: (context, c, f, onSubmit) => TextField(
-                  key: const Key('ni-comunidad'),
-                  controller: c,
-                  focusNode: f,
-                  enabled: municipality != null,
-                  textCapitalization: TextCapitalization.words,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                      labelText: 'Comunidad (opcional)',
-                      helperText: municipality == null
-                          ? 'Elige primero el municipio'
-                          : communities.isEmpty
-                              ? 'Aún no hay comunidades en este municipio: escríbela y quedará añadida'
-                              : null),
-                ),
+                fieldViewBuilder: (context, c, f, onSubmit) => LabeledField(
+                    label: 'Comunidad',
+                    optional: true,
+                    child: TextField(
+                      key: const Key('ni-comunidad'),
+                      controller: c,
+                      focusNode: f,
+                      enabled: municipality != null,
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                          helperText: municipality == null
+                              ? 'Elige primero el municipio'
+                              : communities.isEmpty
+                                  ? 'Aún no hay comunidades en este municipio: escríbela y quedará añadida'
+                                  : null),
+                    )),
                 optionsViewBuilder: (context, onSelected, options) => Align(
                   alignment: Alignment.topLeft,
                   child: Material(
