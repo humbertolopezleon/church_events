@@ -17,6 +17,23 @@ class TableImportSummary {
 
   /// Cuántas filas se aplicarán (0 = no hay nada que importar).
   int work;
+
+  /// Decisiones que el usuario puede cambiar antes de importar (puede no haber ninguna).
+  final List<ImportDecision> decisions = [];
+}
+
+/// Algo que el importador no debe decidir solo: se muestra en la revisión con varias opciones
+/// (la primera es la propuesta) y la elegida llega a `apply` en `choices[id]`.
+class ImportDecision {
+  ImportDecision(
+      {required this.id, required this.message, required this.options})
+      : assert(options.length > 1);
+  final String id;
+  final String message;
+  final List<String> options;
+
+  /// Opción elegida (índice en [options]); 0 = la propuesta.
+  int selected = 0;
 }
 
 /// Una importación de CSV para una vista: primero se REVISA (sin escribir) y luego se APLICA.
@@ -29,7 +46,8 @@ abstract class TableImporter {
   /// Columnas del CSV (ayuda y plantilla vacía). `null` si la vista no la ofrece.
   CsvSpec? get spec => null;
   Future<TableImportSummary> preview(String csvText);
-  Future<TableImportSummary> apply(String csvText);
+  Future<TableImportSummary> apply(String csvText,
+      {Map<String, int> choices = const {}});
 }
 
 /// Lee una tabla CSV con encabezados: devuelve filas como mapas {encabezado normalizado → valor}

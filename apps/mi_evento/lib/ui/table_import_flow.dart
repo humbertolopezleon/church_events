@@ -35,8 +35,6 @@ Future<bool> runTableImport(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(importer.help, style: const TextStyle(color: Brand.gris)),
-              const SizedBox(height: 12),
               for (final l in preview.lines) Text(l),
               if (preview.warnings.isNotEmpty) ...[
                 const SizedBox(height: 10),
@@ -48,12 +46,15 @@ Future<bool> runTableImport(
                 if (preview.warnings.length > 8)
                   Text('… y ${preview.warnings.length - 8} más'),
               ],
+              for (final d in preview.decisions) _DecisionView(d),
               if (preview.work == 0)
                 const Padding(
                     padding: EdgeInsets.only(top: 10),
                     child: Text('No hay nada que importar.',
                         key: Key('ti-nada'),
                         style: TextStyle(fontWeight: FontWeight.w700))),
+              const SizedBox(height: 12),
+              Text(importer.help, style: const TextStyle(color: Brand.gris)),
             ]),
       ),
       actions: [
@@ -70,7 +71,9 @@ Future<bool> runTableImport(
   );
   if (go != true || !context.mounted) return false;
   try {
-    final done = await importer.apply(text);
+    final done = await importer.apply(text, choices: {
+      for (final d in preview.decisions) d.id: d.selected,
+    });
     if (!context.mounted) return true;
     await _message(context, 'Importación terminada', done.lines.join('\n'),
         const Key('ti-resultado'));
@@ -81,6 +84,44 @@ Future<bool> runTableImport(
           context, 'No se pudo importar', '$e', const Key('ti-error'));
     }
     return false;
+  }
+}
+
+/// Una decisión de la revisión: el aviso y sus opciones (la primera es la propuesta).
+class _DecisionView extends StatefulWidget {
+  const _DecisionView(this.d);
+  final ImportDecision d;
+  @override
+  State<_DecisionView> createState() => _DecisionViewState();
+}
+
+class _DecisionViewState extends State<_DecisionView> {
+  @override
+  Widget build(BuildContext context) {
+    final d = widget.d;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+          key: Key('ti-decision-${d.id}'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(d.message,
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+            RadioGroup<int>(
+              groupValue: d.selected,
+              onChanged: (v) => setState(() => d.selected = v ?? 0),
+              child: Column(children: [
+                for (var i = 0; i < d.options.length; i++)
+                  RadioListTile<int>(
+                      key: Key('ti-decision-${d.id}-$i'),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      value: i,
+                      title: Text(d.options[i])),
+              ]),
+            ),
+          ]),
+    );
   }
 }
 

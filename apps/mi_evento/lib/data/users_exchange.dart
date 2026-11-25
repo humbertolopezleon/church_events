@@ -119,6 +119,7 @@ class UsersExchange implements TableImporter {
   Future<TableImportSummary> preview(String csvText) =>
       _run(csvText, write: false);
   @override
-  Future<TableImportSummary> apply(String csvText) =>
+  Future<TableImportSummary> apply(String csvText,
+          {Map<String, int> choices = const {}}) =>
       _run(csvText, write: true);
 }

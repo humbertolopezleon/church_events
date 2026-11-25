@@ -521,6 +521,36 @@ class TeamRepo {
     });
   }
 
+  /// Crea un equipo con [name] y [color] (opcional) al final de la lista.
+  Future<TeamRow> create(String eventId,
+      {required String name, String? color}) async {
+    if (name.trim().isEmpty) throw DataException('Falta el nombre del equipo.');
+    return db.transaction(() async {
+      final existing = await (db.select(db.teams)
+            ..where((t) => t.eventId.equals(eventId) & t.deletedAt.isNull()))
+          .get();
+      if (existing
+          .any((o) => normalizeText(o.name) == normalizeText(name.trim()))) {
+        throw DataException('Ya existe un equipo llamado «${name.trim()}».');
+      }
+      final now = DateTime.now().toUtc();
+      final order =
+          existing.fold<int>(-1, (m, t) => t.sortOrder > m ? t.sortOrder : m);
+      final id = newUuidV7();
+      await db.into(db.teams).insert(TeamsCompanion.insert(
+            id: id,
+            createdAt: now,
+            updatedAt: now,
+            originDeviceId: await db.deviceId(),
+            eventId: eventId,
+            name: name.trim(),
+            color: Value(color),
+            sortOrder: Value(order + 1),
+          ));
+      return (db.select(db.teams)..where((t) => t.id.equals(id))).getSingle();
+    });
+  }
+
   Future<void> update(String id,
       {required String name, String? color, String? captainId}) async {
     if (name.trim().isEmpty) throw DataException('Falta el nombre del equipo.');

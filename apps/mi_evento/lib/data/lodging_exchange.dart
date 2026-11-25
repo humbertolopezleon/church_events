@@ -199,6 +199,7 @@ class LodgingExchange implements TableImporter {
   Future<TableImportSummary> preview(String csvText) =>
       _run(csvText, write: false);
   @override
-  Future<TableImportSummary> apply(String csvText) async =>
+  Future<TableImportSummary> apply(String csvText,
+          {Map<String, int> choices = const {}}) async =>
       db.transaction(() => _run(csvText, write: true));
 }
