@@ -6,8 +6,9 @@ import 'database.dart';
 import 'repos_b.dart';
 import 'table_import.dart';
 
-/// Exportar e importar los hospedajes de un evento en CSV. Las columnas son las del CSV que ya
-/// exporta la vista (ocupadas y libres se ignoran al importar: se calculan).
+/// Exportar e importar los hospedajes de un evento en CSV. Es la definición de los hospedajes (para
+/// reutilizarla en otro evento), sin las personas alojadas. Los CSV antiguos con las columnas
+/// «ocupadas» y «libres» siguen importándose: esas columnas se ignoran.
 class LodgingExchange implements TableImporter {
   LodgingExchange(this.db, this.eventId);
   final AppDatabase db;
@@ -18,8 +19,6 @@ class LodgingExchange implements TableImporter {
     'tipo',
     'acepta',
     'capacidad',
-    'ocupadas',
-    'libres',
     'anfitrion',
     'telefono',
     'indicaciones',
@@ -36,10 +35,6 @@ class LodgingExchange implements TableImporter {
         CsvColumn('acepta',
             'Solo hombres, Solo mujeres, Matrimonios o Sin preferencia'),
         CsvColumn('capacidad', 'número de plazas (al menos 1)', required: true),
-        CsvColumn(
-            'ocupadas', 'solo informativa: se calcula, se ignora al importar'),
-        CsvColumn(
-            'libres', 'solo informativa: se calcula, se ignora al importar'),
         CsvColumn('anfitrion', 'nombre del anfitrión'),
         CsvColumn('telefono', 'teléfono de contacto'),
         CsvColumn('indicaciones', 'cómo llegar'),
@@ -60,6 +55,32 @@ class LodgingExchange implements TableImporter {
 
   static String kindLabel(String kind) =>
       kind == 'shelter' ? 'Albergue' : 'Casa particular';
+
+  /// Filas del CSV (con títulos): todos los hospedajes dados, ordenados por nombre.
+  static List<List<String>> toRows(Iterable<LodgingRow> lodgings) {
+    final sorted = lodgings.toList()
+      ..sort((a, b) => normalizeText(a.name).compareTo(normalizeText(b.name)));
+    return [
+      headers,
+      for (final l in sorted)
+        [
+          l.name,
+          kindLabel(l.kind),
+          lodgingAcceptsLabel(lodgingAcceptsFromDb(l.accepts)),
+          '${l.capacity}',
+          l.hostName ?? '',
+          l.contactPhone ?? '',
+          l.directions,
+          l.distanceNote,
+        ],
+    ];
+  }
+
+  /// Todos los hospedajes del evento (los borrados no salen), listos para guardar como CSV.
+  Future<List<List<String>>> export() async =>
+      toRows(await (db.select(db.lodgings)
+            ..where((l) => l.eventId.equals(eventId) & l.deletedAt.isNull()))
+          .get());
 
   static LodgingAccepts? _accepts(String raw) {
     final n = normalizeText(raw);
