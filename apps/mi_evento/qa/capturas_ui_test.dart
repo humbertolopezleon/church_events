@@ -557,7 +557,8 @@ void main() {
   group('Atajos de teclado', () {
     cap('escritorio: ayuda de atajos', (t) async {
       await _abrir(t, _pc);
-      await tapKey(t, 'atajos-ayuda');
+      await t.sendKeyEvent(LogicalKeyboardKey.f1);
+      await settle(t);
       await shot(t, 'atajos-ayuda-escritorio');
     });
   });
