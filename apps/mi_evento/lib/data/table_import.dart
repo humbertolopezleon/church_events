@@ -1,3 +1,5 @@
+import 'package:mi_evento_core/mi_evento_core.dart' show restoreFormula;
+
 import 'csv_spec.dart';
 
 /// Resultado de revisar (o aplicar) la importación de una tabla CSV.
@@ -31,7 +33,7 @@ abstract class TableImporter {
 }
 
 /// Lee una tabla CSV con encabezados: devuelve filas como mapas {encabezado normalizado → valor}
-/// (con el número de línea). Los sinónimos se resuelven con [aliases] (canónico → alternativas).
+/// (con el número de línea). Deshace el apóstrofo con que la exportación neutraliza las fórmulas. Los sinónimos se resuelven con [aliases] (canónico → alternativas).
 List<(int, Map<String, String>)> readCsvTable(List<List<String>> table,
     Map<String, List<String>> aliases, String Function(String) norm) {
   if (table.isEmpty) return const [];
@@ -49,7 +51,8 @@ List<(int, Map<String, String>)> readCsvTable(List<List<String>> table,
         i + 1,
         {
           for (var j = 0; j < header.length; j++)
-            header[j]: j < table[i].length ? table[i][j].trim() : ''
+            header[j]:
+                j < table[i].length ? restoreFormula(table[i][j].trim()) : ''
         }
       )
   ];
