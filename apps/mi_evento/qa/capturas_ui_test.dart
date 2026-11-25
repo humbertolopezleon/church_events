@@ -228,4 +228,50 @@ void main() {
       await shot(t, 'nuevo-hospedaje-escritorio');
     });
   });
+
+  group('Fase 5 · todas las pantallas', () {
+    const pantallas = {
+      'panel': 'Panel',
+      'asistentes': 'Asistentes',
+      'confirmar': 'Confirmar asistencia',
+      'hospedajes': 'Hospedajes',
+      'equipos': 'Equipos',
+      'comidas': 'Comidas',
+      'reportes': 'Reportes',
+      'iglesias': 'Iglesias',
+      'usuarios': 'Usuarios',
+      'configuracion': 'Configuración',
+      'copias': 'Copias de seguridad',
+    };
+    for (final e in {'normal': 1.0, 'letra130': 1.3}.entries) {
+      cap('móvil con datos · ${e.key}', (t) async {
+        await _abrir(t, _movil, escala: e.value);
+        for (final p in pantallas.entries) {
+          await _ir(t, p.value);
+          await shot(t, 'todas-${p.key}-${e.key}');
+        }
+        await _ir(t, 'Asistentes');
+        await openFilters(t);
+        await shot(t, 'todas-asistentes-hoja-filtros-${e.key}');
+        await closeFilters(t);
+        await _ir(t, 'Iglesias');
+        await openFilters(t);
+        await shot(t, 'todas-iglesias-hoja-filtros-${e.key}');
+      });
+    }
+    cap('móvil vacías', (t) async {
+      await _abrir(t, _movil, datos: false);
+      for (final p in ['Hospedajes', 'Equipos', 'Iglesias', 'Comidas']) {
+        await _ir(t, p);
+        await shot(t, 'vacia-${p.toLowerCase()}');
+      }
+    });
+    cap('escritorio con datos', (t) async {
+      await _abrir(t, _pc);
+      for (final p in ['Asistentes', 'Equipos']) {
+        await _ir(t, p);
+        await shot(t, 'escritorio-${p.toLowerCase()}');
+      }
+    });
+  });
 }

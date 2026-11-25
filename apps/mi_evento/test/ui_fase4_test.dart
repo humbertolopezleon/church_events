@@ -70,8 +70,8 @@ void main() {
     await tapKey(t, 'lf-guardar');
     // Vuelve a la lista con la tarjeta nueva y «Solo mujeres».
     expect(find.byKey(const Key('hosp-Casa de Ana')), findsOneWidget);
-    expect(
-        find.textContaining('Casa particular · Solo mujeres'), findsOneWidget);
+    expect(find.textContaining('Acepta: Solo mujeres'), findsOneWidget);
+    expect(find.byKey(const Key('hosp-tipo-Casa de Ana')), findsOneWidget);
     expect(find.text('1 plaza libre'), findsOneWidget);
   });
 

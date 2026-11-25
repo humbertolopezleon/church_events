@@ -37,7 +37,7 @@ void main() {
     await settle(t);
     expect(find.text('Cárdenas, Matanzas'), findsOneWidget);
     expect(find.text('2 asistentes'), findsOneWidget);
-    expect(find.text('0 asistentes'), findsOneWidget);
+    expect(find.text('Sin asistentes'), findsOneWidget);
     expect(find.byType(ListTile), findsNothing);
   });
 
@@ -78,7 +78,7 @@ void main() {
     expect(find.text('2 personas sin hospedaje'), findsOneWidget);
     expect(find.text('1 hospedaje · 4 plazas'), findsOneWidget);
     expect(find.text('4 plazas libres'), findsOneWidget);
-    expect(find.text('0 de 4 ocupadas'), findsOneWidget);
+    expect(find.text('Ninguna ocupada'), findsOneWidget);
     expect(find.byTooltip('Opciones de Casa Norte'), findsOneWidget);
     await tapKey(t, 'hosp-resumen');
     // Asistentes, ya filtrado a «Necesita y no tiene».
@@ -92,7 +92,8 @@ void main() {
     await settle(t);
     await t.tap(find.text('Hospedajes').first);
     await settle(t);
-    expect(find.text('Todos los asistentes tienen hospedaje'), findsOneWidget);
+    expect(find.text('Todos tienen hospedaje. Quedan 2 plazas libres.'),
+        findsOneWidget);
     expect(find.text('2 de 4 ocupadas'), findsOneWidget);
   });
 }

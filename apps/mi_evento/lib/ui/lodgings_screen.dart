@@ -73,7 +73,9 @@ class _Occupancy extends StatelessWidget {
             Text(
                 over
                     ? '$occupied de $capacity ocupadas · sobrecupo de ${occupied - capacity}'
-                    : '$occupied de $capacity ocupadas',
+                    : occupied == 0
+                        ? 'Ninguna ocupada'
+                        : '$occupied de $capacity ocupadas',
                 style: over
                     ? bodyStyle(14, color: Brand.error, weight: FontWeight.w700)
                     : meta),
@@ -84,14 +86,14 @@ class _Occupancy extends StatelessWidget {
 
 /// Franja de estado: ámbar con «N personas sin hospedaje» (abre Asistentes filtrados) o verde si todos tienen.
 class _LodgingStatusBanner extends ConsumerWidget {
-  const _LodgingStatusBanner(this.pending);
-  final int pending;
+  const _LodgingStatusBanner(this.pending, this.free);
+  final int pending, free;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ok = pending == 0;
     final fg = ok ? Brand.exito : Brand.avisoTexto;
     final text = ok
-        ? 'Todos los asistentes tienen hospedaje'
+        ? 'Todos tienen hospedaje. ${free <= 0 ? 'No quedan plazas libres.' : free == 1 ? 'Queda 1 plaza libre.' : 'Quedan $free plazas libres.'}'
         : '${plural(pending, 'persona', 'personas')} sin hospedaje';
     void open() {
       ref.read(attendeesPresetLodgingProvider.notifier).state =
@@ -256,7 +258,10 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
               children: [
                   if (lodgings.isNotEmpty || pending > 0) ...[
-                    _LodgingStatusBanner(pending),
+                    _LodgingStatusBanner(
+                        pending,
+                        lodgings.fold<int>(
+                            0, (s, l) => s + (l.free < 0 ? 0 : l.free))),
                     const SizedBox(height: 12),
                   ],
                   if (lodgings.isNotEmpty)
@@ -357,16 +362,33 @@ class _LodgingsScreenState extends ConsumerState<LodgingsScreen> {
                                                     weight: FontWeight.w800))),
                                         _LodgingMenu(l),
                                       ]),
-                                      Text(
-                                          '${kindLabel(l.row.kind)} · ${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.row.accepts))}',
-                                          style:
-                                              bodyStyle(14, color: Brand.gris)),
-                                      if (l.row.distanceNote.isNotEmpty)
-                                        Text(l.row.distanceNote,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: bodyStyle(14,
-                                                color: Brand.gris)),
+                                      Wrap(
+                                          crossAxisAlignment:
+                                              WrapCrossAlignment.center,
+                                          spacing: 8,
+                                          runSpacing: 4,
+                                          children: [
+                                            Container(
+                                              key: Key(
+                                                  'hosp-tipo-${l.row.name}'),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 3),
+                                              decoration: BoxDecoration(
+                                                  color: Brand.azulSuave,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8)),
+                                              child: Text(kindLabel(l.row.kind),
+                                                  style: bodyStyle(14,
+                                                      color: Brand.azul,
+                                                      weight: FontWeight.w700)),
+                                            ),
+                                            Text(
+                                                'Acepta: ${lodgingAcceptsLabel(lodgingAcceptsFromDb(l.row.accepts))}${l.row.distanceNote.isEmpty ? '' : ' · ${l.row.distanceNote}'}',
+                                                style: bodyStyle(14,
+                                                    color: Brand.gris)),
+                                          ]),
                                       const SizedBox(height: 10),
                                       Padding(
                                           padding:
@@ -609,8 +631,9 @@ class _LodgingFormScreenState extends ConsumerState<LodgingFormScreen> {
                           controller: name,
                           textCapitalization: TextCapitalization.words,
                           onChanged: (_) {
-                            if (nameError != null)
+                            if (nameError != null) {
                               setState(() => nameError = null);
+                            }
                           },
                           decoration: InputDecoration(
                               hintText: kind == 'shelter'
