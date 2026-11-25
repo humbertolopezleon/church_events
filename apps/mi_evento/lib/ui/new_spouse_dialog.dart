@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'widgets/labeled_field.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
 import '../data/database.dart';
@@ -125,39 +126,45 @@ class _NewSpouseDialogState extends ConsumerState<NewSpouseDialog> {
                     'Se inscribe junto con esta persona, con su misma iglesia y lugar. No se guarda nada hasta que guardes la ficha.',
                     style: TextStyle(color: Brand.gris)),
                 const SizedBox(height: 12),
-                TextField(
-                    key: const Key('ns-nombre'),
-                    controller: first,
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(labelText: 'Nombre')),
+                LabeledField(
+                    label: 'Nombre',
+                    child: TextField(
+                        key: const Key('ns-nombre'),
+                        controller: first,
+                        autofocus: true,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration())),
                 const SizedBox(height: 12),
-                TextField(
-                    key: const Key('ns-apellido1'),
-                    controller: last1,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    decoration:
-                        const InputDecoration(labelText: 'Primer apellido')),
+                LabeledField(
+                    label: 'Primer apellido',
+                    child: TextField(
+                        key: const Key('ns-apellido1'),
+                        controller: last1,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration())),
                 const SizedBox(height: 12),
-                TextField(
-                    key: const Key('ns-apellido2'),
-                    controller: last2,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    decoration:
-                        const InputDecoration(labelText: 'Segundo apellido')),
+                LabeledField(
+                    label: 'Segundo apellido',
+                    child: TextField(
+                        key: const Key('ns-apellido2'),
+                        controller: last2,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration())),
                 const SizedBox(height: 12),
                 Row(children: [
                   SizedBox(
                     width: 110,
-                    child: TextField(
-                        key: const Key('ns-edad'),
-                        controller: age,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: digitsOnly(3),
-                        decoration: const InputDecoration(labelText: 'Edad')),
+                    child: LabeledField(
+                        label: 'Edad',
+                        child: TextField(
+                            key: const Key('ns-edad'),
+                            controller: age,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: digitsOnly(3),
+                            decoration: const InputDecoration())),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

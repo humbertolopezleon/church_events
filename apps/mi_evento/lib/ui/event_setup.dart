@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'widgets/labeled_field.dart';
 
 import '../auth/auth_service.dart';
 import '../data/database.dart';
@@ -230,14 +231,16 @@ class _EventConfigScreenState extends ConsumerState<EventConfigScreen> {
               ),
             if (admin) ...[
               section('Datos del evento', Icons.event_note_outlined, [
-                TextField(
-                    key: const Key('cfg-nombre'),
-                    controller: name,
-                    onChanged: (_) => setState(() {
-                          dirty = true;
-                          saved = false;
-                        }),
-                    decoration: const InputDecoration(labelText: 'Nombre')),
+                LabeledField(
+                    label: 'Nombre',
+                    child: TextField(
+                        key: const Key('cfg-nombre'),
+                        controller: name,
+                        onChanged: (_) => setState(() {
+                              dirty = true;
+                              saved = false;
+                            }),
+                        decoration: const InputDecoration())),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   key: const Key('cfg-fechas'),
@@ -249,22 +252,25 @@ class _EventConfigScreenState extends ConsumerState<EventConfigScreen> {
                   label: Text('Fechas: $_rangeText'),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                    controller: venue,
-                    onChanged: (_) => setState(() {
-                          dirty = true;
-                          saved = false;
-                        }),
-                    decoration: const InputDecoration(labelText: 'Lugar')),
+                LabeledField(
+                    label: 'Lugar',
+                    child: TextField(
+                        controller: venue,
+                        onChanged: (_) => setState(() {
+                              dirty = true;
+                              saved = false;
+                            }),
+                        decoration: const InputDecoration())),
                 const SizedBox(height: 12),
-                TextField(
-                    controller: organizer,
-                    onChanged: (_) => setState(() {
-                          dirty = true;
-                          saved = false;
-                        }),
-                    decoration:
-                        const InputDecoration(labelText: 'Organizador')),
+                LabeledField(
+                    label: 'Organizador',
+                    child: TextField(
+                        controller: organizer,
+                        onChanged: (_) => setState(() {
+                              dirty = true;
+                              saved = false;
+                            }),
+                        decoration: const InputDecoration())),
                 SwitchListTile(
                     key: const Key('cfg-hospedaje'),
                     contentPadding: EdgeInsets.zero,

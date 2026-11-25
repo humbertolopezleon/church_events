@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'widgets/labeled_field.dart';
 import 'package:mi_evento_core/mi_evento_core.dart' show normalizeText;
 
 import '../auth/auth_service.dart';
@@ -200,18 +201,21 @@ class _UserDialogState extends ConsumerState<_UserDialog> {
           child: SizedBox(
             width: 420,
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(
-                  key: const Key('nu-nombre'),
-                  controller: name,
-                  textCapitalization: TextCapitalization.words,
-                  decoration:
-                      const InputDecoration(labelText: 'Nombre de la persona')),
+              LabeledField(
+                  label: 'Nombre de la persona',
+                  child: TextField(
+                      key: const Key('nu-nombre'),
+                      controller: name,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration())),
               const SizedBox(height: 12),
-              TextField(
-                  key: const Key('nu-usuario'),
-                  controller: user,
-                  autocorrect: false,
-                  decoration: const InputDecoration(labelText: 'Usuario')),
+              LabeledField(
+                  label: 'Usuario',
+                  child: TextField(
+                      key: const Key('nu-usuario'),
+                      controller: user,
+                      autocorrect: false,
+                      decoration: const InputDecoration())),
               const SizedBox(height: 12),
               PasswordField(
                   key: const Key('nu-clave'),

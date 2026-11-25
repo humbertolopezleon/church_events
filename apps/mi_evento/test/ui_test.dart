@@ -85,11 +85,13 @@ void main() {
     await t.enterText(find.byKey(const Key('setup-usuario')), 'ana.perez');
     await t.enterText(find.byKey(const Key('setup-clave')), 'secreto1');
     await t.enterText(find.byKey(const Key('setup-clave2')), 'distinta');
+    await t.ensureVisible(find.byKey(const Key('setup-crear')));
     await t.tap(find.byKey(const Key('setup-crear')));
     await settle(t);
     expect(find.text('Las contraseñas no coinciden.'), findsOneWidget);
 
     await t.enterText(find.byKey(const Key('setup-clave2')), 'secreto1');
+    await t.ensureVisible(find.byKey(const Key('setup-crear')));
     await t.tap(find.byKey(const Key('setup-crear')));
     await settle(t);
     expect(find.byKey(const Key('codigo-recuperacion')), findsOneWidget);

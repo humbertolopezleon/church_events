@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'widgets/labeled_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_service.dart';
@@ -326,14 +327,14 @@ class _DeleteEventDialogState extends ConsumerState<_DeleteEventDialog> {
                     'Antes de eliminarlo, guarda una copia desde «Copias de seguridad» si quieres conservarlo.',
                     style: TextStyle(color: Brand.gris)),
                 const SizedBox(height: 12),
-                TextField(
-                  key: const Key('ev-eliminar-nombre'),
-                  controller: typed,
-                  onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(
-                      labelText:
-                          'Para confirmar, escribe el nombre del evento'),
-                ),
+                LabeledField(
+                    label: 'Para confirmar, escribe el nombre del evento',
+                    child: TextField(
+                      key: const Key('ev-eliminar-nombre'),
+                      controller: typed,
+                      onChanged: (_) => setState(() {}),
+                      decoration: const InputDecoration(),
+                    )),
                 if (error != null) ...[
                   const SizedBox(height: 8),
                   ErrorBox(error!)
@@ -448,10 +449,12 @@ class _NewEventDialogState extends ConsumerState<_NewEventDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                      key: const Key('ev-nombre'),
-                      controller: name,
-                      decoration: const InputDecoration(labelText: 'Nombre')),
+                  LabeledField(
+                      label: 'Nombre',
+                      child: TextField(
+                          key: const Key('ev-nombre'),
+                          controller: name,
+                          decoration: const InputDecoration())),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     key: const Key('ev-fechas'),
@@ -463,14 +466,17 @@ class _NewEventDialogState extends ConsumerState<_NewEventDialog> {
                     label: Text('Fechas: $_rangeText'),
                   ),
                   const SizedBox(height: 12),
-                  TextField(
-                      controller: venue,
-                      decoration: const InputDecoration(labelText: 'Lugar')),
+                  LabeledField(
+                      label: 'Lugar',
+                      child: TextField(
+                          controller: venue,
+                          decoration: const InputDecoration())),
                   const SizedBox(height: 12),
-                  TextField(
-                      controller: organizer,
-                      decoration:
-                          const InputDecoration(labelText: 'Organizador')),
+                  LabeledField(
+                      label: 'Organizador',
+                      child: TextField(
+                          controller: organizer,
+                          decoration: const InputDecoration())),
                   SwitchListTile(
                       key: const Key('ev-hospedaje'),
                       contentPadding: EdgeInsets.zero,
