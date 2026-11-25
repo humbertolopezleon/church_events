@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'event_dates.dart' show isoDate;
 import 'widgets/labeled_field.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
@@ -283,7 +284,7 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
                         DropdownMenuItem(
                             value: x.row.id,
                             child: Text(
-                                '${x.row.name}${x.closed ? ' (cerrada)' : ''}',
+                                '${x.row.name}${x.row.scheduledAt == null ? '' : ' · ${x.row.scheduledAt!.toLocal().day}/${x.row.scheduledAt!.toLocal().month}'}${x.closed ? ' (cerrada)' : ''}',
                                 overflow: TextOverflow.ellipsis))
                     ],
                     onChanged: (v) => setState(() {
@@ -586,15 +587,47 @@ class NewSessionDialog extends ConsumerStatefulWidget {
 class _NewSessionDialogState extends ConsumerState<NewSessionDialog> {
   final name = TextEditingController();
   String? typeId;
+  String? typeName;
   String? error;
   String _auto = '';
+  DateTime? date; // día de la sesión; por defecto, el primer día del evento
+
+  DateTime? _eventDay(String iso) {
+    final d = DateTime.tryParse(iso);
+    return d == null ? null : DateTime(d.year, d.month, d.day);
+  }
 
   void _pickType(ControlType t) {
-    // el nombre se sugiere solo mientras la persona no lo haya cambiado a mano
-    final wasAuto = name.text.isEmpty || name.text == _auto;
     typeId = t.id;
-    _auto = suggestSessionName(t.name, DateTime.now());
+    typeName = t.name;
+    _suggestName();
+  }
+
+  /// El nombre se sugiere solo mientras la persona no lo haya cambiado a mano.
+  void _suggestName() {
+    final wasAuto = name.text.isEmpty || name.text == _auto;
+    _auto = suggestSessionName(typeName ?? '', date ?? DateTime.now());
     if (wasAuto) name.text = _auto;
+  }
+
+  Future<void> _pickDate(Event ev) async {
+    final first = _eventDay(ev.startDate), last = _eventDay(ev.endDate);
+    if (first == null || last == null) return;
+    final cur = date ?? first;
+    final r = await showDatePicker(
+      context: context,
+      initialDate:
+          cur.isBefore(first) ? first : (cur.isAfter(last) ? last : cur),
+      firstDate: first,
+      lastDate: last,
+      helpText: 'Fecha de la sesión',
+    );
+    if (r != null) {
+      setState(() {
+        date = r;
+        _suggestName();
+      });
+    }
   }
 
   Future<void> _create(List<ControlType> types) async {
@@ -606,7 +639,8 @@ class _NewSessionDialogState extends ConsumerState<NewSessionDialog> {
     try {
       final s = await ref.read(mealRepoProvider).createSession(
           widget.eventId, t, name.text,
-          operatorName: ref.read(currentUserProvider)?.displayName ?? '');
+          operatorName: ref.read(currentUserProvider)?.displayName ?? '',
+          date: date);
       ref.read(currentSessionIdProvider.notifier).state = s.id;
       if (mounted) Navigator.pop(context);
     } on DataException catch (e) {
@@ -618,6 +652,10 @@ class _NewSessionDialogState extends ConsumerState<NewSessionDialog> {
   Widget build(BuildContext context) {
     final types = ref.watch(controlTypesProvider(widget.eventId)).valueOrNull ??
         const <ControlType>[];
+    final event = ref.watch(eventProvider(widget.eventId)).valueOrNull;
+    if (date == null && event != null) {
+      date = _eventDay(event.startDate);
+    }
     if (typeId == null && types.isNotEmpty) {
       final t = types.firstWhere((x) => x.name == 'Almuerzo',
           orElse: () => types.first);
@@ -643,6 +681,19 @@ class _NewSessionDialogState extends ConsumerState<NewSessionDialog> {
                   onChanged: (v) => setState(
                       () => _pickType(types.firstWhere((t) => t.id == v))),
                 )),
+            const SizedBox(height: 12),
+            if (event != null && date != null)
+              LabeledField(
+                  label: 'Fecha de la sesión',
+                  child: OutlinedButton.icon(
+                    key: const Key('ns-fecha'),
+                    style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                        alignment: Alignment.centerLeft),
+                    onPressed: () => _pickDate(event),
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    label: Text('${weekdayEs(date!)} ${isoDate(date!)}'),
+                  )),
             const SizedBox(height: 12),
             LabeledField(
                 label: 'Nombre de la sesión',

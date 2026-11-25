@@ -17,11 +17,15 @@ class MealRow {
       required this.church,
       required this.team,
       this.time,
-      this.by = ''});
+      this.by = '',
+      this.times = 0});
   final int regNumber;
   final String name, sex, church, team, by;
   final int age;
   final DateTime? time; // hora local en que pasó; null = no pasó
+
+  /// Veces que pasó (registros activos): 0 = no pasó, 1 = una vez, 2 o más = repitió.
+  final int times;
 }
 
 class TeamLine {
@@ -46,6 +50,7 @@ class MealReport {
     required this.notPassed,
     required this.teams,
     required this.buckets,
+    this.repeatCounts = const {},
   });
 
   final String eventName, eventDates, sessionName, typeName;
@@ -54,6 +59,16 @@ class MealReport {
   final List<MealRow> passed, notPassed;
   final List<TeamLine> teams;
   final List<(DateTime, int)> buckets;
+
+  /// Cuántas personas pasaron exactamente N veces, solo para N ≥ 2 (los que repitieron).
+  final Map<int, int> repeatCounts;
+
+  /// Personas que pasaron más de una vez.
+  int get repeaters => repeatCounts.values.fold(0, (a, b) => a + b);
+
+  /// Pasadas de más (por ejemplo, alguien que pasó 3 veces suma 2).
+  int get extraPasses =>
+      repeatCounts.entries.fold(0, (a, e) => a + (e.key - 1) * e.value);
 
   int get total => passed.length + notPassed.length;
   int get percent => total == 0 ? 0 : (passed.length * 100 / total).round();
@@ -76,7 +91,9 @@ MealReport buildMealReport({
   required List<ControlRecord> records,
 }) {
   final first = <String, ControlRecord>{};
+  final times = <String, int>{};
   for (final r in records) {
+    times[r.attendeeId] = (times[r.attendeeId] ?? 0) + 1;
     final cur = first[r.attendeeId];
     if (cur == null || r.markedAt.isBefore(cur.markedAt)) {
       first[r.attendeeId] = r;
@@ -95,6 +112,7 @@ MealReport buildMealReport({
       team: teams[a.teamId]?.name ?? '',
       time: r?.markedAt.toLocal(),
       by: r?.operatorName ?? '',
+      times: times[a.id] ?? 0,
     );
   }
 
@@ -132,7 +150,18 @@ MealReport buildMealReport({
     notPassed: not,
     teams: lines,
     buckets: arrivalBuckets([for (final r in passed) r.time!]),
+    repeatCounts: _repeatCounts([for (final p in passed) p.times]),
   );
+}
+
+/// {veces: personas} solo para veces ≥ 2, a partir de las veces que pasó cada persona.
+Map<int, int> _repeatCounts(Iterable<int> perPerson) {
+  final out = <int, int>{};
+  for (final n in perPerson) {
+    if (n >= 2) out[n] = (out[n] ?? 0) + 1;
+  }
+  return Map.fromEntries(
+      out.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
 }
 
 /// CSV con TODAS las personas (pasó sí/no) para abrir en cualquier programa.
@@ -146,7 +175,8 @@ String mealCsv(MealReport r) => buildCsv([
         'Equipo',
         'Pasó',
         'Hora',
-        'Marcado por'
+        'Marcado por',
+        'Veces'
       ],
       for (final p in [
         ...r.passed,
@@ -161,7 +191,8 @@ String mealCsv(MealReport r) => buildCsv([
           p.team,
           p.time == null ? 'No' : 'Sí',
           p.time == null ? '' : hhmm(p.time!),
-          p.by
+          p.by,
+          '${p.times}'
         ],
     ]);
 
@@ -174,7 +205,7 @@ Uint8List mealXlsx(MealReport r) {
         p.age,
         p.church,
         p.team,
-        if (withTime) ...[hhmm(p.time!), p.by]
+        if (withTime) ...[hhmm(p.time!), p.by, p.times]
       ];
   const head = ['Nº', 'Nombre', 'Sexo', 'Edad', 'Iglesia', 'Equipo'];
   return buildXlsx([
@@ -195,6 +226,9 @@ Uint8List mealXlsx(MealReport r) {
       ['No pasaron', r.notPassed.length],
       ['Porcentaje que pasó', '${r.percent} %'],
       ['Repetidos evitados', r.blockedRepeats],
+      ['Personas que repitieron', r.repeaters],
+      for (final e in r.repeatCounts.entries)
+        ['Pasaron ${e.key} veces', e.value],
       ['', ''],
       ['Equipo', 'Pasaron / total'],
       for (final t in r.teams) [t.name, '${t.passed} / ${t.total}'],
@@ -203,7 +237,7 @@ Uint8List mealXlsx(MealReport r) {
       for (final b in r.buckets) [hhmm(b.$1), b.$2],
     ]),
     XlsxSheet('Pasaron', [
-      [...head, 'Hora', 'Marcado por'],
+      [...head, 'Hora', 'Marcado por', 'Veces'],
       for (final p in r.passed) person(p),
     ]),
     XlsxSheet('No pasaron', [

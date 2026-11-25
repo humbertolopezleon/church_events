@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart' show Override;
 import 'package:mi_evento/backup/file_picker.dart';
+import 'package:mi_evento/data/meal_repo.dart';
 import 'package:mi_evento/data/repos_b.dart';
 import 'package:mi_evento/providers.dart';
 import 'package:mi_evento_core/mi_evento_core.dart' show buildCsvDelimited;
@@ -447,7 +448,8 @@ void main() {
       await _ir(t, 'Hospedajes');
       await tapKey(t, 'hosp-nuevo');
       await tapKey(t, 'lf-acepta-womenOrCouples');
-      await t.drag(find.byType(SingleChildScrollView).first, const Offset(0, -300));
+      await t.drag(
+          find.byType(SingleChildScrollView).first, const Offset(0, -300));
       await t.pump();
       await shot(t, 'hospedaje-mixto-formulario');
     });
@@ -455,7 +457,8 @@ void main() {
       await _abrir(t, _movil, datos: false, escala: 1.3);
       await _ir(t, 'Hospedajes');
       await tapKey(t, 'hosp-nuevo');
-      await t.drag(find.byType(SingleChildScrollView).first, const Offset(0, -300));
+      await t.drag(
+          find.byType(SingleChildScrollView).first, const Offset(0, -300));
       await t.pump();
       await shot(t, 'hospedaje-mixto-formulario-letra130');
     });
@@ -465,6 +468,51 @@ void main() {
       await _ir(t, 'Hospedajes');
       await tapKey(t, 'hosp-sugerir');
       await shot(t, 'sugerir-separar-casilla');
+    });
+  });
+
+  group('Sugerir y comidas', () {
+    cap('móvil: elegir personas con buscador y marcar todos', (t) async {
+      await _abrir(t, _movil);
+      await _ir(t, 'Hospedajes');
+      await tapKey(t, 'hosp-sugerir');
+      await tapKey(t, 'sg-elegir');
+      await shot(t, 'sugerir-elegir-personas');
+      await enter(t, 'sgp-buscar', 'a');
+      await shot(t, 'sugerir-elegir-personas-busqueda');
+    });
+    cap('móvil: nueva sesión con fecha', (t) async {
+      await _abrir(t, _movil);
+      await _ir(t, 'Comidas');
+      await tapKey(t, 'cm-nueva');
+      await shot(t, 'comidas-nueva-sesion-fecha');
+    });
+    cap('móvil: resumen con repeticiones', (t) async {
+      final c = await _abrir(t, _movil);
+      await t.runAsync(() async {
+        final meals = MealRepo(c.db);
+        final ev = (await c.db.select(c.db.events).getSingle()).id;
+        await meals.ensureDefaultTypes(ev);
+        final tp =
+            (await meals.types(ev)).firstWhere((x) => x.name == 'Almuerzo');
+        final s = await meals.createSession(ev, tp.id, 'Almuerzo del sábado');
+        final people = (await c.db.select(c.db.attendees).get())
+            .where((a) => a.status == 'confirmed')
+            .toList();
+        for (final p in people) {
+          await meals.mark(s.id, p.id, operatorName: 'Ruth');
+        }
+        for (final (i, n) in [(0, 1), (1, 1), (2, 2), (3, 3)]) {
+          for (var k = 0; k < n; k++) {
+            await meals.mark(s.id, people[i].id,
+                operatorName: 'Ruth', repeat: true);
+          }
+        }
+      });
+      await _ir(t, 'Comidas');
+      await tapKey(t, 'cm-cerrar');
+      await tapKey(t, 'cm-cerrar-ok');
+      await shot(t, 'comidas-resumen-repeticiones');
     });
   });
 }

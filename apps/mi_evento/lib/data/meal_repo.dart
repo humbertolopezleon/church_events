@@ -100,11 +100,29 @@ class MealRepo {
         ]);
   }
 
+  /// [date] es el día de la sesión (opcional): debe estar dentro de las fechas del evento.
   Future<ControlSession> createSession(
       String eventId, String typeId, String name,
-      {String operatorName = ''}) async {
+      {String operatorName = '', DateTime? date}) async {
     final n = name.trim();
     if (n.isEmpty) throw DataException('Falta el nombre de la sesión.');
+    DateTime? day;
+    if (date != null) {
+      day = DateTime(date.year, date.month, date.day);
+      final ev = await (db.select(db.events)
+            ..where((e) => e.id.equals(eventId)))
+          .getSingle();
+      final start = DateTime.tryParse(ev.startDate);
+      final end = DateTime.tryParse(ev.endDate);
+      if (start != null && end != null) {
+        final s0 = DateTime(start.year, start.month, start.day);
+        final e0 = DateTime(end.year, end.month, end.day);
+        if (day.isBefore(s0) || day.isAfter(e0)) {
+          throw DataException(
+              'La fecha de la sesión debe estar dentro del evento (del ${ev.startDate} al ${ev.endDate}).');
+        }
+      }
+    }
     final existing = await (db.select(db.controlSessions)
           ..where((s) => s.eventId.equals(eventId) & s.deletedAt.isNull()))
         .get();
@@ -122,6 +140,7 @@ class MealRepo {
           controlTypeId: typeId,
           name: n,
           openedAt: Value(now),
+          scheduledAt: Value(day),
           operatorName: Value(operatorName),
         ));
     return (db.select(db.controlSessions)..where((s) => s.id.equals(id)))
