@@ -184,3 +184,12 @@ Implementa la tabla aprobada (§9). Solo escritorio; en móvil no estorban.
 - **Zona horaria:** la hora se exporta y se lee en **hora local** del equipo; entre equipos en husos distintos las horas se desplazarían. No se tuvo en cuenta (el evento es en un solo lugar).
 - **No hecho:** las marcas importadas no cuentan los «avisos de repetido no marcado» (`blockedRepeats`) de la sesión; es una cifra del resumen de cierre propia de cada dispositivo.
 - **Pruebas:** `pr12_comidas_intercambio_test.dart` (formatos, ida y vuelta entre eventos, fechas, filas con avisos, no duplicar, repetidos, y el menú de la pantalla).
+
+## 19. «¿Descartar los cambios?» en los formularios (rama `feat/descartar-cambios`)
+
+- **Qué:** al salir de la **ficha del asistente** o del **formulario de hospedaje** con cambios sin guardar (flecha «Atrás», X, Cancelar, Esc, Alt+← o el gesto atrás del móvil), sale el diálogo «¿Descartar los cambios?» con «Seguir editando» (conserva todo lo escrito) y «Descartar» (sale sin guardar). Sin cambios, se sale directo.
+- **Qué cuenta como cambio:** se compara el contenido actual con el de **al abrir** (o, al editar, con lo cargado de la base). Escribir y volver a borrar, o devolver un valor al original, **no** cuenta. «Guardar», «Guardar y registrar otro» y «Eliminar» no preguntan.
+- **Cómo:** `DiscardGuard` (`lib/ui/discard_guard.dart`) = `PopScope` que evalúa los cambios **al intentar salir** (teclear no reconstruye la pantalla, así que no se puede fijar `canPop` al construir). Los botones X y Cancelar pasan a `maybePop` para que el aviso también los alcance; Esc ya iba por `maybePop` (§9).
+- **No se aplicó** a los diálogos pequeños (nuevo evento, iglesia, equipo, usuario, contraseña…): se cierran tocando fuera y tienen pocos campos. *Por qué:* lo pedido fue «formularios»; si en el evento se pierde algo escrito en esos diálogos, se añade la misma protección.
+- **Límite:** en Android la protección anula la animación de «atrás predictivo» en estas dos pantallas (`canPop` siempre falso). Sin probar en un Android real.
+- **Pruebas:** `pr13_descartar_cambios_test.dart` (6).

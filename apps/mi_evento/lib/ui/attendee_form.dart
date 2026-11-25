@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'discard_guard.dart';
 import 'shortcuts.dart';
 import 'widgets/labeled_field.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
@@ -78,12 +79,38 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
   AttendeeRow? savedRow; // pantalla de éxito tras guardar
 
   bool get editing => widget.attendeeId != null;
+
+  /// Todo lo escrito o elegido en la ficha, para saber si hay cambios sin guardar.
+  String get _signature => [
+        first.text,
+        last1.text,
+        last2.text,
+        age.text,
+        phone.text,
+        notes.text,
+        municipality.text,
+        churchText.text,
+        sex?.name ?? '',
+        province ?? '',
+        needsLodging,
+        preregister,
+        church?.id ?? '',
+        spouse?.id ?? '',
+        spouseDraft != null,
+        (groupIds.toList()..sort()).join(','),
+        lodgingId ?? '',
+        lodgingDeferred,
+      ].join('\u0001');
+  String _baseline = '';
+  bool get _dirty => _signature != _baseline;
+
   String get eventId => ref.read(currentEventIdProvider)!;
   Repository get repo => ref.read(repositoryProvider);
 
   @override
   void initState() {
     super.initState();
+    _baseline = _signature;
     if (editing) _load();
   }
 
@@ -127,6 +154,7 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
       church = c;
       churchText.text = c?.name ?? '';
       loaded = true;
+      _baseline = _signature;
     });
   }
 
@@ -165,6 +193,7 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
       error = null;
       savedRow = null;
       churchPickerOpen = false;
+      _baseline = _signature;
     });
     firstFocus.requestFocus();
   }
@@ -514,424 +543,440 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
         .any((c) => normalizeText(c.name) == normalizeText(churchText.text));
     final showDup = dupes.isNotEmpty && dismissedDupFor != _dupKey;
     // Ctrl+S / Ctrl+Enter guardan (como el botón «Guardar»).
-    return ScreenShortcutsScope(
-      handlers: {ScreenAction.save: busy ? null : () => _save(another: false)},
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(editing ? 'Ficha del asistente' : 'Nuevo asistente'),
-          actions: [
-            if (editing && (me?.isAdmin ?? false))
-              ExcludeFocus(
-                child: IconButton(
-                    key: const Key('f-eliminar'),
-                    tooltip: 'Eliminar',
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: _delete),
-              ),
-          ],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: FocusTraversalGroup(
-                policy: OrderedTraversalPolicy(),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (lastSavedMsg != null) ...[
-                        Container(
-                          key: const Key('f-ok-otro'),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                              color: Brand.exitoSuave,
-                              borderRadius: BorderRadius.circular(10)),
-                          child: Row(children: [
-                            const Icon(Icons.check_circle, color: Brand.exito),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(lastSavedMsg!)),
-                          ]),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      _tabOrder(
-                          1,
-                          LabeledField(
-                              label: 'Nombre *',
-                              child: TextField(
-                                key: const Key('f-nombre'),
-                                controller: first,
-                                focusNode: firstFocus,
-                                autofocus: !editing,
-                                textCapitalization: TextCapitalization.words,
-                                textInputAction: TextInputAction.next,
-                                onChanged: (_) => _checkDup(),
-                                decoration: const InputDecoration(),
-                              ))),
-                      const SizedBox(height: 12),
-                      LayoutBuilder(builder: (context, c) {
-                        final apellidos = [
-                          _tabOrder(
-                              2,
-                              LabeledField(
-                                  label: 'Primer apellido *',
-                                  child: TextField(
-                                      key: const Key('f-apellido1'),
-                                      controller: last1,
-                                      textCapitalization:
-                                          TextCapitalization.words,
-                                      textInputAction: TextInputAction.next,
-                                      onChanged: (_) => _checkDup(),
-                                      decoration: const InputDecoration()))),
-                          _tabOrder(
-                              3,
-                              LabeledField(
-                                  label: 'Segundo apellido',
-                                  optional: true,
-                                  child: TextField(
-                                      key: const Key('f-apellido2'),
-                                      controller: last2,
-                                      textCapitalization:
-                                          TextCapitalization.words,
-                                      textInputAction: TextInputAction.next,
-                                      decoration: const InputDecoration()))),
-                        ];
-                        return Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Expanded(child: apellidos[0]),
-                              const SizedBox(width: 10),
-                              Expanded(child: apellidos[1])
-                            ]);
-                      }),
-                      if (showDup) ...[
-                        const SizedBox(height: 12),
-                        ExcludeFocus(child: _dupWarning())
-                      ],
-                      const SizedBox(height: 16),
-                      _tabOrder(
-                          4,
-                          LabeledField(
-                              label: 'Sexo *',
-                              child: DropdownButtonFormField<Sex>(
-                                key: const Key('f-sexo'),
-                                initialValue: sex,
-                                isExpanded: true,
-                                decoration: const InputDecoration(),
-                                items: const [
-                                  DropdownMenuItem(
-                                      value: Sex.male,
-                                      child: Text('M (Hombre)')),
-                                  DropdownMenuItem(
-                                      value: Sex.female,
-                                      child: Text('F (Mujer)')),
-                                ],
-                                onChanged: (v) => setState(() => sex = v),
-                              ))),
-                      const SizedBox(height: 16),
-                      Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            SizedBox(
-                              width: 110,
-                              child: _tabOrder(
-                                  5,
-                                  LabeledField(
-                                      label: 'Edad *',
-                                      child: TextField(
-                                          key: const Key('f-edad'),
-                                          controller: age,
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: digitsOnly(3),
-                                          textInputAction: TextInputAction.next,
-                                          onChanged: (_) {
-                                            _checkDup();
-                                            setState(() {});
-                                          },
-                                          decoration:
-                                              const InputDecoration()))),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                                child: _tabOrder(
-                                    6,
-                                    LabeledField(
-                                        label: 'Teléfono',
-                                        optional: true,
-                                        child: TextField(
-                                            key: const Key('f-telefono'),
-                                            controller: phone,
-                                            keyboardType: TextInputType.phone,
-                                            inputFormatters: phoneChars(),
-                                            decoration:
-                                                const InputDecoration())))),
-                          ]),
-                      const SizedBox(height: 16),
-                      _tabOrder(
-                        7,
-                        // Al salir del campo con Tab (o con Enter) se elige la iglesia si coincide
-                        // exactamente o es la única sugerida: así se completa solo con el teclado.
-                        Focus(
-                          canRequestFocus: false,
-                          skipTraversal: true,
-                          onFocusChange: (has) {
-                            if (!has) _autoPickChurch(churches);
-                          },
-                          child: LabeledField(
-                              label: 'Iglesia *',
-                              child: TextField(
-                                key: const Key('f-iglesia'),
-                                controller: churchText,
-                                textInputAction: TextInputAction.next,
-                                onSubmitted: (_) => _autoPickChurch(churches),
-                                onChanged: (_) => setState(() {
-                                  church =
-                                      null; // al escribir se deshace la selección anterior
-                                  churchPickerOpen = true;
-                                }),
-                                decoration: InputDecoration(
-                                  suffixIcon: church != null
-                                      ? const Icon(Icons.check_circle,
-                                          color: Brand.exito)
-                                      : null,
-                                ),
-                              )),
-                        ),
-                      ),
-                      if (suggestions.isNotEmpty ||
-                          (churchPickerOpen &&
-                              church == null &&
-                              churchText.text.trim().isNotEmpty))
-                        Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            // Material (no Container con color): así el ListTile pinta bien su fondo y el toque.
-                            // Fuera del orden de Tab: se elige con el ratón/dedo o con Enter en el campo.
-                            child: ExcludeFocus(
-                                child: Material(
-                              color: Colors.white,
-                              clipBehavior: Clip.antiAlias,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: const BorderSide(color: Brand.borde)),
-                              child: Column(children: [
-                                for (final c in suggestions)
-                                  ListTile(
-                                    key: Key('iglesia-${c.nameNormalized}'),
-                                    minTileHeight: 56,
-                                    title: Text(c.name,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w700)),
-                                    subtitle: Text([
-                                      c.community,
-                                      c.municipality,
-                                      c.province
-                                    ].where((e) => e.isNotEmpty).join(', ')),
-                                    onTap: () => _pickChurch(c),
-                                  ),
-                                if (!exact)
-                                  ListTile(
-                                    key: const Key('iglesia-nueva'),
-                                    minTileHeight: 56,
-                                    tileColor: const Color(0xFFF3F7FC),
-                                    title: Text(
-                                        '+ Registrar «${churchText.text.trim()}» como iglesia nueva',
-                                        style: const TextStyle(
-                                            color: Brand.azul,
-                                            fontWeight: FontWeight.w700)),
-                                    subtitle: const Text(
-                                        'Pide nombre, provincia y municipio, y queda en el catálogo'),
-                                    onTap: () =>
-                                        _newChurch(churchText.text.trim()),
-                                  ),
-                              ]),
-                            ))),
-                      const SizedBox(height: 16),
-                      // Provincia y municipio son los de la iglesia: no se escriben aquí.
-                      ExcludeFocus(
-                        child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Expanded(
-                                  child: LabeledField(
-                                      label: 'Provincia (de la iglesia)',
-                                      child: InputDecorator(
-                                          key: const Key('f-provincia'),
-                                          decoration: const InputDecoration(),
-                                          child: Text(
-                                              church?.province.isNotEmpty ==
-                                                      true
-                                                  ? church!.province
-                                                  : '—',
-                                              style: const TextStyle(
-                                                  color: Brand.gris))))),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                  child: LabeledField(
-                                      label: 'Municipio (de la iglesia)',
-                                      child: InputDecorator(
-                                          key: const Key('f-municipio'),
-                                          decoration: const InputDecoration(),
-                                          child: Text(
-                                              church?.municipality.isNotEmpty ==
-                                                      true
-                                                  ? church!.municipality
-                                                  : '—',
-                                              style: const TextStyle(
-                                                  color: Brand.gris))))),
+    return DiscardGuard(
+      isDirty: () => _dirty,
+      child: ScreenShortcutsScope(
+        handlers: {
+          ScreenAction.save: busy ? null : () => _save(another: false)
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(editing ? 'Ficha del asistente' : 'Nuevo asistente'),
+            actions: [
+              if (editing && (me?.isAdmin ?? false))
+                ExcludeFocus(
+                  child: IconButton(
+                      key: const Key('f-eliminar'),
+                      tooltip: 'Eliminar',
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: _delete),
+                ),
+            ],
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: FocusTraversalGroup(
+                  policy: OrderedTraversalPolicy(),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (lastSavedMsg != null) ...[
+                          Container(
+                            key: const Key('f-ok-otro'),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                                color: Brand.exitoSuave,
+                                borderRadius: BorderRadius.circular(10)),
+                            child: Row(children: [
+                              const Icon(Icons.check_circle,
+                                  color: Brand.exito),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(lastSavedMsg!)),
                             ]),
-                      ),
-                      const Padding(
-                          padding: EdgeInsets.only(top: 6),
-                          child: Text('* obligatorio',
-                              style:
-                                  TextStyle(fontSize: 14, color: Brand.gris))),
-                      const SizedBox(height: 16),
-                      if (!editing)
-                        Card(
-                          child: SwitchListTile(
-                            key: const Key('f-preinscripcion'),
-                            secondary: const Icon(
-                                Icons.event_available_outlined,
-                                color: Brand.azul),
-                            title: const Text('Preinscripción',
-                                style: TextStyle(fontWeight: FontWeight.w700)),
-                            subtitle: const Text(
-                                'Se anota antes del evento; la asistencia se confirma el día'),
-                            value: preregister,
-                            onChanged: (v) => setState(() => preregister = v),
                           ),
-                        )
-                      else if (_isPreregistered)
-                        Card(
-                          color: Brand.avisoSuave,
-                          child: ListTile(
-                            key: const Key('f-preinscrito'),
-                            leading: const Icon(Icons.event_available_outlined,
-                                color: Brand.avisoTexto),
-                            title: const Text(
-                                'Preinscrito: asistencia sin confirmar',
-                                style: TextStyle(fontWeight: FontWeight.w700)),
-                            trailing: FilledButton(
-                                key: const Key('f-confirmar-asistencia'),
-                                onPressed: () async {
-                                  await repo
-                                      .confirmAttendance([widget.attendeeId!]);
-                                  if (!mounted) return;
-                                  setState(() => _isPreregistered = false);
-                                },
-                                child: const Text('Confirmar')),
+                          const SizedBox(height: 12),
+                        ],
+                        _tabOrder(
+                            1,
+                            LabeledField(
+                                label: 'Nombre *',
+                                child: TextField(
+                                  key: const Key('f-nombre'),
+                                  controller: first,
+                                  focusNode: firstFocus,
+                                  autofocus: !editing,
+                                  textCapitalization: TextCapitalization.words,
+                                  textInputAction: TextInputAction.next,
+                                  onChanged: (_) => _checkDup(),
+                                  decoration: const InputDecoration(),
+                                ))),
+                        const SizedBox(height: 12),
+                        LayoutBuilder(builder: (context, c) {
+                          final apellidos = [
+                            _tabOrder(
+                                2,
+                                LabeledField(
+                                    label: 'Primer apellido *',
+                                    child: TextField(
+                                        key: const Key('f-apellido1'),
+                                        controller: last1,
+                                        textCapitalization:
+                                            TextCapitalization.words,
+                                        textInputAction: TextInputAction.next,
+                                        onChanged: (_) => _checkDup(),
+                                        decoration: const InputDecoration()))),
+                            _tabOrder(
+                                3,
+                                LabeledField(
+                                    label: 'Segundo apellido',
+                                    optional: true,
+                                    child: TextField(
+                                        key: const Key('f-apellido2'),
+                                        controller: last2,
+                                        textCapitalization:
+                                            TextCapitalization.words,
+                                        textInputAction: TextInputAction.next,
+                                        decoration: const InputDecoration()))),
+                          ];
+                          return Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(child: apellidos[0]),
+                                const SizedBox(width: 10),
+                                Expanded(child: apellidos[1])
+                              ]);
+                        }),
+                        if (showDup) ...[
+                          const SizedBox(height: 12),
+                          ExcludeFocus(child: _dupWarning())
+                        ],
+                        const SizedBox(height: 16),
+                        _tabOrder(
+                            4,
+                            LabeledField(
+                                label: 'Sexo *',
+                                child: DropdownButtonFormField<Sex>(
+                                  key: const Key('f-sexo'),
+                                  initialValue: sex,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(),
+                                  items: const [
+                                    DropdownMenuItem(
+                                        value: Sex.male,
+                                        child: Text('M (Hombre)')),
+                                    DropdownMenuItem(
+                                        value: Sex.female,
+                                        child: Text('F (Mujer)')),
+                                  ],
+                                  onChanged: (v) => setState(() => sex = v),
+                                ))),
+                        const SizedBox(height: 16),
+                        Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              SizedBox(
+                                width: 110,
+                                child: _tabOrder(
+                                    5,
+                                    LabeledField(
+                                        label: 'Edad *',
+                                        child: TextField(
+                                            key: const Key('f-edad'),
+                                            controller: age,
+                                            keyboardType: TextInputType.number,
+                                            inputFormatters: digitsOnly(3),
+                                            textInputAction:
+                                                TextInputAction.next,
+                                            onChanged: (_) {
+                                              _checkDup();
+                                              setState(() {});
+                                            },
+                                            decoration:
+                                                const InputDecoration()))),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                  child: _tabOrder(
+                                      6,
+                                      LabeledField(
+                                          label: 'Teléfono',
+                                          optional: true,
+                                          child: TextField(
+                                              key: const Key('f-telefono'),
+                                              controller: phone,
+                                              keyboardType: TextInputType.phone,
+                                              inputFormatters: phoneChars(),
+                                              decoration:
+                                                  const InputDecoration())))),
+                            ]),
+                        const SizedBox(height: 16),
+                        _tabOrder(
+                          7,
+                          // Al salir del campo con Tab (o con Enter) se elige la iglesia si coincide
+                          // exactamente o es la única sugerida: así se completa solo con el teclado.
+                          Focus(
+                            canRequestFocus: false,
+                            skipTraversal: true,
+                            onFocusChange: (has) {
+                              if (!has) _autoPickChurch(churches);
+                            },
+                            child: LabeledField(
+                                label: 'Iglesia *',
+                                child: TextField(
+                                  key: const Key('f-iglesia'),
+                                  controller: churchText,
+                                  textInputAction: TextInputAction.next,
+                                  onSubmitted: (_) => _autoPickChurch(churches),
+                                  onChanged: (_) => setState(() {
+                                    church =
+                                        null; // al escribir se deshace la selección anterior
+                                    churchPickerOpen = true;
+                                  }),
+                                  decoration: InputDecoration(
+                                    suffixIcon: church != null
+                                        ? const Icon(Icons.check_circle,
+                                            color: Brand.exito)
+                                        : null,
+                                  ),
+                                )),
                           ),
-                        )
-                      else if (editing)
-                        Card(
-                          child: ListTile(
-                            key: const Key('f-confirmado'),
-                            leading: const Icon(Icons.check_circle_outline,
-                                color: Brand.exito),
-                            title: const Text('Asistencia confirmada',
-                                style: TextStyle(fontWeight: FontWeight.w700)),
-                            trailing: OutlinedButton(
-                                key: const Key('f-desconfirmar-asistencia'),
-                                onPressed: () async {
-                                  final messenger =
-                                      ScaffoldMessenger.of(context);
-                                  try {
-                                    await repo.unconfirmAttendance(
+                        ),
+                        if (suggestions.isNotEmpty ||
+                            (churchPickerOpen &&
+                                church == null &&
+                                churchText.text.trim().isNotEmpty))
+                          Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              // Material (no Container con color): así el ListTile pinta bien su fondo y el toque.
+                              // Fuera del orden de Tab: se elige con el ratón/dedo o con Enter en el campo.
+                              child: ExcludeFocus(
+                                  child: Material(
+                                color: Colors.white,
+                                clipBehavior: Clip.antiAlias,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: const BorderSide(color: Brand.borde)),
+                                child: Column(children: [
+                                  for (final c in suggestions)
+                                    ListTile(
+                                      key: Key('iglesia-${c.nameNormalized}'),
+                                      minTileHeight: 56,
+                                      title: Text(c.name,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w700)),
+                                      subtitle: Text([
+                                        c.community,
+                                        c.municipality,
+                                        c.province
+                                      ].where((e) => e.isNotEmpty).join(', ')),
+                                      onTap: () => _pickChurch(c),
+                                    ),
+                                  if (!exact)
+                                    ListTile(
+                                      key: const Key('iglesia-nueva'),
+                                      minTileHeight: 56,
+                                      tileColor: const Color(0xFFF3F7FC),
+                                      title: Text(
+                                          '+ Registrar «${churchText.text.trim()}» como iglesia nueva',
+                                          style: const TextStyle(
+                                              color: Brand.azul,
+                                              fontWeight: FontWeight.w700)),
+                                      subtitle: const Text(
+                                          'Pide nombre, provincia y municipio, y queda en el catálogo'),
+                                      onTap: () =>
+                                          _newChurch(churchText.text.trim()),
+                                    ),
+                                ]),
+                              ))),
+                        const SizedBox(height: 16),
+                        // Provincia y municipio son los de la iglesia: no se escriben aquí.
+                        ExcludeFocus(
+                          child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                    child: LabeledField(
+                                        label: 'Provincia (de la iglesia)',
+                                        child: InputDecorator(
+                                            key: const Key('f-provincia'),
+                                            decoration: const InputDecoration(),
+                                            child: Text(
+                                                church?.province.isNotEmpty ==
+                                                        true
+                                                    ? church!.province
+                                                    : '—',
+                                                style: const TextStyle(
+                                                    color: Brand.gris))))),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                    child: LabeledField(
+                                        label: 'Municipio (de la iglesia)',
+                                        child: InputDecorator(
+                                            key: const Key('f-municipio'),
+                                            decoration: const InputDecoration(),
+                                            child: Text(
+                                                church?.municipality
+                                                            .isNotEmpty ==
+                                                        true
+                                                    ? church!.municipality
+                                                    : '—',
+                                                style: const TextStyle(
+                                                    color: Brand.gris))))),
+                              ]),
+                        ),
+                        const Padding(
+                            padding: EdgeInsets.only(top: 6),
+                            child: Text('* obligatorio',
+                                style: TextStyle(
+                                    fontSize: 14, color: Brand.gris))),
+                        const SizedBox(height: 16),
+                        if (!editing)
+                          Card(
+                            child: SwitchListTile(
+                              key: const Key('f-preinscripcion'),
+                              secondary: const Icon(
+                                  Icons.event_available_outlined,
+                                  color: Brand.azul),
+                              title: const Text('Preinscripción',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w700)),
+                              subtitle: const Text(
+                                  'Se anota antes del evento; la asistencia se confirma el día'),
+                              value: preregister,
+                              onChanged: (v) => setState(() => preregister = v),
+                            ),
+                          )
+                        else if (_isPreregistered)
+                          Card(
+                            color: Brand.avisoSuave,
+                            child: ListTile(
+                              key: const Key('f-preinscrito'),
+                              leading: const Icon(
+                                  Icons.event_available_outlined,
+                                  color: Brand.avisoTexto),
+                              title: const Text(
+                                  'Preinscrito: asistencia sin confirmar',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w700)),
+                              trailing: FilledButton(
+                                  key: const Key('f-confirmar-asistencia'),
+                                  onPressed: () async {
+                                    await repo.confirmAttendance(
                                         [widget.attendeeId!]);
                                     if (!mounted) return;
-                                    setState(() => _isPreregistered = true);
-                                  } on DataException catch (e) {
-                                    messenger.notice(e.message, error: true);
-                                  }
-                                },
-                                child: const Text('Desconfirmar')),
+                                    setState(() => _isPreregistered = false);
+                                  },
+                                  child: const Text('Confirmar')),
+                            ),
+                          )
+                        else if (editing)
+                          Card(
+                            child: ListTile(
+                              key: const Key('f-confirmado'),
+                              leading: const Icon(Icons.check_circle_outline,
+                                  color: Brand.exito),
+                              title: const Text('Asistencia confirmada',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w700)),
+                              trailing: OutlinedButton(
+                                  key: const Key('f-desconfirmar-asistencia'),
+                                  onPressed: () async {
+                                    final messenger =
+                                        ScaffoldMessenger.of(context);
+                                    try {
+                                      await repo.unconfirmAttendance(
+                                          [widget.attendeeId!]);
+                                      if (!mounted) return;
+                                      setState(() => _isPreregistered = true);
+                                    } on DataException catch (e) {
+                                      messenger.notice(e.message, error: true);
+                                    }
+                                  },
+                                  child: const Text('Desconfirmar')),
+                            ),
                           ),
-                        ),
-                      if (offersLodging) ...[
-                        const SizedBox(height: 16),
-                        Card(
-                          child: SwitchListTile(
-                            key: const Key('f-hospedaje'),
-                            secondary: const Icon(Icons.house_outlined,
+                        if (offersLodging) ...[
+                          const SizedBox(height: 16),
+                          Card(
+                            child: SwitchListTile(
+                              key: const Key('f-hospedaje'),
+                              secondary: const Icon(Icons.house_outlined,
+                                  color: Brand.azul),
+                              title: const Text('Necesita hospedaje',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w700)),
+                              subtitle: Text(lodgingViews.isEmpty
+                                  ? 'Aún no hay hospedajes definidos'
+                                  : 'Elige uno ahora o asígnalo después'),
+                              value: needsLodging,
+                              onChanged: (v) => setState(() {
+                                needsLodging = v;
+                                if (!v) lodgingId = null;
+                              }),
+                            ),
+                          ),
+                          if (needsLodging && lodgingViews.isNotEmpty)
+                            _lodgingAssign(lodgingViews, allPeople),
+                        ],
+                        if (editing && teamName != null) ...[
+                          const SizedBox(height: 12),
+                          Row(children: [
+                            const Icon(Icons.groups_outlined,
                                 color: Brand.azul),
-                            title: const Text('Necesita hospedaje',
-                                style: TextStyle(fontWeight: FontWeight.w700)),
-                            subtitle: Text(lodgingViews.isEmpty
-                                ? 'Aún no hay hospedajes definidos'
-                                : 'Elige uno ahora o asígnalo después'),
-                            value: needsLodging,
-                            onChanged: (v) => setState(() {
-                              needsLodging = v;
-                              if (!v) lodgingId = null;
-                            }),
-                          ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                                child: Text(
+                                    'Equipo: $teamName (se cambia desde la vista de Equipos)',
+                                    key: const Key('f-equipo-actual'),
+                                    style: const TextStyle(color: Brand.gris))),
+                          ]),
+                        ],
+                        const SizedBox(height: 16),
+                        SocialSection(
+                          eventId: eventId,
+                          selfId: widget.attendeeId,
+                          spouse: spouse,
+                          spouseDraft: spouseDraft,
+                          groupIds: groupIds,
+                          selfSex: sex,
+                          selfLastName: last1.text,
+                          onSpouse: (s) => setState(() {
+                            spouse = s;
+                            _coupleMoveDismissed = false;
+                            if (s != null) spouseDraft = null;
+                          }),
+                          onSpouseDraft: (d) => setState(() {
+                            spouseDraft = d;
+                            if (d != null) spouse = null;
+                          }),
+                          onGroups: (g) => setState(() => groupIds = g),
                         ),
-                        if (needsLodging && lodgingViews.isNotEmpty)
-                          _lodgingAssign(lodgingViews, allPeople),
-                      ],
-                      if (editing && teamName != null) ...[
-                        const SizedBox(height: 12),
-                        Row(children: [
-                          const Icon(Icons.groups_outlined, color: Brand.azul),
-                          const SizedBox(width: 8),
-                          Expanded(
-                              child: Text(
-                                  'Equipo: $teamName (se cambia desde la vista de Equipos)',
-                                  key: const Key('f-equipo-actual'),
-                                  style: const TextStyle(color: Brand.gris))),
-                        ]),
-                      ],
-                      const SizedBox(height: 16),
-                      SocialSection(
-                        eventId: eventId,
-                        selfId: widget.attendeeId,
-                        spouse: spouse,
-                        spouseDraft: spouseDraft,
-                        groupIds: groupIds,
-                        selfSex: sex,
-                        selfLastName: last1.text,
-                        onSpouse: (s) => setState(() {
-                          spouse = s;
-                          _coupleMoveDismissed = false;
-                          if (s != null) spouseDraft = null;
-                        }),
-                        onSpouseDraft: (d) => setState(() {
-                          spouseDraft = d;
-                          if (d != null) spouse = null;
-                        }),
-                        onGroups: (g) => setState(() => groupIds = g),
-                      ),
-                      const SizedBox(height: 16),
-                      LabeledField(
-                          label: 'Observaciones',
-                          optional: true,
-                          child: TextField(
-                              key: const Key('f-observaciones'),
-                              controller: notes,
-                              maxLines: 3,
-                              decoration: const InputDecoration(
-                                  helperText:
-                                      'Evita datos médicos innecesarios.'))),
-                      if (error != null) ...[
-                        const SizedBox(height: 12),
-                        ErrorBox(error!)
-                      ],
-                      const SizedBox(height: 16),
-                      FilledButton(
-                        key: const Key('f-guardar'),
-                        onPressed: busy ? null : () => _save(another: false),
-                        child: Text(
-                            editing ? 'Guardar cambios' : 'Guardar asistente'),
-                      ),
-                      if (!editing) ...[
-                        const SizedBox(height: 8),
-                        TextButton(
-                            key: const Key('f-guardar-otro'),
-                            onPressed: busy ? null : () => _save(another: true),
-                            child: const Text('Guardar y registrar otro')),
-                      ],
-                    ]),
+                        const SizedBox(height: 16),
+                        LabeledField(
+                            label: 'Observaciones',
+                            optional: true,
+                            child: TextField(
+                                key: const Key('f-observaciones'),
+                                controller: notes,
+                                maxLines: 3,
+                                decoration: const InputDecoration(
+                                    helperText:
+                                        'Evita datos médicos innecesarios.'))),
+                        if (error != null) ...[
+                          const SizedBox(height: 12),
+                          ErrorBox(error!)
+                        ],
+                        const SizedBox(height: 16),
+                        FilledButton(
+                          key: const Key('f-guardar'),
+                          onPressed: busy ? null : () => _save(another: false),
+                          child: Text(editing
+                              ? 'Guardar cambios'
+                              : 'Guardar asistente'),
+                        ),
+                        if (!editing) ...[
+                          const SizedBox(height: 8),
+                          TextButton(
+                              key: const Key('f-guardar-otro'),
+                              onPressed:
+                                  busy ? null : () => _save(another: true),
+                              child: const Text('Guardar y registrar otro')),
+                        ],
+                      ]),
+                ),
               ),
             ),
           ),

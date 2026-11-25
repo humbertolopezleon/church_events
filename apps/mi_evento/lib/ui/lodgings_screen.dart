@@ -28,6 +28,7 @@ import 'widgets/app_fab.dart';
 import 'widgets/app_header.dart';
 import 'widgets/filter_spec.dart';
 import 'widgets/plural.dart';
+import 'discard_guard.dart';
 import 'notifications.dart';
 
 String kindLabel(String kind) =>
@@ -431,6 +432,26 @@ class _LodgingFormScreenState extends ConsumerState<LodgingFormScreen> {
   String? nameError, capacityError, error;
   final _nameKey = GlobalKey(), _capacityKey = GlobalKey();
 
+  /// Todo lo escrito/elegido, para saber si hay cambios sin guardar.
+  String get _signature => [
+        name.text,
+        capacity.text,
+        host.text,
+        phone.text,
+        directions.text,
+        near.text,
+        kind,
+        accepts.name
+      ].join('\u0001');
+  String _baseline = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _baseline = _signature;
+  }
+  bool get _dirty => _signature != _baseline;
+
   @override
   void dispose() {
     for (final c in [name, capacity, host, phone, directions, near]) {
@@ -572,215 +593,223 @@ class _LodgingFormScreenState extends ConsumerState<LodgingFormScreen> {
     final editing = widget.lodging != null;
     const gap = SizedBox(height: 20);
     // Ctrl+S / Ctrl+Enter guardan (como el botón «Guardar hospedaje»).
-    return ScreenShortcutsScope(
-      handlers: {ScreenAction.save: _save},
-      child: Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 64,
-          titleSpacing: 0,
-          leading: IconButton(
-              key: const Key('lf-cerrar'),
-              tooltip: 'Cerrar sin guardar',
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.pop(context)),
-          title: Text(editing ? 'Editar hospedaje' : 'Nuevo hospedaje'),
-        ),
-        body: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      LabeledField(
-                        label: 'Tipo',
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: SegmentedButton<String>(
-                            style: SegmentedButton.styleFrom(
-                                minimumSize: const Size(0, 56)),
-                            segments: const [
-                              ButtonSegment(
-                                  value: 'shelter', label: Text('Albergue')),
-                              ButtonSegment(
-                                  value: 'private_home',
-                                  label: Text('Casa particular')),
-                            ],
-                            selected: {kind},
-                            onSelectionChanged: (s) =>
-                                setState(() => kind = s.first),
-                          ),
-                        ),
-                      ),
-                      gap,
-                      LabeledField(
-                        key: _nameKey,
-                        label: 'Nombre',
-                        error: nameError,
-                        child: TextField(
-                            key: const Key('lf-nombre'),
-                            controller: name,
-                            textCapitalization: TextCapitalization.words,
-                            onChanged: (_) {
-                              if (nameError != null) {
-                                setState(() => nameError = null);
-                              }
-                            },
-                            decoration: InputDecoration(
-                                hintText: kind == 'shelter'
-                                    ? 'Ej.: Albergue Central'
-                                    : 'Ej.: Casa de la Hna. Teresa')),
-                      ),
-                      gap,
-                      if (kind == 'private_home') ...[
+    return DiscardGuard(
+      isDirty: () => _dirty,
+      child: ScreenShortcutsScope(
+        handlers: {ScreenAction.save: _save},
+        child: Scaffold(
+          appBar: AppBar(
+            toolbarHeight: 64,
+            titleSpacing: 0,
+            leading: IconButton(
+                key: const Key('lf-cerrar'),
+                tooltip: 'Cerrar sin guardar',
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.maybePop(context)),
+            title: Text(editing ? 'Editar hospedaje' : 'Nuevo hospedaje'),
+          ),
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                         LabeledField(
-                          label: 'Anfitrión',
-                          optional: true,
-                          child: TextField(
-                              key: const Key('lf-anfitrion'),
-                              controller: host,
-                              textCapitalization: TextCapitalization.words),
+                          label: 'Tipo',
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: SegmentedButton<String>(
+                              style: SegmentedButton.styleFrom(
+                                  minimumSize: const Size(0, 56)),
+                              segments: const [
+                                ButtonSegment(
+                                    value: 'shelter', label: Text('Albergue')),
+                                ButtonSegment(
+                                    value: 'private_home',
+                                    label: Text('Casa particular')),
+                              ],
+                              selected: {kind},
+                              onSelectionChanged: (s) =>
+                                  setState(() => kind = s.first),
+                            ),
+                          ),
                         ),
                         gap,
-                      ],
-                      LabeledField(
-                        label: 'Zona o dirección',
-                        optional: true,
-                        helper: 'Ej.: a 300 m del templo',
-                        child: TextField(
-                            key: const Key('lf-cerca'), controller: near),
-                      ),
-                      gap,
-                      LabeledField(
-                        label: 'Cómo llegar',
-                        optional: true,
-                        child: TextField(
-                            key: const Key('lf-direccion'),
-                            controller: directions,
-                            maxLines: 2),
-                      ),
-                      gap,
-                      LabeledField(
-                        key: _capacityKey,
-                        label: 'Capacidad (plazas)',
-                        error: capacityError,
-                        child: Row(children: [
-                          _stepper(Icons.remove, 'Una plaza menos',
-                              const Key('lf-menos'), () => _step(-1)),
-                          Expanded(
+                        LabeledField(
+                          key: _nameKey,
+                          label: 'Nombre',
+                          error: nameError,
+                          child: TextField(
+                              key: const Key('lf-nombre'),
+                              controller: name,
+                              textCapitalization: TextCapitalization.words,
+                              onChanged: (_) {
+                                if (nameError != null) {
+                                  setState(() => nameError = null);
+                                }
+                              },
+                              decoration: InputDecoration(
+                                  hintText: kind == 'shelter'
+                                      ? 'Ej.: Albergue Central'
+                                      : 'Ej.: Casa de la Hna. Teresa')),
+                        ),
+                        gap,
+                        if (kind == 'private_home') ...[
+                          LabeledField(
+                            label: 'Anfitrión',
+                            optional: true,
                             child: TextField(
-                                key: const Key('lf-capacidad'),
-                                controller: capacity,
-                                textAlign: TextAlign.center,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: digitsOnly(3),
-                                onChanged: (_) {
-                                  if (capacityError != null) {
-                                    setState(() => capacityError = null);
-                                  }
-                                },
-                                style: headStyle(32),
-                                decoration:
-                                    const InputDecoration(hintText: '1')),
+                                key: const Key('lf-anfitrion'),
+                                controller: host,
+                                textCapitalization: TextCapitalization.words),
                           ),
-                          _stepper(Icons.add, 'Una plaza más',
-                              const Key('lf-mas'), () => _step(1)),
-                        ]),
-                      ),
-                      gap,
-                      LabeledField(
-                        label: 'Acepta',
-                        child: Column(children: [
-                          // Con letra grande las etiquetas no caben en dos columnas: una por fila.
-                          if (MediaQuery.textScalerOf(context).scale(16) > 18.4)
-                            for (final a in LodgingAccepts.values) ...[
-                              _acceptsOption(a),
-                              const SizedBox(height: 10),
-                            ]
-                          else
-                            for (final row in [
-                              (56.0, LodgingAccepts.men, LodgingAccepts.women),
-                              (
-                                56.0,
-                                LodgingAccepts.couples,
-                                LodgingAccepts.any
-                              ),
-                              // Las etiquetas «… o matrimonios» ocupan dos líneas.
-                              (
-                                68.0,
-                                LodgingAccepts.menOrCouples,
-                                LodgingAccepts.womenOrCouples
-                              ),
-                            ]) ...[
-                              SizedBox(
-                                height: row.$1,
-                                child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Expanded(child: _acceptsOption(row.$2)),
-                                      const SizedBox(width: 10),
-                                      Expanded(child: _acceptsOption(row.$3)),
-                                    ]),
-                              ),
-                              const SizedBox(height: 10),
-                            ],
-                          const SizedBox(height: 8),
-                          Text(
-                              '«… o matrimonios»: personas solas de ese sexo o un matrimonio, sin mezclar (p. ej. 2 plazas = 2 mujeres o un matrimonio).',
-                              key: const Key('lf-acepta-mixto-ayuda'),
-                              style: bodyStyle(14, color: Brand.gris)),
-                        ]),
-                      ),
-                      gap,
-                      LabeledField(
-                        label: 'Teléfono de contacto',
-                        optional: true,
-                        child: TextField(
-                            key: const Key('lf-telefono'),
-                            controller: phone,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: phoneChars()),
-                      ),
-                      if (error != null) ...[gap, ErrorBox(error!)],
-                    ])),
+                          gap,
+                        ],
+                        LabeledField(
+                          label: 'Zona o dirección',
+                          optional: true,
+                          helper: 'Ej.: a 300 m del templo',
+                          child: TextField(
+                              key: const Key('lf-cerca'), controller: near),
+                        ),
+                        gap,
+                        LabeledField(
+                          label: 'Cómo llegar',
+                          optional: true,
+                          child: TextField(
+                              key: const Key('lf-direccion'),
+                              controller: directions,
+                              maxLines: 2),
+                        ),
+                        gap,
+                        LabeledField(
+                          key: _capacityKey,
+                          label: 'Capacidad (plazas)',
+                          error: capacityError,
+                          child: Row(children: [
+                            _stepper(Icons.remove, 'Una plaza menos',
+                                const Key('lf-menos'), () => _step(-1)),
+                            Expanded(
+                              child: TextField(
+                                  key: const Key('lf-capacidad'),
+                                  controller: capacity,
+                                  textAlign: TextAlign.center,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: digitsOnly(3),
+                                  onChanged: (_) {
+                                    if (capacityError != null) {
+                                      setState(() => capacityError = null);
+                                    }
+                                  },
+                                  style: headStyle(32),
+                                  decoration:
+                                      const InputDecoration(hintText: '1')),
+                            ),
+                            _stepper(Icons.add, 'Una plaza más',
+                                const Key('lf-mas'), () => _step(1)),
+                          ]),
+                        ),
+                        gap,
+                        LabeledField(
+                          label: 'Acepta',
+                          child: Column(children: [
+                            // Con letra grande las etiquetas no caben en dos columnas: una por fila.
+                            if (MediaQuery.textScalerOf(context).scale(16) >
+                                18.4)
+                              for (final a in LodgingAccepts.values) ...[
+                                _acceptsOption(a),
+                                const SizedBox(height: 10),
+                              ]
+                            else
+                              for (final row in [
+                                (
+                                  56.0,
+                                  LodgingAccepts.men,
+                                  LodgingAccepts.women
+                                ),
+                                (
+                                  56.0,
+                                  LodgingAccepts.couples,
+                                  LodgingAccepts.any
+                                ),
+                                // Las etiquetas «… o matrimonios» ocupan dos líneas.
+                                (
+                                  68.0,
+                                  LodgingAccepts.menOrCouples,
+                                  LodgingAccepts.womenOrCouples
+                                ),
+                              ]) ...[
+                                SizedBox(
+                                  height: row.$1,
+                                  child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Expanded(child: _acceptsOption(row.$2)),
+                                        const SizedBox(width: 10),
+                                        Expanded(child: _acceptsOption(row.$3)),
+                                      ]),
+                                ),
+                                const SizedBox(height: 10),
+                              ],
+                            const SizedBox(height: 8),
+                            Text(
+                                '«… o matrimonios»: personas solas de ese sexo o un matrimonio, sin mezclar (p. ej. 2 plazas = 2 mujeres o un matrimonio).',
+                                key: const Key('lf-acepta-mixto-ayuda'),
+                                style: bodyStyle(14, color: Brand.gris)),
+                          ]),
+                        ),
+                        gap,
+                        LabeledField(
+                          label: 'Teléfono de contacto',
+                          optional: true,
+                          child: TextField(
+                              key: const Key('lf-telefono'),
+                              controller: phone,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: phoneChars()),
+                        ),
+                        if (error != null) ...[gap, ErrorBox(error!)],
+                      ])),
+            ),
           ),
-        ),
-        bottomNavigationBar: SafeArea(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-            decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Brand.borde))),
-            child: Center(
-              heightFactor: 1,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: Row(children: [
-                  Expanded(
-                      flex: 5,
-                      child: OutlinedButton(
-                          key: const Key('lf-cancelar'),
-                          style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 56)),
-                          onPressed: () => Navigator.pop(context),
-                          child: const FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text('Cancelar', maxLines: 1)))),
-                  const SizedBox(width: 12),
-                  Expanded(
-                      flex: 6,
-                      child: FilledButton(
-                          key: const Key('lf-guardar'),
-                          style: FilledButton.styleFrom(
-                              minimumSize: const Size(0, 56)),
-                          onPressed: _save,
-                          child: Text(editing
-                              ? 'Guardar cambios'
-                              : 'Guardar hospedaje'))),
-                ]),
+          bottomNavigationBar: SafeArea(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Brand.borde))),
+              child: Center(
+                heightFactor: 1,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Row(children: [
+                    Expanded(
+                        flex: 5,
+                        child: OutlinedButton(
+                            key: const Key('lf-cancelar'),
+                            style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(0, 56)),
+                            onPressed: () => Navigator.maybePop(context),
+                            child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text('Cancelar', maxLines: 1)))),
+                    const SizedBox(width: 12),
+                    Expanded(
+                        flex: 6,
+                        child: FilledButton(
+                            key: const Key('lf-guardar'),
+                            style: FilledButton.styleFrom(
+                                minimumSize: const Size(0, 56)),
+                            onPressed: _save,
+                            child: Text(editing
+                                ? 'Guardar cambios'
+                                : 'Guardar hospedaje'))),
+                  ]),
+                ),
               ),
             ),
           ),
