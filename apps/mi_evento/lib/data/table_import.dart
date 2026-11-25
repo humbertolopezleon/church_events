@@ -1,3 +1,5 @@
+import 'csv_spec.dart';
+
 /// Resultado de revisar (o aplicar) la importación de una tabla CSV.
 class TableImportSummary {
   TableImportSummary(
@@ -21,6 +23,9 @@ abstract class TableImporter {
 
   /// Columnas que entiende (para la ayuda del diálogo).
   String get help;
+
+  /// Columnas del CSV (ayuda y plantilla vacía). `null` si la vista no la ofrece.
+  CsvSpec? get spec => null;
   Future<TableImportSummary> preview(String csvText);
   Future<TableImportSummary> apply(String csvText);
 }

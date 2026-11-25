@@ -304,4 +304,36 @@ void main() {
       await shot(t, 'etiquetas-usuario');
     });
   });
+
+  group('Importar/exportar · plantilla y ayuda de columnas', () {
+    cap('móvil: menú ⋮, columnas y estados vacíos', (t) async {
+      await _abrir(t, _movil, datos: false);
+      for (final e in {'Hospedajes': 'hosp', 'Equipos': 'eq', 'Iglesias': 'ig'}
+          .entries) {
+        await _ir(t, e.key);
+        await shot(t, 'plantilla-vacia-${e.value}');
+        await t.tap(find.byKey(const Key('menu-csv')));
+        await settle(t);
+        await shot(t, 'plantilla-menu-${e.value}');
+        await t.tap(find.byKey(Key('${e.value}-columnas')));
+        await settle(t);
+        await shot(t, 'plantilla-columnas-${e.value}');
+        await t.tap(find.text('Entendido'));
+        await settle(t);
+      }
+    });
+    cap('móvil: columnas de hospedajes al 130 %', (t) async {
+      await _abrir(t, _movil, datos: false, escala: 1.3);
+      await _ir(t, 'Hospedajes');
+      await tapKey(t, 'hosp-columnas');
+      await shot(t, 'plantilla-columnas-hosp-letra130');
+    });
+    cap('escritorio: Hospedajes vacía y columnas', (t) async {
+      await _abrir(t, _pc, datos: false);
+      await _ir(t, 'Hospedajes');
+      await shot(t, 'plantilla-escritorio-hosp');
+      await tapKey(t, 'hosp-columnas');
+      await shot(t, 'plantilla-escritorio-columnas-hosp');
+    });
+  });
 }

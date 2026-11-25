@@ -6,6 +6,7 @@ import '../data/church_exchange.dart';
 import '../data/database.dart';
 import '../data/repository.dart';
 import '../export/csv_export.dart';
+import 'csv_spec_ui.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'attendee_form.dart' show ChurchDialog;
@@ -163,6 +164,11 @@ class _ChurchesScreenState extends ConsumerState<ChurchesScreen> {
         onImport: _import,
         onExport: () => _export(shown),
         exportEnabled: shown.isNotEmpty,
+        onTemplate: () => saveCsvTemplate(context, ref, ChurchExchange.csvSpec),
+        onColumns: () =>
+            showCsvSpecDialog(context, ref, ChurchExchange.csvSpec),
+        templateKey: const Key('ig-plantilla'),
+        columnsKey: const Key('ig-columnas'),
       ),
       floatingActionButton: AppFab(
         key: const Key('ig-nueva'),
@@ -213,13 +219,19 @@ class _ChurchesScreenState extends ConsumerState<ChurchesScreen> {
               ? Center(
                   child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Text(
-                      all.isEmpty
-                          ? 'Todavía no hay iglesias. Toca «Nueva iglesia» o importa un CSV.'
-                          : 'Ninguna iglesia coincide con la búsqueda y los filtros.',
-                      key: const Key('ig-vacio'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 18, color: Brand.gris)),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(
+                        all.isEmpty
+                            ? 'Todavía no hay iglesias. Toca «Nueva iglesia» o importa un CSV.'
+                            : 'Ninguna iglesia coincide con la búsqueda y los filtros.',
+                        key: const Key('ig-vacio'),
+                        textAlign: TextAlign.center,
+                        style:
+                            const TextStyle(fontSize: 18, color: Brand.gris)),
+                    if (all.isEmpty)
+                      const CsvHelpButtons(
+                          spec: ChurchExchange.csvSpec, prefix: 'ig'),
+                  ]),
                 ))
               : useTables(context)
                   ? Padding(

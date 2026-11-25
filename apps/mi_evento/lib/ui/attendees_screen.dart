@@ -3,14 +3,16 @@ import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:material_ui/material_ui.dart';
 
 import 'package:mi_evento_core/mi_evento_core.dart'
-    show attendeeCsvHeaders, normalizeText, parseCsv;
+    show normalizeText, parseCsv;
 
 import '../data/database.dart';
 import '../data/repos_b.dart';
 
 import '../data/list_filters.dart';
 import '../data/repository.dart';
+import '../data/attendee_exchange.dart';
 import '../export/csv_export.dart';
+import 'csv_spec_ui.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'attendee_form.dart';
@@ -273,6 +275,10 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
           importKey: const Key('asis-importar'),
           onImport: _importFile,
           onExport: () {},
+          onTemplate: () => saveCsvTemplate(context, ref, attendeeCsvSpec),
+          onColumns: () => showCsvColumnsHelp(context, ref),
+          templateKey: const Key('asis-plantilla'),
+          columnsKey: const Key('asis-columnas'),
           exportEnabled: false,
         ),
         body: Center(
@@ -375,6 +381,10 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
             },
             onExport: () => _export(eventId, list),
             exportEnabled: list.isNotEmpty,
+            onTemplate: () => saveCsvTemplate(context, ref, attendeeCsvSpec),
+            onColumns: () => showCsvColumnsHelp(context, ref),
+            templateKey: const Key('asis-plantilla'),
+            columnsKey: const Key('asis-columnas'),
           ),
           floatingActionButton: AppFab(
             key: const Key('asis-registrar'),
@@ -506,62 +516,7 @@ Future<void> openRegister(BuildContext context) => Navigator.of(context)
     .push(MaterialPageRoute<void>(builder: (_) => const AttendeeFormScreen()));
 
 /// Qué columnas espera el importador de asistentes (las reales de `attendeeCsvHeaders`).
-Future<void> showCsvColumnsHelp(BuildContext context, WidgetRef ref) {
-  const required = {
-    'nombre': 'nombre de la persona',
-    'apellido1': 'primer apellido',
-    'sexo': 'Hombre o Mujer (también M o F)',
-    'edad': 'edad en años (1 a 110)',
-    'iglesia': 'nombre de la iglesia (si no existe, se crea)',
-  };
-  const optional = {
-    'id': 'identificador interno (lo pone la app al exportar)',
-    'numero': 'número de inscripción',
-    'apellido2': 'segundo apellido',
-    'provincia': 'provincia de la iglesia',
-    'municipio': 'municipio de la iglesia',
-    'telefono': 'teléfono',
-    'necesita_hospedaje': 'Sí o No',
-    'hospedaje': 'nombre del hospedaje',
-    'equipo': 'nombre del equipo',
-    'pareja_numero': 'número de inscripción del cónyuge',
-    'grupos': 'grupos separados por |',
-    'observaciones': 'notas',
-    'estado': 'Preinscrito o Confirmado',
-  };
-  return showDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      key: const Key('asis-ayuda-csv'),
-      title: const Text('Columnas del CSV'),
-      content: SingleChildScrollView(
-        child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Obligatorias',
-                  style: bodyStyle(16, weight: FontWeight.w700)),
-              for (final e in required.entries) Text('• ${e.key}: ${e.value}'),
-              const SizedBox(height: 12),
-              Text('Opcionales', style: bodyStyle(16, weight: FontWeight.w700)),
-              for (final e in optional.entries) Text('• ${e.key}: ${e.value}'),
-              const SizedBox(height: 12),
-              Text(
-                  'Separador «;» (o coma), con encabezados en la primera fila. Excel lo guarda bien.',
-                  style: bodyStyle(15, color: Brand.gris)),
-            ]),
-      ),
-      actions: [
-        TextButton(
-            key: const Key('asis-ayuda-plantilla'),
-            onPressed: () => saveCsv(ctx, ref,
-                name: 'plantilla-asistentes.csv',
-                rows: [List<String>.of(attendeeCsvHeaders)]),
-            child: const Text('Guardar plantilla vacía')),
-        FilledButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Entendido')),
-      ],
-    ),
-  );
-}
+Future<void> showCsvColumnsHelp(BuildContext context, WidgetRef ref) =>
+    showCsvSpecDialog(context, ref, attendeeCsvSpec,
+        dialogKey: const Key('asis-ayuda-csv'),
+        templateKey: const Key('asis-ayuda-plantilla'));

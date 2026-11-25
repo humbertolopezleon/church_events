@@ -8,6 +8,7 @@ import '../auth/auth_service.dart';
 import '../data/database.dart';
 import '../data/list_filters.dart';
 import '../export/csv_export.dart';
+import 'csv_spec_ui.dart';
 import '../data/repos_b.dart';
 import '../data/repository.dart';
 import '../providers.dart';
@@ -222,6 +223,10 @@ class TeamsScreen extends ConsumerWidget {
             eventName: event?.name ?? '',
             query: ref.read(teamQueryProvider)),
         exportEnabled: shownTeams.isNotEmpty,
+        onTemplate: () => saveCsvTemplate(context, ref, TeamExchange.csvSpec),
+        onColumns: () => showCsvSpecDialog(context, ref, TeamExchange.csvSpec),
+        templateKey: const Key('eq-plantilla'),
+        columnsKey: const Key('eq-columnas'),
       ),
       body: event != null && !event.offersTeams && teams.isEmpty
           ? const Center(
@@ -260,6 +265,8 @@ class TeamsScreen extends ConsumerWidget {
                                   ref.read(databaseProvider), eventId)),
                           icon: const Icon(Icons.upload_file_outlined),
                           label: const Text('Importar equipos (CSV)')),
+                      const CsvHelpButtons(
+                          spec: TeamExchange.csvSpec, prefix: 'eq'),
                     ]),
                   ),
                 )

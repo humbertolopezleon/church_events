@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
+import 'csv_spec.dart';
 import 'database.dart';
 import 'repos_b.dart';
 import 'table_import.dart';
@@ -22,6 +23,25 @@ class TeamExchange implements TableImporter {
     'iglesia'
   ];
   static const noTeam = 'sin equipo';
+
+  static const csvSpec = CsvSpec(
+      title: 'Columnas del CSV de personas por equipo',
+      fileName: 'plantilla-equipos-personas.csv',
+      columns: [
+        CsvColumn('equipo',
+            'nombre del equipo («Sin equipo» deja a la persona sin equipo)',
+            required: true),
+        CsvColumn('numero', 'número de inscripción de la persona',
+            required: true),
+        CsvColumn('nombre', 'solo informativa: se ignora al importar'),
+        CsvColumn('sexo', 'solo informativa: se ignora al importar'),
+        CsvColumn('edad', 'solo informativa: se ignora al importar'),
+        CsvColumn('iglesia', 'solo informativa: se ignora al importar'),
+      ],
+      note: csvSeparatorNote);
+
+  @override
+  CsvSpec get spec => csvSpec;
 
   @override
   String get title => 'Importar equipos';
