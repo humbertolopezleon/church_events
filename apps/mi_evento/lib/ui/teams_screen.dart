@@ -264,7 +264,7 @@ class TeamsScreen extends ConsumerWidget {
                 )
               : ListView(padding: const EdgeInsets.all(16), children: [
                   Text(
-                      '${teams.length} equipos · ${views.length} personas · ${unassigned.length} sin equipo',
+                      '${plural(teams.length, 'equipo', 'equipos')} · ${plural(views.length, 'persona', 'personas', zero: 'nadie inscrito')} · ${unassigned.isEmpty ? 'todos tienen equipo' : '${unassigned.length} sin equipo'}',
                       key: const Key('eq-resumen'),
                       style: const TextStyle(color: Brand.gris)),
                   const SizedBox(height: 8),
@@ -718,6 +718,7 @@ class _TeamCardState extends ConsumerState<_TeamCard> {
                           key: Key('equipo-${t.name}-n'), style: headStyle(32)),
                       PopupMenuButton<String>(
                         key: Key('equipo-${t.name}-menu'),
+                        tooltip: 'Opciones de ${t.name}',
                         onSelected: (a) async {
                           if (a == 'edit') {
                             await showDialog<void>(

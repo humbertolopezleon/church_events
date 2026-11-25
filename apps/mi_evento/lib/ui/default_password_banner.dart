@@ -33,7 +33,7 @@ class DefaultPasswordBanner extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: Container(
-          height: 48,
+          constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.only(left: 16, right: 4),
           decoration: const BoxDecoration(
               border:
@@ -45,8 +45,7 @@ class DefaultPasswordBanner extends ConsumerWidget {
             Expanded(
                 child: Text('Contraseña inicial en uso',
                     key: const Key('banner-clave-inicial'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                     style: bodyStyle(15,
                         color: Brand.avisoTexto, weight: FontWeight.w700))),
             TextButton(

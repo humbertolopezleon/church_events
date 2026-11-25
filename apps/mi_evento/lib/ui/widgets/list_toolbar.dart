@@ -50,6 +50,14 @@ class ListToolbar extends StatelessWidget {
         if (f.active) f
     ];
     final useSheet = specs.isNotEmpty && !inline;
+    // Con letra grande el botón «Filtros» baja bajo el buscador para que nada se corte.
+    final large = MediaQuery.textScalerOf(context).scale(16) > 18.4;
+    Widget filtersButton() => _FiltersButton(
+        count: active.length,
+        onPressed: () => showFilterSheet(context,
+            filters: filters!,
+            resultCount: resultCount ?? () => 0,
+            resultLabel: resultLabel ?? ((n) => 'Ver resultados')));
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Expanded(
@@ -73,16 +81,15 @@ class ListToolbar extends StatelessWidget {
             ),
           ),
         ),
-        if (useSheet) ...[
+        if (useSheet && !large) ...[
           const SizedBox(width: 8),
-          _FiltersButton(
-              count: active.length,
-              onPressed: () => showFilterSheet(context,
-                  filters: filters!,
-                  resultCount: resultCount ?? () => 0,
-                  resultLabel: resultLabel ?? ((n) => 'Ver resultados'))),
+          filtersButton(),
         ],
       ]),
+      if (useSheet && large) ...[
+        const SizedBox(height: 8),
+        Align(alignment: Alignment.centerLeft, child: filtersButton()),
+      ],
       if (inline && specs.isNotEmpty) ...[
         const SizedBox(height: 8),
         InlineFilters(filters: specs),

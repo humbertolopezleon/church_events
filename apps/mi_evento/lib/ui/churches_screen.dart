@@ -279,8 +279,8 @@ class _ChurchesScreenState extends ConsumerState<ChurchesScreen> {
                                                 color: Brand.gris)),
                                         const SizedBox(height: 2),
                                         Text(
-                                            plural(
-                                                n, 'asistente', 'asistentes'),
+                                            plural(n, 'asistente', 'asistentes',
+                                                zero: 'Sin asistentes'),
                                             key: Key('ig-asistentes-${c.name}'),
                                             style: bodyStyle(14,
                                                 color: Brand.gris)),

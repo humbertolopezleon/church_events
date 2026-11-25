@@ -205,21 +205,26 @@ class _AppShellState extends ConsumerState<AppShell> {
     final mi = mobile.indexWhere((d) => d.id == sel.id);
     return Scaffold(
       body: body,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: mi >= 0 ? mi : mobile.length,
-        onDestinationSelected: (i) {
-          if (i < mobile.length) {
-            setPage(mobile[i].id);
-          } else {
-            _more(context, dests, me);
-          }
-        },
-        destinations: [
-          for (final d in mobile)
-            NavigationDestination(icon: Icon(d.icon), label: d.label),
-          const NavigationDestination(icon: Icon(Icons.menu), label: 'Más'),
-        ],
-      ),
+      bottomNavigationBar: MediaQuery(
+          // Las etiquetas de la barra no crecen más de un 15 %: con letra grande se partirían.
+          data: MediaQuery.of(context).copyWith(
+              textScaler:
+                  MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.15)),
+          child: NavigationBar(
+            selectedIndex: mi >= 0 ? mi : mobile.length,
+            onDestinationSelected: (i) {
+              if (i < mobile.length) {
+                setPage(mobile[i].id);
+              } else {
+                _more(context, dests, me);
+              }
+            },
+            destinations: [
+              for (final d in mobile)
+                NavigationDestination(icon: Icon(d.icon), label: d.label),
+              const NavigationDestination(icon: Icon(Icons.menu), label: 'Más'),
+            ],
+          )),
     );
   }
 
