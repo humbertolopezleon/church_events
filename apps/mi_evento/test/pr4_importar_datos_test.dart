@@ -138,15 +138,18 @@ void main() {
         EventExchange.headers,
         ['E', '2026-01-01', '2026-01-02', '', '', 'Sí', 'Sí'], // ya existe
         ['Nuevo', '2027-02-01', '2027-02-03', 'Templo', 'Ana', 'No', 'Sí'],
-        ['Mal', '1/2/2027', '2027-02-03', '', '', '', ''],
+        ['Mal', 'mañana', '2027-02-03', '', '', '', ''],
+        ['Excel', '5/3/2027', '07-03-2027', '', '', '', ''], // d/m/aaaa
         ['Al revés', '2027-02-03', '2027-02-01', '', '', '', ''],
       ]);
       final pre = await ex.preview(csv);
-      expect(pre.work, 1);
+      expect(pre.work, 2);
       expect(pre.warnings, hasLength(2));
       await ex.apply(csv);
       final evs = await db.select(db.events).get();
-      expect(evs.map((e) => e.name).toSet(), {'E', 'Nuevo'});
+      expect(evs.map((e) => e.name).toSet(), {'E', 'Nuevo', 'Excel'});
+      expect(evs.firstWhere((e) => e.name == 'Excel').startDate, '2027-03-05');
+      expect(evs.firstWhere((e) => e.name == 'Excel').endDate, '2027-03-07');
       expect(evs.firstWhere((e) => e.name == 'Nuevo').offersLodging, isFalse);
     });
 

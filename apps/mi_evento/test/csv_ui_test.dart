@@ -59,7 +59,10 @@ void main() {
     final f = saver.saved.entries.single;
     expect(f.key, endsWith('.csv'));
     final text = utf8.decode(f.value);
-    expect(text.split('\r\n').first.replaceFirst('﻿', ''), _head);
+    final lines = text.split('\r\n');
+    expect(
+        lines.first.replaceFirst('﻿', ''), 'sep=;'); // Excel separa en columnas
+    expect(lines[1], _head);
     expect(text, contains('Juan'));
     expect(text, contains('Bautista Ebenezer'));
   });
