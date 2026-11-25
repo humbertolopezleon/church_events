@@ -22,6 +22,8 @@ import 'package:mi_evento/data/repos_b.dart';
 import 'package:mi_evento/providers.dart';
 import 'package:mi_evento_core/mi_evento_core.dart' show buildCsvDelimited;
 
+import 'package:mi_evento/ui/notifications.dart';
+
 import '../test/helpers.dart';
 import '../test/qa/qa_support.dart';
 
@@ -560,6 +562,25 @@ void main() {
       await t.sendKeyEvent(LogicalKeyboardKey.f1);
       await settle(t);
       await shot(t, 'atajos-ayuda-escritorio');
+    });
+  });
+
+  group('Centro de notificaciones', () {
+    cap('escritorio: campana con contador y panel', (t) async {
+      await _abrir(t, _pc);
+      NotificationCenter.instance
+        ..add('CSV guardado (12 filas).')
+        ..add('Contraseña de Ruth restablecida.')
+        ..add('No se pudo exportar. Detalle técnico: sin permiso.',
+            error: true);
+      await t.pump();
+      await shot(t, 'notificaciones-campana');
+      await tapKey(t, 'campana');
+      await shot(t, 'notificaciones-panel');
+      final first = NotificationCenter.instance.items.last;
+      NotificationCenter.instance.markRead(first);
+      await t.pump();
+      await shot(t, 'notificaciones-panel-una-leida');
     });
   });
 }

@@ -15,6 +15,7 @@ import 'table_import_flow.dart';
 import 'widgets/app_header.dart';
 import 'widgets/filter_spec.dart';
 import 'widgets/plural.dart';
+import 'notifications.dart';
 
 /// Asistencia el día del evento: confirmar a los preinscritos (uno, un subconjunto o todos los que
 /// se ven) y desconfirmar a quien se confirmó por error. En escritorio es una tabla con filtros.
@@ -50,7 +51,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   void _snack(String text, {SnackBarAction? action}) =>
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(text), action: action));
+        ..notice(text, action: action);
 
   Future<void> _confirm(String eventId, Iterable<String> ids) async {
     final list = ids.toList();

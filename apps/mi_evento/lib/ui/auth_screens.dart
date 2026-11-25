@@ -7,6 +7,7 @@ import '../auth/auth_service.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
 import 'brand_logo.dart';
+import 'notifications.dart';
 
 /// Marco de las pantallas de acceso. En PC: panel azul con la marca a la izquierda y el formulario a
 /// la derecha. En móvil: la marca arriba, compacta, y el formulario debajo.
@@ -224,8 +225,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: recoveryCode!));
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Código copiado.')));
+                ScaffoldMessenger.of(context).notice('Código copiado.');
               }
             },
             icon: const Icon(Icons.copy),

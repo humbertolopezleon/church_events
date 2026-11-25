@@ -12,6 +12,7 @@ import '../data/repository.dart';
 import '../export/report_export.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
+import 'notifications.dart';
 
 /// Totales por sexo, rango de edad, iglesia, hospedaje y equipo; con listado exportable e imprimible.
 class ReportsScreen extends ConsumerStatefulWidget {
@@ -56,8 +57,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       await job(d);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('No se pudo exportar. Detalle técnico: $e')));
+        ScaffoldMessenger.of(context)
+            .notice('No se pudo exportar. Detalle técnico: $e', error: true);
       }
     } finally {
       if (mounted) setState(() => busy = false);
@@ -68,9 +69,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final ok =
         await ref.read(fileSaverProvider).save(name, bytes, mimeType: mime);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-              ok ? 'Listo. Archivo exportado.' : 'Exportación cancelada.')));
+      ScaffoldMessenger.of(context)
+          .notice(ok ? 'Listo. Archivo exportado.' : 'Exportación cancelada.');
     }
   }
 

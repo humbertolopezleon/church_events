@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import 'auth_screens.dart' show ErrorBox;
 import 'proposal_card.dart';
 import 'teams_screen.dart' show teamColor;
+import 'notifications.dart';
 
 /// Generación automática de equipos (estrategia C). Calcula una PROPUESTA; no cambia nada
 /// hasta pulsar «Aceptar», y después se puede deshacer.
@@ -77,12 +78,10 @@ class _TeamGenerateScreenState extends ConsumerState<TeamGenerateScreen> {
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       final repo = ref.read(teamRepoProvider);
-      messenger.showSnackBar(SnackBar(
-        duration: const Duration(seconds: 12),
-        content: Text('Equipos asignados a ${p.assignments.length} personas.'),
-        action: SnackBarAction(
-            label: 'Deshacer', onPressed: () => repo.restoreTeams(previous)),
-      ));
+      messenger.notice('Equipos asignados a ${p.assignments.length} personas.',
+          action: SnackBarAction(
+              label: 'Deshacer', onPressed: () => repo.restoreTeams(previous)),
+          duration: const Duration(seconds: 12));
       Navigator.pop(context);
     } catch (e) {
       if (mounted) {

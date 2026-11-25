@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import 'auth_screens.dart' show ErrorBox;
 import 'csv_import.dart';
 import 'import_flow.dart';
+import 'notifications.dart';
 
 String ago(DateTime t, [DateTime? now]) {
   final d = (now ?? DateTime.now()).difference(t);
@@ -50,8 +51,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           .save(name, bytes, mimeType: 'text/csv');
       if (ok) await ref.read(autoBackupProvider).markBackup(DateTime.now());
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(ok ? 'Copia guardada.' : 'Guardado cancelado.')));
+        ScaffoldMessenger.of(context)
+            .notice(ok ? 'Copia guardada.' : 'Guardado cancelado.');
       }
     } catch (e) {
       if (mounted) {
@@ -83,9 +84,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           name, Uint8List.fromList(utf8.encode(text)),
           mimeType: 'text/csv');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content:
-                Text(ok ? 'Archivo CSV guardado.' : 'Guardado cancelado.')));
+        ScaffoldMessenger.of(context)
+            .notice(ok ? 'Archivo CSV guardado.' : 'Guardado cancelado.');
       }
     } catch (e) {
       if (mounted) {

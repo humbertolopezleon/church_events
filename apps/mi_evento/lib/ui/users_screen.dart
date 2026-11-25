@@ -15,6 +15,7 @@ import 'table_import_flow.dart';
 import 'widgets/app_fab.dart';
 import 'widgets/app_header.dart';
 import 'widgets/plural.dart';
+import 'notifications.dart';
 
 /// Administración de usuarios (solo administrador).
 class UsersScreen extends ConsumerStatefulWidget {
@@ -153,8 +154,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
               context: context, builder: (_) => _NewPasswordDialog(user: u));
           if (pw != null) {
             await auth.resetPassword(me, u.id, pw);
-            messenger.showSnackBar(SnackBar(
-                content: Text('Contraseña de ${u.displayName} restablecida.')));
+            messenger.notice('Contraseña de ${u.displayName} restablecida.');
           }
         case 'active':
           await auth.setActive(me, u.id, !u.active);
@@ -162,7 +162,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
           await auth.setAdmin(me, u.id, !u.isAdmin);
       }
     } on AuthException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.notice(e.message, error: true);
     }
   }
 }
@@ -282,8 +282,7 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
       ref.invalidate(defaultPasswordInUseProvider);
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Contraseña cambiada.')));
+      ScaffoldMessenger.of(context).notice('Contraseña cambiada.');
     } on AuthException catch (e) {
       setState(() => error = e.message);
     }

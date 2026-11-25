@@ -16,6 +16,7 @@ import 'new_spouse_dialog.dart';
 import 'proposal_card.dart';
 import 'social_section.dart';
 import 'widgets/input_formats.dart';
+import 'notifications.dart';
 
 /// Registro y edición de asistentes (misma pantalla).
 /// [attendeeId] == null → registro nuevo (pestaña «Registrar»); si no, edición de esa ficha.
@@ -351,8 +352,7 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
         });
         if (!mounted) return;
         Navigator.pop(context);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Cambios guardados.')));
+        ScaffoldMessenger.of(context).notice('Cambios guardados.');
         return;
       }
       late AttendeeRow row;
@@ -448,10 +448,9 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
           isAdmin: ref.read(currentUserProvider)?.isAdmin ?? false);
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(lostCaptainOf == null
-              ? 'Asistente eliminado.'
-              : 'Asistente eliminado. Era capitán de «$lostCaptainOf»: ese equipo se quedó sin capitán.')));
+      ScaffoldMessenger.of(context).notice(lostCaptainOf == null
+          ? 'Asistente eliminado.'
+          : 'Asistente eliminado. Era capitán de «$lostCaptainOf»: ese equipo se quedó sin capitán.');
     } on DataException catch (e) {
       setState(() => error = e.message);
     }
@@ -843,8 +842,7 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
                                     if (!mounted) return;
                                     setState(() => _isPreregistered = true);
                                   } on DataException catch (e) {
-                                    messenger.showSnackBar(
-                                        SnackBar(content: Text(e.message)));
+                                    messenger.notice(e.message, error: true);
                                   }
                                 },
                                 child: const Text('Desconfirmar')),
