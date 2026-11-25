@@ -2,6 +2,7 @@
 
 Sistema offline para registrar asistentes a eventos cristianos (Android + Windows, Flutter).
 
+- `docs/DECISIONES.md` — registro de decisiones (qué se decidió, por qué y qué falta decidir).
 - `docs/PLAN.md` — plan de arquitectura, modelo de datos, algoritmos, fases, riesgos y estimación.
 - `prototype/index.html` — prototipo clicable aprobado de la interfaz (abrir en el navegador).
 - `packages/mi_evento_core` — dominio compartido en Dart puro (ids, duplicados, rangos de edad, balanceo).
