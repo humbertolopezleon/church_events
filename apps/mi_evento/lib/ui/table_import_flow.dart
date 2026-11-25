@@ -35,8 +35,6 @@ Future<bool> runTableImport(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(importer.help, style: const TextStyle(color: Brand.gris)),
-              const SizedBox(height: 12),
               for (final l in preview.lines) Text(l),
               if (preview.warnings.isNotEmpty) ...[
                 const SizedBox(height: 10),
@@ -55,6 +53,8 @@ Future<bool> runTableImport(
                     child: Text('No hay nada que importar.',
                         key: Key('ti-nada'),
                         style: TextStyle(fontWeight: FontWeight.w700))),
+              const SizedBox(height: 12),
+              Text(importer.help, style: const TextStyle(color: Brand.gris)),
             ]),
       ),
       actions: [

@@ -222,10 +222,15 @@ class TeamDefinitionExchange implements TableImporter {
       }
     }
     out.work = plans.length;
+    // Sin «0» en las frases (la fuente Atkinson lo tacha).
     out.lines
-      ..add('Equipos nuevos: $created')
-      ..add('Equipos actualizados: $updated')
-      ..add('Capitanes asignados: $captains');
+      ..add(created == 0 ? 'Sin equipos nuevos' : 'Equipos nuevos: $created')
+      ..add(updated == 0
+          ? 'Sin equipos que actualizar'
+          : 'Equipos actualizados: $updated')
+      ..add(captains == 0
+          ? 'Sin cambios de capitán'
+          : 'Capitanes asignados: $captains');
     if (moves > 0) {
       out.lines.add(
           'Personas que cambian de equipo para ser capitán: $moves (elige abajo si no estás de acuerdo)');

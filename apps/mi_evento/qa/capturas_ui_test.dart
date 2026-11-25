@@ -5,6 +5,7 @@
 // Arranca la app real con datos de prueba, con las fuentes reales (Atkinson, Nunito e iconos) y
 // guarda PNG de cada pantalla a 390×844 dp (móvil), con letra normal y al 130 %, y a 1366×768
 // (escritorio).
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -13,6 +14,12 @@ import 'package:flutter/widgets.dart'
     show FocusHighlightStrategy, FocusManager, SingleChildScrollView;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart' show Override;
+import 'package:mi_evento/backup/file_picker.dart';
+import 'package:mi_evento/data/repos_b.dart';
+import 'package:mi_evento/providers.dart';
+import 'package:mi_evento_core/mi_evento_core.dart' show buildCsvDelimited;
 
 import '../test/helpers.dart';
 import '../test/qa/qa_support.dart';
@@ -73,10 +80,12 @@ Future<void> _datos(Ctx c, {int n = 14}) async {
 }
 
 Future<Ctx> _abrir(WidgetTester t, Size size,
-    {bool datos = true, double escala = 1.0}) async {
+    {bool datos = true,
+    double escala = 1.0,
+    List<Override> overrides = const []}) async {
   t.platformDispatcher.textScaleFactorTestValue = escala;
   addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
-  final c = await pumpApp(t, size, defaultAdmin: true);
+  final c = await pumpApp(t, size, defaultAdmin: true, overrides: overrides);
   await t.runAsync(() async {
     if (datos) {
       await _datos(c);
@@ -334,6 +343,67 @@ void main() {
       await shot(t, 'plantilla-escritorio-hosp');
       await tapKey(t, 'hosp-columnas');
       await shot(t, 'plantilla-escritorio-columnas-hosp');
+    });
+  });
+
+  group('Importar/exportar · equipos (definición)', () {
+    cap('móvil: menú ⋮ de Equipos y decisión del capitán', (t) async {
+      final picker = MemoryFilePick();
+      final c = await _abrir(t, _movil,
+          overrides: [filePickProvider.overrideWithValue(picker)]);
+      await _ir(t, 'Equipos');
+      await t.tap(find.byKey(const Key('menu-csv')));
+      await settle(t);
+      await shot(t, 'equipos-menu-csv');
+      await t.tapAt(const Offset(5, 600)); // cierra el menú
+      await settle(t);
+      // Capitán que hoy está en otro equipo.
+      final (nombre, numero) = await t.runAsync(() async {
+        final teams = await TeamRepo(c.db)
+            .watchTeams((await c.db.select(c.db.events).getSingle()).id)
+            .first;
+        final p = await (c.db.select(c.db.attendees)
+              ..where((a) => a.teamId.equals(teams[1].id)))
+            .get();
+        return (teams[0].name, p.first.regNumber);
+      }) as (String, int);
+      picker.file = PickedFile(
+          'e.csv',
+          Uint8List.fromList(utf8.encode(buildCsvDelimited([
+            ['equipo', 'color', 'capitan_numero'],
+            [nombre, 'Morado', '$numero'],
+            ['Los Leones', 'Turquesa', ''],
+          ]))));
+      await tapKey(t, 'eq-def-importar');
+      await shot(t, 'equipos-importar-decision');
+    });
+    cap('móvil: decisión del capitán al 130 %', (t) async {
+      final picker = MemoryFilePick();
+      final c = await _abrir(t, _movil,
+          escala: 1.3, overrides: [filePickProvider.overrideWithValue(picker)]);
+      await _ir(t, 'Equipos');
+      final numero = await t.runAsync(() async {
+        final teams = await TeamRepo(c.db)
+            .watchTeams((await c.db.select(c.db.events).getSingle()).id)
+            .first;
+        return (await (c.db.select(c.db.attendees)
+                  ..where((a) => a.teamId.equals(teams[1].id)))
+                .get())
+            .first
+            .regNumber;
+      }) as int;
+      final nombre = await t.runAsync(() async => (await TeamRepo(c.db)
+              .watchTeams((await c.db.select(c.db.events).getSingle()).id)
+              .first)[0]
+          .name) as String;
+      picker.file = PickedFile(
+          'e.csv',
+          Uint8List.fromList(utf8.encode(buildCsvDelimited([
+            ['equipo', 'color', 'capitan_numero'],
+            [nombre, '', '$numero'],
+          ]))));
+      await tapKey(t, 'eq-def-importar');
+      await shot(t, 'equipos-importar-decision-letra130');
     });
   });
 }
