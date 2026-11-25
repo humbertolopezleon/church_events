@@ -440,4 +440,31 @@ void main() {
       await shot(t, 'fechas-escritorio');
     });
   });
+
+  group('Hospedaje · mixto y matrimonios separados', () {
+    cap('móvil: Nuevo hospedaje con las 6 opciones de «Acepta»', (t) async {
+      await _abrir(t, _movil, datos: false);
+      await _ir(t, 'Hospedajes');
+      await tapKey(t, 'hosp-nuevo');
+      await tapKey(t, 'lf-acepta-womenOrCouples');
+      await t.drag(find.byType(SingleChildScrollView).first, const Offset(0, -300));
+      await t.pump();
+      await shot(t, 'hospedaje-mixto-formulario');
+    });
+    cap('móvil al 130 %: opciones de «Acepta»', (t) async {
+      await _abrir(t, _movil, datos: false, escala: 1.3);
+      await _ir(t, 'Hospedajes');
+      await tapKey(t, 'hosp-nuevo');
+      await t.drag(find.byType(SingleChildScrollView).first, const Offset(0, -300));
+      await t.pump();
+      await shot(t, 'hospedaje-mixto-formulario-letra130');
+    });
+    cap('móvil: Sugerir hospedaje con la casilla de separar matrimonios',
+        (t) async {
+      await _abrir(t, _movil);
+      await _ir(t, 'Hospedajes');
+      await tapKey(t, 'hosp-sugerir');
+      await shot(t, 'sugerir-separar-casilla');
+    });
+  });
 }

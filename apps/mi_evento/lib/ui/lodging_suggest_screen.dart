@@ -29,6 +29,8 @@ class LodgingSuggestScreen extends ConsumerStatefulWidget {
 class _LodgingSuggestScreenState extends ConsumerState<LodgingSuggestScreen> {
   bool keepTogether = true;
   bool preferChurch = true;
+  bool splitCouples =
+      false; // último recurso: separar matrimonios si no hay hospedaje para ellos
   Set<String>? chosen; // nulo = todas las pendientes
   Map<String, String> spouses = {};
   List<LodgingProposal>? proposals;
@@ -91,11 +93,17 @@ class _LodgingSuggestScreenState extends ConsumerState<LodgingSuggestScreen> {
                   p.a.churchId!
             },
             distanceNote: l.row.distanceNote,
+            occupantMix: occupantMixOfRows([
+              for (final p in all)
+                if (p.a.lodgingId == l.row.id) p.a
+            ]),
           )
       ];
       final result = suggestLodging(refs, candidates,
           options: SuggestOptions(
-              keepTogether: keepTogether, preferHostChurch: preferChurch));
+              keepTogether: keepTogether,
+              preferHostChurch: preferChurch,
+              splitCouples: splitCouples));
       setState(() {
         spouses = sp;
         proposals = result;
@@ -322,6 +330,18 @@ class _LodgingSuggestScreenState extends ConsumerState<LodgingSuggestScreen> {
                   value: preferChurch,
                   onChanged: (v) => setState(() {
                         preferChurch = v;
+                        proposals = null;
+                      })),
+              SwitchListTile(
+                  key: const Key('sg-separar'),
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                      'Si no hay hospedaje para matrimonios, alojarlos por separado'),
+                  subtitle: const Text(
+                      'Solo a los que no quepan juntos: el esposo con hombres y la esposa con mujeres.'),
+                  value: splitCouples,
+                  onChanged: (v) => setState(() {
+                        splitCouples = v;
                         proposals = null;
                       })),
               const SizedBox(height: 8),

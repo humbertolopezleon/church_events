@@ -33,7 +33,7 @@ class LodgingExchange implements TableImporter {
             required: true),
         CsvColumn('tipo', 'Albergue o Casa particular'),
         CsvColumn('acepta',
-            'Solo hombres, Solo mujeres, Matrimonios o Sin preferencia'),
+            'Solo hombres, Solo mujeres, Matrimonios, Sin preferencia, Solo hombres o matrimonios o Solo mujeres o matrimonios'),
         CsvColumn('capacidad', 'número de plazas (al menos 1)', required: true),
         CsvColumn('anfitrion', 'nombre del anfitrión'),
         CsvColumn('telefono', 'teléfono de contacto'),
@@ -50,7 +50,7 @@ class LodgingExchange implements TableImporter {
   @override
   String get help =>
       'Columnas: nombre, tipo (Albergue o Casa particular), acepta (Solo hombres, Solo mujeres, '
-      'Matrimonios o Sin preferencia), capacidad, anfitrion, telefono, indicaciones y cercania. '
+      'Matrimonios, Sin preferencia, Solo hombres o matrimonios o Solo mujeres o matrimonios), capacidad, anfitrion, telefono, indicaciones y cercania. '
       'Si el hospedaje ya existe (mismo nombre) se actualiza.';
 
   static String kindLabel(String kind) =>
@@ -140,7 +140,7 @@ class LodgingExchange implements TableImporter {
       }
       if (accepts == null) {
         out.warnings.add(
-            'Fila $line: «${r['acepta']}» no es un valor de «acepta» (Solo hombres, Solo mujeres, Matrimonios o Sin preferencia).');
+            'Fila $line: «${r['acepta']}» no es un valor de «acepta» (Solo hombres, Solo mujeres, Matrimonios, Sin preferencia, Solo hombres o matrimonios o Solo mujeres o matrimonios).');
         continue;
       }
       if (kindRaw.isNotEmpty &&

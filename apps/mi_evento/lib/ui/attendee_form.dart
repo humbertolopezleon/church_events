@@ -1021,6 +1021,10 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
             if (p.a.lodgingId == l.row.id && p.a.churchId != null) p.a.churchId!
         },
         distanceNote: l.row.distanceNote,
+        occupantMix: occupantMixOfRows([
+          for (final p in all)
+            if (p.a.lodgingId == l.row.id && p.a.id != widget.attendeeId) p.a
+        ]),
       );
     }
 

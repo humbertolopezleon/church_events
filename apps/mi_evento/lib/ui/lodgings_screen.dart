@@ -523,37 +523,35 @@ class _LodgingFormScreenState extends ConsumerState<LodgingFormScreen> {
 
   Widget _acceptsOption(LodgingAccepts a) {
     final sel = accepts == a;
-    return Expanded(
-      child: Semantics(
-        inMutuallyExclusiveGroup: true,
-        checked: sel,
-        label: lodgingAcceptsLabel(a),
-        excludeSemantics: true,
-        child: InkWell(
-          key: Key('lf-acepta-${a.name}'),
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => setState(() => accepts = a),
-          child: Container(
-            height: 56,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: sel ? Brand.azulSuave : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: sel ? Brand.azul : Brand.borde, width: sel ? 2 : 1),
-            ),
-            child: Row(children: [
-              Icon(sel ? Icons.radio_button_checked : Icons.radio_button_off,
-                  color: sel ? Brand.azul : Brand.gris),
-              const SizedBox(width: 8),
-              Expanded(
-                  child: Text(lodgingAcceptsLabel(a),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: bodyStyle(16,
-                          weight: sel ? FontWeight.w700 : FontWeight.w400))),
-            ]),
+    return Semantics(
+      inMutuallyExclusiveGroup: true,
+      checked: sel,
+      label: lodgingAcceptsLabel(a),
+      excludeSemantics: true,
+      child: InkWell(
+        key: Key('lf-acepta-${a.name}'),
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => setState(() => accepts = a),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 56),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: sel ? Brand.azulSuave : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: sel ? Brand.azul : Brand.borde, width: sel ? 2 : 1),
           ),
+          child: Row(children: [
+            Icon(sel ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: sel ? Brand.azul : Brand.gris),
+            const SizedBox(width: 8),
+            Expanded(
+                child: Text(lodgingAcceptsLabel(a),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: bodyStyle(16,
+                        weight: sel ? FontWeight.w700 : FontWeight.w400))),
+          ]),
         ),
       ),
     );
@@ -689,17 +687,41 @@ class _LodgingFormScreenState extends ConsumerState<LodgingFormScreen> {
                     LabeledField(
                       label: 'Acepta',
                       child: Column(children: [
-                        Row(children: [
-                          _acceptsOption(LodgingAccepts.men),
-                          const SizedBox(width: 10),
-                          _acceptsOption(LodgingAccepts.women),
-                        ]),
-                        const SizedBox(height: 10),
-                        Row(children: [
-                          _acceptsOption(LodgingAccepts.couples),
-                          const SizedBox(width: 10),
-                          _acceptsOption(LodgingAccepts.any),
-                        ]),
+                        // Con letra grande las etiquetas no caben en dos columnas: una por fila.
+                        if (MediaQuery.textScalerOf(context).scale(16) > 18.4)
+                          for (final a in LodgingAccepts.values) ...[
+                            _acceptsOption(a),
+                            const SizedBox(height: 10),
+                          ]
+                        else
+                          for (final row in [
+                            (56.0, LodgingAccepts.men, LodgingAccepts.women),
+                            (56.0, LodgingAccepts.couples, LodgingAccepts.any),
+                            // Las etiquetas «… o matrimonios» ocupan dos líneas.
+                            (
+                              68.0,
+                              LodgingAccepts.menOrCouples,
+                              LodgingAccepts.womenOrCouples
+                            ),
+                          ]) ...[
+                            SizedBox(
+                              height: row.$1,
+                              child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(child: _acceptsOption(row.$2)),
+                                    const SizedBox(width: 10),
+                                    Expanded(child: _acceptsOption(row.$3)),
+                                  ]),
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                        const SizedBox(height: 8),
+                        Text(
+                            '«… o matrimonios»: personas solas de ese sexo o un matrimonio, sin mezclar (p. ej. 2 plazas = 2 mujeres o un matrimonio).',
+                            key: const Key('lf-acepta-mixto-ayuda'),
+                            style: bodyStyle(14, color: Brand.gris)),
                       ]),
                     ),
                     gap,

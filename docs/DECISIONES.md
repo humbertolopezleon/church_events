@@ -120,3 +120,14 @@ Principio: primero lo que **sin eso el evento no funciona**; lo demás, después
 - **Fechas del evento** (`lib/ui/event_dates.dart`): un diálogo propio con pestañas «Inicio» y «Fin» sobre un calendario, botón **Hoy**, y sin días anteriores a hoy. *Por qué propio:* `showDateRangePicker` de Flutter no tiene botón «Hoy» y no se puede añadir sin trucos. Al **editar** un evento que ya empezó se respeta su fecha de inicio (`earliestEventDate`); al **copiar** un evento ya pasado se propone hoy conservando su duración. La validación «no antes de hoy» está **solo en la interfaz** (el repositorio acepta cualquier fecha: las importaciones y pruebas usan fechas arbitrarias).
 - **Equipos oculto** si el evento no los usa (menú lateral e inferior, columna de la tabla de Asistentes y ficha de la sesión de comidas). Los filtros por equipo ya dependían de que existan equipos. *No* se ocultó Hospedajes cuando el evento no los ofrece (no se pidió).
 - **Esc** en escritorio vuelve atrás en pantallas completas (ver §9).
+
+## 12. Bloque de hospedaje: mixto y matrimonios separados (hecho en la rama `feat/hospedaje-mixto-y-separados`)
+
+- **Hospedaje mixto:** `LodgingAccepts.menOrCouples` / `womenOrCouples` («Solo hombres o matrimonios» / «Solo mujeres o matrimonios»), guardados como `men_couples` / `women_couples` en la columna `accepts` (**sin migración**).
+  - Una persona **sola** debe ser del sexo del hospedaje. Una mujer casada cuyo esposo está en otro sitio cuenta como mujer sola; un hombre casado sin su esposa en un hospedaje de mujeres, no.
+  - **No se mezclan solteros y matrimonios** dentro del mismo hospedaje (bloqueo, con mensaje). Un matrimonio es «matrimonio» cuando los dos cónyuges están dentro.
+  - En la sugerencia, el mixto es el **último recurso** de su tipo (puntúa −3 frente a un hospedaje específico) y cuenta como lugar para matrimonios. `LodgingCandidate.occupantMix` dice qué hay dentro; dentro de una misma propuesta se va actualizando para que dos bloques no mezclen un mixto.
+  - El formulario de hospedaje pasa a una cuadrícula 2×3 con una línea de ayuda; el CSV acepta los dos valores nuevos.
+- **Matrimonios por separado (opcional):** casilla «Si no hay hospedaje para matrimonios, alojarlos por separado» en «Sugerir hospedaje» (`SuggestOptions.splitCouples`, desactivada por defecto).
+  - Solo se separan **los matrimonios que sobran** (los que no caben en hospedajes que reciben matrimonios: «matrimonios», «sin preferencia» y mixtos libres); el esposo va con los hombres y la esposa con las mujeres. La propuesta lo explica y lo marca en `LodgingProposal.splitCoupleIds`.
+  - *Asignación manual:* se mantiene el aviso que ya existía en la ficha («esto separa al matrimonio…») en vez de un diálogo de confirmación aparte, porque ya es visible antes de guardar y no frena al operador.
