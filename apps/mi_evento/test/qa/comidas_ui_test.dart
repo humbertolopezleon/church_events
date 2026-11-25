@@ -134,7 +134,7 @@ void main() {
     // La imagen solo lleva cifras: ningún apellido de los inscritos aparece en sus bytes.
     final png = a.saver.saved[nombres.firstWhere((n) => n.endsWith('.png'))]!;
     expect(png.take(4).toList(), [137, 80, 78, 71]);
-    await t.pageBack();
+    await pageBack(t);
     await settle(t);
     await tapKey(t, 'cm-reabrir');
     expect(find.byKey(const Key('cm-buscar')), findsOneWidget);

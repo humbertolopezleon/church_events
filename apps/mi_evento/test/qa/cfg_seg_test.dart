@@ -27,12 +27,7 @@ void main() {
       expect(find.textContaining('Falta el nombre'), findsOneWidget);
       await enter(t, 'ev-nombre', 'Congreso de Jóvenes Ñandú 2026');
       await tapKey(t, 'ev-fechas');
-      await t.tap(find.text('15').first);
-      await t.pump();
-      await t.tap(find.text('17').first);
-      await t.pump();
-      await t.tap(find.text('Aceptar'));
-      await settle(t);
+      await pickEventRangeFromToday(t);
       expect(find.textContaining('→'), findsOneWidget);
       await tapKey(t, 'ev-crear');
       // Primer momento: solo configuración.

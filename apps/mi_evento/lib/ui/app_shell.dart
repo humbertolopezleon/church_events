@@ -128,8 +128,11 @@ class _AppShellState extends ConsumerState<AppShell> {
         ]),
       );
     }
-    final dests =
-        allDestinations.where((d) => !d.adminOnly || me.isAdmin).toList();
+    // Un evento que no usa equipos no muestra «Equipos» en ninguna parte.
+    final dests = allDestinations
+        .where((d) => !d.adminOnly || me.isAdmin)
+        .where((d) => d.id != 'equipos' || (event?.offersTeams ?? true))
+        .toList();
     final sel =
         dests.firstWhere((d) => d.id == current, orElse: () => dests.first);
     final page = sel.builder(context);
@@ -199,8 +202,11 @@ class _AppShellState extends ConsumerState<AppShell> {
         ]),
       );
     }
+    // Si un destino principal no aplica (p. ej. Equipos en un evento sin equipos), no sale en la
+    // barra inferior y el resto se corre; no se rellena el hueco con otro destino.
     final mobile = [
-      for (final id in mobileMainIds) dests.firstWhere((d) => d.id == id)
+      for (final id in mobileMainIds)
+        if (dests.any((d) => d.id == id)) dests.firstWhere((d) => d.id == id)
     ];
     final mi = mobile.indexWhere((d) => d.id == sel.id);
     return Scaffold(

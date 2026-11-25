@@ -109,7 +109,6 @@ void main() {
     await tapKey(t, 'iglesia-bautista');
     await tapKey(t, 'f-hospedaje');
     await enter(t, 'f-hosp-buscar', 'zzz');
-    await tapKey(t, 'f-hosp-filtro-libres');
     await tapKey(t, 'f-guardar');
     await tapKey(t, 'exito-otra');
     await tapKey(t, 'f-hospedaje');
@@ -121,11 +120,8 @@ void main() {
             .controller
             .text,
         isEmpty);
-    expect(
-        t
-            .widget<FilterChip>(find.byKey(const Key('f-hosp-filtro-libres')))
-            .selected,
-        isFalse);
+    // Ya no hay filtro «Con plazas libres»: siempre se muestran solo los hospedajes con plazas.
+    expect(find.byKey(const Key('f-hosp-filtro-libres')), findsNothing);
     // Los grupos ya no se ofrecen en el registro.
     expect(find.byKey(const Key('social-grupos')), findsNothing);
   });

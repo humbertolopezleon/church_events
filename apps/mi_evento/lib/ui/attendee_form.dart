@@ -61,7 +61,6 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
   int hospMinSlots = 0; // filtro «plazas necesarias» del selector de hospedaje
   bool hospOnlyFit =
       false; // solo los que aceptan a esta persona (según su sexo / cónyuge)
-  bool hospOnlyFree = false; // solo con plazas libres
   bool lodgingDeferred =
       false; // «dejar para después» (p. ej. se asignará con su grupo)
   String?
@@ -150,7 +149,6 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
       lodgingId = null;
       lodgingDeferred = false;
       hospOnlyFit = false;
-      hospOnlyFree = false;
       hospMinSlots = 0;
       _coupleMoveDismissed = false;
       savedTeamName = savedLodgingName = null;
@@ -1242,11 +1240,6 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
               selected: hospOnlyFit,
               onSelected:
                   ready ? (v) => setState(() => hospOnlyFit = v) : null),
-          FilterChip(
-              key: const Key('f-hosp-filtro-libres'),
-              label: const Text('Con plazas libres'),
-              selected: hospOnlyFree,
-              onSelected: (v) => setState(() => hospOnlyFree = v)),
           // Cantidad: solo hospedajes con al menos N plazas libres (p. ej. 2 para un matrimonio).
           DropdownButton<int>(
             key: const Key('f-hosp-minplazas'),
@@ -1264,11 +1257,12 @@ class _AttendeeFormScreenState extends ConsumerState<AttendeeFormScreen> {
         ]),
         const SizedBox(height: 6),
         Builder(builder: (context) {
-          // El hospedaje ya elegido siempre se muestra, aunque el filtro lo deje fuera.
+          // Solo hospedajes con plazas libres (siempre, sin filtro). El hospedaje ya elegido se
+          // muestra aunque esté lleno.
           final options = [
             for (final l in filterLodgings(lodgings, hospSearch.text))
               if (l.row.id == lodgingId ||
-                  ((!hospOnlyFree || cand(l).free > 0) &&
+                  (cand(l).free > 0 &&
                       (hospMinSlots == 0 || cand(l).free >= hospMinSlots) &&
                       (!hospOnlyFit || !ready || _blockersFor(l).isEmpty)))
                 l

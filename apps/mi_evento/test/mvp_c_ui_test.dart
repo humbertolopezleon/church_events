@@ -248,7 +248,7 @@ void main() {
     expect(_n(t, 'res-no-pasaron'), '1');
     expect(find.text('2 / 2'), findsOneWidget); // equipo Rojo: Juan y María
     expect(find.text('0 / 1'), findsOneWidget); // equipo Azul: Pedro no pasó
-    await t.pageBack();
+    await pageBack(t);
     await settle(t);
     // la sesión cerrada ya no deja marcar
     expect(find.byKey(const Key('cm-cerrada')), findsOneWidget);

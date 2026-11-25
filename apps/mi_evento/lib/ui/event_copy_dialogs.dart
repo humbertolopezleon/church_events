@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'event_dates.dart';
 import 'widgets/labeled_field.dart';
 
 import '../data/database.dart';
@@ -23,9 +24,19 @@ class DuplicateEventDialog extends ConsumerStatefulWidget {
 
 class _DuplicateEventDialogState extends ConsumerState<DuplicateEventDialog> {
   late final name = TextEditingController(text: '${widget.event.name} (copia)');
-  late DateTime start =
-      DateTime.tryParse(widget.event.startDate) ?? DateTime.now();
-  late DateTime end = DateTime.tryParse(widget.event.endDate) ?? start;
+  // El evento nuevo no puede empezar antes de hoy: si el original ya pasó, se propone hoy y se
+  // conserva su duración.
+  late DateTime start = () {
+    final s = DateTime.tryParse(widget.event.startDate) ?? DateTime.now();
+    final today = dateOnly(DateTime.now());
+    return dateOnly(s).isBefore(today) ? today : dateOnly(s);
+  }();
+  late DateTime end = () {
+    final s = DateTime.tryParse(widget.event.startDate);
+    final e = DateTime.tryParse(widget.event.endDate);
+    final days = (s == null || e == null) ? 0 : e.difference(s).inDays;
+    return start.add(Duration(days: days < 0 ? 0 : days));
+  }();
   bool people = true,
       preregister = true,
       teams = true,
@@ -35,14 +46,8 @@ class _DuplicateEventDialogState extends ConsumerState<DuplicateEventDialog> {
   String? error;
 
   Future<void> _pickRange() async {
-    final r = await showDateRangePicker(
-      context: context,
-      initialDateRange: DateTimeRange(start: start, end: end),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      helpText: 'Fechas del evento nuevo',
-      saveText: 'Aceptar',
-    );
+    final r = await pickEventDates(context,
+        start: start, end: end, title: 'Fechas del evento nuevo');
     if (r != null) {
       setState(() {
         start = r.start;
@@ -52,6 +57,10 @@ class _DuplicateEventDialogState extends ConsumerState<DuplicateEventDialog> {
   }
 
   Future<void> _save() async {
+    if (start.isBefore(dateOnly(DateTime.now()))) {
+      setState(() => error = 'La fecha de inicio no puede ser anterior a hoy.');
+      return;
+    }
     setState(() {
       busy = true;
       error = null;

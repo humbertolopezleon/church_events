@@ -133,6 +133,8 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
       List<LodgingView> lodgings, List<TeamRow> teams) {
     final lodgingName = {for (final l in lodgings) l.row.id: l.row.name};
     final teamName = {for (final t in teams) t.id: t.name};
+    final offersTeams =
+        ref.read(eventProvider(eventId)).valueOrNull?.offersTeams ?? true;
     Widget txt(String s) => Text(s, overflow: TextOverflow.ellipsis);
     return DataTableView<AttendeeView>(
       items: list,
@@ -162,8 +164,9 @@ class _AttendeesScreenState extends ConsumerState<AttendeesScreen> {
                     ? 'Sin asignar'
                     : '—'),
             sortValue: (v) => normalizeText(lodgingName[v.a.lodgingId] ?? '~')),
-        TableCol('Equipo', (v) => txt(teamName[v.a.teamId] ?? '—'),
-            sortValue: (v) => normalizeText(teamName[v.a.teamId] ?? '~')),
+        if (offersTeams)
+          TableCol('Equipo', (v) => txt(teamName[v.a.teamId] ?? '—'),
+              sortValue: (v) => normalizeText(teamName[v.a.teamId] ?? '~')),
         TableCol(
             'Asistencia',
             (v) => v.isPreregistered

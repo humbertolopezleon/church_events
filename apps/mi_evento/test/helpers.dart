@@ -159,3 +159,29 @@ Future<void> closeFilters(WidgetTester t) async {
   await t.tap(find.byKey(const Key('filtros-ver')));
   await settle(t);
 }
+
+/// Vuelve a la pantalla anterior con el botón «Atrás» de la barra (el tooltip está en español;
+/// `WidgetTester.pageBack` busca «Back»).
+Future<void> pageBack(WidgetTester t) async {
+  await t.tap(find.byTooltip('Atrás'));
+  await settle(t);
+}
+
+/// Fechas del evento en el diálogo «Fechas del evento»: empieza hoy y termina [days] días después
+/// (con «Hoy» y el calendario de «Fin»). Deja el diálogo cerrado.
+Future<void> pickEventRangeFromToday(WidgetTester t, {int days = 2}) async {
+  final today = DateTime.now();
+  final end = DateTime(today.year, today.month, today.day + days);
+  await t.tap(find.byKey(const Key('fechas-hoy')));
+  await t.pump();
+  await t.tap(find.byKey(const Key('fechas-fin')));
+  await t.pump();
+  if (end.month != today.month) {
+    await t.tap(find.byIcon(Icons.chevron_right));
+    await t.pump();
+  }
+  await t.tap(find.text('${end.day}').first);
+  await t.pump();
+  await t.tap(find.byKey(const Key('fechas-aceptar')));
+  await settle(t);
+}

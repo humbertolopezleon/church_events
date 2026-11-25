@@ -4,6 +4,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:mi_evento/data/repos_b.dart';
 import 'package:mi_evento_core/mi_evento_core.dart';
 
+import 'package:mi_evento/ui/event_dates.dart';
+
 import 'helpers.dart';
 
 const _pc = Size(1200, 2400);
@@ -21,38 +23,70 @@ Future<void> _newEvent(WidgetTester t,
 
 void main() {
   group('fechas del evento', () {
-    testWidgets(
-        'un solo calendario de rango: mismo día dos veces = un solo día',
+    testWidgets('«Hoy» + Aceptar = un solo día (el de hoy)', (t) async {
+      await pumpApp(t, _pc);
+      await login(t, 'admin', 'secreto1');
+      await t.tap(find.text('Crear evento'));
+      await settle(t);
+      await tapKey(t, 'ev-fechas');
+      expect(find.byKey(const Key('fechas-dialogo')), findsOneWidget);
+      await t.tap(find.byKey(const Key('fechas-hoy')));
+      await t.pump();
+      await t.tap(find.byKey(const Key('fechas-aceptar')));
+      await settle(t);
+      expect(find.textContaining('Un solo día'), findsOneWidget);
+      expect(find.textContaining(isoDate(DateTime.now())), findsOneWidget);
+    });
+
+    testWidgets('inicio y fin sobre el mismo calendario: muestra inicio → fin',
         (t) async {
       await pumpApp(t, _pc);
       await login(t, 'admin', 'secreto1');
       await t.tap(find.text('Crear evento'));
       await settle(t);
       await tapKey(t, 'ev-fechas');
-      expect(find.byType(DateRangePickerDialog), findsOneWidget);
-      await t.tap(find.text('15').first);
+      final today = DateTime.now();
+      final end = DateTime(today.year, today.month, today.day + 2);
+      await t.tap(find.byKey(const Key('fechas-hoy')));
       await t.pump();
-      await t.tap(find.text('15').first);
+      await t.tap(find.byKey(const Key('fechas-fin')));
       await t.pump();
-      await t.tap(find.text('Aceptar'));
+      if (end.month != today.month) {
+        await t.tap(find.byIcon(Icons.chevron_right));
+        await t.pump();
+      }
+      await t.tap(find.text('${end.day}').first);
+      await t.pump();
+      await t.tap(find.byKey(const Key('fechas-aceptar')));
       await settle(t);
-      expect(find.textContaining('Un solo día'), findsOneWidget);
+      expect(find.textContaining('→'), findsOneWidget);
+      expect(find.textContaining('Un solo día'), findsNothing);
     });
 
-    testWidgets('el rango muestra inicio → fin', (t) async {
+    testWidgets('no se pueden elegir días anteriores a hoy', (t) async {
+      final today = DateTime.now();
+      if (today.day == 1) return; // sin días anteriores visibles en este mes
       await pumpApp(t, _pc);
       await login(t, 'admin', 'secreto1');
       await t.tap(find.text('Crear evento'));
       await settle(t);
       await tapKey(t, 'ev-fechas');
-      await t.tap(find.text('15').first);
+      // Ayer está deshabilitado: tocarlo no cambia el inicio.
+      await t.tap(find.text('${today.day - 1}').first);
       await t.pump();
-      await t.tap(find.text('17').first);
-      await t.pump();
-      await t.tap(find.text('Aceptar'));
+      await t.tap(find.byKey(const Key('fechas-aceptar')));
       await settle(t);
-      expect(find.textContaining('→'), findsOneWidget);
-      expect(find.textContaining('Un solo día'), findsNothing);
+      expect(find.textContaining(isoDate(today)), findsOneWidget);
+    });
+
+    test('earliestEventDate: hoy, o la fecha de inicio ya pasada del evento',
+        () {
+      final today = dateOnly(DateTime.now());
+      expect(earliestEventDate(), today);
+      expect(earliestEventDate(current: today.add(const Duration(days: 5))),
+          today);
+      final past = today.subtract(const Duration(days: 9));
+      expect(earliestEventDate(current: past), past);
     });
   });
 

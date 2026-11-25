@@ -6,6 +6,7 @@ import 'data/database.dart';
 import 'providers.dart';
 import 'theme/app_theme.dart';
 import 'ui/app_shell.dart';
+import 'ui/escape_key.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,16 +18,27 @@ Future<void> main() async {
       child: const MiEventoApp()));
 }
 
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+final _topRoute = TopRouteObserver();
+
 class MiEventoApp extends StatelessWidget {
   const MiEventoApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
+        navigatorKey: rootNavigatorKey,
+        navigatorObservers: [_topRoute],
         title: 'Mi Evento',
         debugShowCheckedModeBanner: false,
         theme: buildTheme(),
         locale: const Locale('es'),
+        // Textos de Material en español (calendario, meses, menús de copiar/pegar, etc.).
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const [Locale('es')],
         home: const AppRoot(),
-        builder: (context, child) => SystemBarsSafe(child: child!),
+        builder: (context, child) => EscapeGoesBack(
+            navigatorKey: rootNavigatorKey,
+            observer: _topRoute,
+            child: SystemBarsSafe(child: child!)),
       );
 }
 
