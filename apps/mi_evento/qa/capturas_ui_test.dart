@@ -553,4 +553,13 @@ void main() {
       await shot(t, 'comidas-registrar-dialogo-letra130');
     });
   });
+
+  group('Atajos de teclado', () {
+    cap('escritorio: ayuda de atajos', (t) async {
+      await _abrir(t, _pc);
+      await t.sendKeyEvent(LogicalKeyboardKey.f1);
+      await settle(t);
+      await shot(t, 'atajos-ayuda-escritorio');
+    });
+  });
 }

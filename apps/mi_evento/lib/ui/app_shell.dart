@@ -20,6 +20,7 @@ import 'lodgings_screen.dart';
 import 'meals_screen.dart';
 import 'panel_screen.dart';
 import 'teams_screen.dart';
+import 'shortcuts.dart';
 import 'users_screen.dart';
 
 class Destination {
@@ -136,10 +137,18 @@ class _AppShellState extends ConsumerState<AppShell> {
     final sel =
         dests.firstWhere((d) => d.id == current, orElse: () => dests.first);
     final page = sel.builder(context);
-    final body = Column(children: [
-      const DefaultPasswordBanner(),
-      Expanded(child: page),
-    ]);
+    final body = ScreenShortcutsScope(
+      // Ctrl+1…6: ir a una sección (solo las que este usuario y este evento tienen).
+      onNavigate: (id) {
+        if (!dests.any((d) => d.id == id)) return false;
+        setPage(id);
+        return true;
+      },
+      child: Column(children: [
+        const DefaultPasswordBanner(),
+        Expanded(child: page),
+      ]),
+    );
     final wide = MediaQuery.sizeOf(context).width >= 900;
     if (wide) {
       return Scaffold(
@@ -177,6 +186,13 @@ class _AppShellState extends ConsumerState<AppShell> {
                           onTap: () => ref
                               .read(currentEventIdProvider.notifier)
                               .state = null),
+                      // Al final de la lista (el pie fijo no debe crecer: en ventanas bajas
+                      // quitaría sitio a los destinos).
+                      _SideItem(
+                          'Atajos de teclado (F1)', Icons.keyboard_outlined,
+                          selected: false,
+                          key: const Key('atajos-ayuda'),
+                          onTap: () => showShortcutsHelp(context)),
                     ]),
                   ),
                   const Divider(),

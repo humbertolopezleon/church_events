@@ -7,6 +7,7 @@ import 'providers.dart';
 import 'theme/app_theme.dart';
 import 'ui/app_shell.dart';
 import 'ui/escape_key.dart';
+import 'ui/shortcuts.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +36,7 @@ class MiEventoApp extends StatelessWidget {
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         supportedLocales: const [Locale('es')],
         home: const AppRoot(),
-        builder: (context, child) => EscapeGoesBack(
+        builder: (context, child) => AppKeyboard(
             navigatorKey: rootNavigatorKey,
             observer: _topRoute,
             child: SystemBarsSafe(child: child!)),

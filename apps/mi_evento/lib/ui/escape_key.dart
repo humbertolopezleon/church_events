@@ -1,16 +1,17 @@
-import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:material_ui/material_ui.dart';
 
-/// Esc en escritorio: además de cerrar diálogos y menús (que Flutter ya hace), vuelve atrás en las
-/// pantallas completas (formularios, fichas…), igual que el botón «Atrás». En la pantalla raíz no
-/// hace nada.
+/// Volver atrás con el teclado (Esc, Alt+← y Retroceso).
 ///
 /// Cómo funciona: Flutter mapea Esc a `DismissIntent`, pero cada ruta de página lo deja
 /// DESHABILITADO y eso tapa a cualquier manejador de más arriba. Por eso aquí se usa un intent
 /// propio ([GoBackIntent]) que solo se habilita cuando la ruta superior es una pantalla; si es un
-/// diálogo o un menú, no se hace nada y Esc llega al manejo normal de Flutter.
+/// diálogo o un menú, no se hace nada y Esc llega al manejo normal de Flutter. Las teclas están en
+/// `lib/ui/shortcuts.dart` (`AppKeyboard`).
 class GoBackIntent extends Intent {
-  const GoBackIntent();
+  const GoBackIntent({this.outsideTextOnly = false});
+
+  /// Retroceso: solo vale fuera de un campo de texto (dentro borra letras).
+  final bool outsideTextOnly;
 }
 
 /// Sigue la pila del navegador para saber qué ruta está arriba.
@@ -35,44 +36,26 @@ class TopRouteObserver extends NavigatorObserver {
   }
 }
 
-class _GoBackAction extends Action<GoBackIntent> {
-  _GoBackAction(this.navigatorKey, this.observer);
+class GoBackAction extends Action<GoBackIntent> {
+  GoBackAction(this.navigatorKey, this.observer);
   final GlobalKey<NavigatorState> navigatorKey;
   final TopRouteObserver observer;
+
+  static bool _typing() {
+    final ctx = FocusManager.instance.primaryFocus?.context;
+    return ctx != null &&
+        ctx.findAncestorStateOfType<EditableTextState>() != null;
+  }
 
   @override
   bool isEnabled(GoBackIntent intent) =>
       observer.top is PageRoute &&
-      (navigatorKey.currentState?.canPop() ?? false);
+      (navigatorKey.currentState?.canPop() ?? false) &&
+      !(intent.outsideTextOnly && _typing());
 
   @override
   Object? invoke(GoBackIntent intent) {
     navigatorKey.currentState?.maybePop();
     return null;
   }
-}
-
-/// Se coloca ENCIMA del navegador (en `MaterialApp.builder`). [navigatorKey] y [observer] son los
-/// del `MaterialApp` (`navigatorKey` y `navigatorObservers`).
-class EscapeGoesBack extends StatelessWidget {
-  const EscapeGoesBack(
-      {super.key,
-      required this.navigatorKey,
-      required this.observer,
-      required this.child});
-  final GlobalKey<NavigatorState> navigatorKey;
-  final TopRouteObserver observer;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => Shortcuts(
-        shortcuts: const {
-          SingleActivator(LogicalKeyboardKey.escape): GoBackIntent(),
-        },
-        child: Actions(
-          actions: {GoBackIntent: _GoBackAction(navigatorKey, observer)},
-          // Con autofocus, si nada tiene el foco (nadie tocó un campo) Esc llega igual aquí.
-          child: Focus(autofocus: true, skipTraversal: true, child: child),
-        ),
-      );
 }

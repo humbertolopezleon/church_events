@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import 'auth_screens.dart' show ErrorBox;
 import 'meal_summary_screen.dart';
 import 'quick_register_dialog.dart';
+import 'shortcuts.dart';
 
 /// Control de comidas y otros registros por persona. Pensado para usarse de pie, con prisa:
 /// escribir un nombre o número, Enter (o tocar «Marcar»), y el contador sube en vivo.
@@ -230,9 +231,25 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
     ref.watch(teamsProvider(
         eventId)); // mantiene los equipos cargados para el aviso de «ya pasó»
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Control de comidas')),
-      body: s == null ? _empty() : _body(s, sessions, views),
+    return ScreenShortcutsScope(
+      handlers: {
+        // Ctrl+N: nueva sesión. Ctrl+F: al buscador. Ctrl+Z: deshace la última marca (la del
+        // aviso verde); si no hay, la tecla se deja pasar (deshacer del campo de texto).
+        ScreenAction.newItem: () => showDialog<void>(
+            context: context,
+            builder: (_) => NewSessionDialog(eventId: eventId)),
+        ScreenAction.search: s == null ? null : () => focus.requestFocus(),
+        ScreenAction.undo: lastOk == null
+            ? null
+            : () async {
+                await ref.read(mealRepoProvider).undo(lastOk!.recordId);
+                if (mounted) setState(() => lastOk = null);
+              },
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Control de comidas')),
+        body: s == null ? _empty() : _body(s, sessions, views),
+      ),
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../theme/app_theme.dart';
+import '../shortcuts.dart';
 
 /// Una opción extra del menú ⋮ (además de importar/exportar/plantilla/columnas).
 class HeaderMenuItem {
@@ -59,7 +60,16 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => Size.fromHeight(subtitle == null ? 64 : 72);
 
   @override
-  Widget build(BuildContext context) => AppBar(
+  Widget build(BuildContext context) => ScreenShortcutsScope(
+        // Ctrl+I / Ctrl+E: lo mismo que «Importar CSV» y «Exportar CSV» del menú ⋮.
+        handlers: {
+          ScreenAction.importCsv: onImport,
+          ScreenAction.exportCsv: exportEnabled ? onExport : null,
+        },
+        child: _bar(context),
+      );
+
+  Widget _bar(BuildContext context) => AppBar(
         toolbarHeight: preferredSize.height,
         titleSpacing: 16,
         title: Column(

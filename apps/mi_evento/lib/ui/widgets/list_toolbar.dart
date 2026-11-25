@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../theme/app_theme.dart';
+import '../shortcuts.dart';
 import 'filter_spec.dart';
 
 /// Barra común de las listas: buscador con lupa, botón «Filtros» (con el número de filtros activos
@@ -52,17 +53,19 @@ class ListToolbar extends StatelessWidget {
     final useSheet = specs.isNotEmpty && !inline;
     // Con letra grande el botón «Filtros» baja bajo el buscador para que nada se corte.
     final large = MediaQuery.textScalerOf(context).scale(16) > 18.4;
-    Widget filtersButton() => _FiltersButton(
-        count: active.length,
-        onPressed: () => showFilterSheet(context,
-            filters: filters!,
-            resultCount: resultCount ?? () => 0,
-            resultLabel: resultLabel ?? ((n) => 'Ver resultados')));
+    void openSheet() => showFilterSheet(context,
+        filters: filters!,
+        resultCount: resultCount ?? () => 0,
+        resultLabel: resultLabel ?? ((n) => 'Ver resultados'));
+    // Ctrl+Mayús+F abre la hoja de filtros (igual que el botón «Filtros»).
+    Widget filtersButton() => ScreenShortcutsScope(
+        handlers: {ScreenAction.filters: openSheet},
+        child: _FiltersButton(count: active.length, onPressed: openSheet));
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Expanded(
-          child: TextField(
-            key: searchKey,
+          child: _SearchField(
+            fieldKey: searchKey,
             controller: controller,
             onChanged: (_) => onChanged(),
             textInputAction: TextInputAction.search,
@@ -120,6 +123,53 @@ class ListToolbar extends StatelessWidget {
         ),
     ]);
   }
+}
+
+/// Campo de búsqueda con su propio foco: Ctrl+F y «/» lo enfocan.
+class _SearchField extends StatefulWidget {
+  const _SearchField(
+      {required this.fieldKey,
+      required this.controller,
+      required this.onChanged,
+      required this.textInputAction,
+      required this.decoration});
+  final Key fieldKey;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final TextInputAction textInputAction;
+  final InputDecoration decoration;
+  @override
+  State<_SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<_SearchField> {
+  final focus = FocusNode();
+
+  @override
+  void dispose() {
+    focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => ScreenShortcutsScope(
+        handlers: {
+          ScreenAction.search: () {
+            focus.requestFocus();
+            // Deja el texto que hubiera seleccionado para escribir encima.
+            widget.controller.selection = TextSelection(
+                baseOffset: 0, extentOffset: widget.controller.text.length);
+          },
+        },
+        child: TextField(
+          key: widget.fieldKey,
+          focusNode: focus,
+          controller: widget.controller,
+          onChanged: widget.onChanged,
+          textInputAction: widget.textInputAction,
+          decoration: widget.decoration,
+        ),
+      );
 }
 
 class _FiltersButton extends StatelessWidget {
