@@ -77,6 +77,15 @@ void main() {
     await tapKey(t, 'hosp-nuevo');
     await enter(t, 'lf-nombre', 'Borrador');
     await tapKey(t, 'lf-cerrar');
+    // Con lo escrito, primero pregunta (pr13_descartar_cambios_test.dart); aquí se descarta.
+    await tapKey(t, 'descartar-ok');
+    expect(find.byKey(const Key('hosp-Borrador')), findsNothing);
+    expect(find.textContaining('Todavía no hay hospedajes'), findsOneWidget);
+    // Lo mismo con «Cancelar».
+    await tapKey(t, 'hosp-nuevo');
+    await enter(t, 'lf-nombre', 'Borrador');
+    await tapKey(t, 'lf-cancelar');
+    await tapKey(t, 'descartar-ok');
     expect(find.byKey(const Key('hosp-Borrador')), findsNothing);
     expect(find.textContaining('Todavía no hay hospedajes'), findsOneWidget);
   });
